@@ -1,5 +1,5 @@
 {
-  "ciFingerprint": "9dd08f5c6dea3d39ddd42746dbb2e19848ac6cb8893a958a9ac68a55f941d160",
+  "ciFingerprint": "84cd239d59e53de1d31d03b03382ab26c2fc775d42174814c5bb9b3ecca9612f",
   "fileCount": 14,
   "algorithm": "SHA256(sorted path + NUL + file SHA256 + LF)",
   "files": {
@@ -10,7 +10,7 @@
     "ci/run.mjs": "966326bf611738ed55670c1f6873a2624fdec2ed1a64e7e9697571325260e489",
     "ci/static-checks.py": "19cb06c5f41ad0d4f6e8782973230727064a39f8db1d389814a9215b22dddc0c",
     "ci/native-location.mjs": "90653bcb276cb5583a1fc3b9b3439d5116ab2c23ddf43299e55d499aceb64242",
-    "ci/adapter.mjs": "3632c13f7db3f8d83582153d3d1f6d2cdecb1543f8fc2f4da3e673d1dd10a2cd",
+    "ci/adapter.mjs": "b99353ad8a7867c339c7bba6ac62d7aa5f69a4e0d8aad945e5bc1c11c9467077",
     "ci/task.py": "b7eae9687a2bcd68f56a16cb979ced36ed5f4b40b44b6c5a1f2c82eefcf16b75",
     "ci/readiness.mjs": "c4c2d8af7f88ced660f89a38f158f4ff9eccb93c463fa8b8f5395e754ff00436",
     "ci/results.py": "4436fef2bda53bb50428d6a29316ef5d0b12b48eeefaa3f2cc88552685a6e5d4",
