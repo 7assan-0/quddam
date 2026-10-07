@@ -1,0 +1,8 @@
+import {NextRequest,NextResponse} from "next/server";
+import {currentUser} from "@/lib/auth/session";
+import {forbidden,requireSameOrigin} from "@/lib/http";
+import {rankedResponse,privateHeaders,parseList} from "@/lib/games/ranked/http";
+import {db} from "@/lib/db";
+import {normalize,RankedError} from "@/lib/games/ranked/module";
+export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:string}>}){if(!requireSameOrigin(request))return forbidden();try{if((await currentUser())?.role!=="ADMIN")return forbidden();const input=await parseList(request),{id}=await params;const row=await db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT "id" FROM "Category" WHERE "id"=$1 FOR SHARE',input.categoryId);const c=await tx.category.findUnique({where:{id:input.categoryId}});if(!c||input.status==="PUBLISHED"&&!c.active)throw new RankedError("يلزم اختيار فئة فعالة للنشر",400);await tx.$queryRawUnsafe('SELECT "id" FROM "RankedListQuestion" WHERE "id"=$1 FOR UPDATE',id);const {entries,...question}=input;await tx.rankedListEntry.deleteMany({where:{questionId:id}});return tx.rankedListQuestion.update({where:{id},data:{...question,normalizedTitle:normalize(input.title),entries:{create:entries}},include:{entries:{orderBy:{rank:"asc"}}}});});return NextResponse.json(row,{headers:privateHeaders});}catch(e){return rankedResponse(e);}}
+export async function DELETE(request:NextRequest,{params}:{params:Promise<{id:string}>}){if(!requireSameOrigin(request))return forbidden();try{if((await currentUser())?.role!=="ADMIN")return forbidden();return NextResponse.json(await db().rankedListQuestion.update({where:{id:(await params).id},data:{status:"ARCHIVED"}}),{headers:privateHeaders});}catch(e){return rankedResponse(e);}}

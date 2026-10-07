@@ -1,0 +1,12 @@
+import { beforeEach, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { LightningError } from "./module";
+const access = vi.hoisted(() => vi.fn());
+vi.mock("./service", () => ({ assertLightningPageAccess: access }));
+import { proxy, config } from "@/proxy";
+beforeEach(() => { access.mockReset(); });
+it.each([["buzzer", "BUZZER"], ["display", "DISPLAY"]])("%s HTML checks its own scoped token before streaming", async (path, kind) => { const response = await proxy(new NextRequest(`https://qalba.test/lightning/${path}/session?token=private-token`)); expect(access).toHaveBeenCalledWith("session", { kind, token: "private-token" }); expect(response.headers.get("x-middleware-next")).toBe("1"); });
+it("revoked credential returns actual 404 without reflection or caching", async () => { access.mockRejectedValue(new LightningError("private internal detail", 403)); const response = await proxy(new NextRequest("https://qalba.test/lightning/buzzer/session?token=private-token")); expect(response.status).toBe(404); expect(response.headers.get("cache-control")).toBe("private, no-store"); expect(response.headers.get("referrer-policy")).toBe("no-referrer"); expect(await response.text()).not.toMatch(/private-token|private internal detail/); });
+it("duplicate query tokens are rejected before any database access", async () => { const response = await proxy(new NextRequest("https://qalba.test/lightning/buzzer/session?token=a&token=b")); expect(response.status).toBe(404); expect(access).not.toHaveBeenCalled(); });
+it("other completed games receive document CSP without calling the Lightning access check", async () => { expect(config.matcher).toEqual(["/((?!api/|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|fonts/|brand/).*)"]); const response = await proxy(new NextRequest("https://qalba.test/social/display/session?token=a")); expect(access).not.toHaveBeenCalled(); expect(response.headers.get("x-middleware-next")).toBe("1"); expect(response.headers.get("content-security-policy-report-only")).toContain("strict-dynamic"); });
+it("database failures propagate instead of masquerading as a revoked link", async () => { access.mockRejectedValue(new Error("database unavailable")); await expect(proxy(new NextRequest("https://qalba.test/lightning/buzzer/session?token=a"))).rejects.toThrow("database unavailable"); });

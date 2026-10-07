@@ -1,0 +1,68 @@
+--- a/verification-tools/consolidated-runner.mjs
++++ b/verification-tools/consolidated-runner.mjs
+@@ -1,5 +1,5 @@
+ /** Verification only: exact I-1 source; native disposable PG; production Next, no dev/reset/retries. */
+-import {spawn} from 'node:child_process';
++import {spawn,spawnSync} from 'node:child_process';
+ import {createRequire} from 'node:module';
+ import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,appendFileSync,rmSync} from 'node:fs';
+ import {join,resolve} from 'node:path';
+@@ -24,7 +24,7 @@
+ if(process.env.J1_CONTINUE==='1')throw Error('J2 forbids importing previous executions');
+ function save(){writeFileSync(join(out,'Execution-Results.json'),JSON.stringify({phase:'5.0J-2',sourceFingerprint:manifest.sourceFingerprint,productionBuild:true,nativePostgres:true,retries:0,runs,passed:runs.filter(r=>r.status==='passed').length,failed:runs.filter(r=>r.status==='failed').length},null,2));}
+ async function appStart(e,label){next=launch(process.execPath,['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3000'],{...e,NODE_ENV:'production'},label);await poll(async()=>{try{return(await fetch('http://127.0.0.1:3000/login')).status===200}catch{return false}});}
+-function mailHarness(){const mailbox=new Map();smtp=net.createServer(socket=>{socket.write('220 synthetic SMTP\r\n');let pending='',body=false,message='',to='';socket.on('data',bytes=>{pending+=bytes.toString();while(pending.includes('\r\n')){const n=pending.indexOf('\r\n'),line=pending.slice(0,n);pending=pending.slice(n+2);if(body){if(line!=='.'){message+=line+'\r\n';continue;}const decoded=message.replace(/=\r?\n/g,'').replace(/=([\da-f]{2})/gi,(_,h)=>String.fromCharCode(parseInt(h,16)));const match=decoded.match(/https?:\/\/[^\s<>]+/);if(match)mailbox.set(to,{url:match[0]});message='';body=false;socket.write('250 accepted\r\n');continue;}if(/^EHLO|^HELO/i.test(line))socket.write('250-synthetic\r\n250 8BITMIME\r\n');else if(/^RCPT TO:/i.test(line)){to=line.match(/<([^>]+)>/)?.[1]??'';socket.write('250 OK\r\n');}else if(/^DATA$/i.test(line)){body=true;socket.write('354 send data\r\n');}else if(/^QUIT$/i.test(line)){socket.end('221 Bye\r\n');}else socket.write('250 OK\r\n');}});});mailWeb=http.createServer((req,res)=>{const to=new URL(req.url,'http://localhost').searchParams.get('to');res.setHeader('Content-Type','application/json');res.end(JSON.stringify(mailbox.get(to)??{}));});return Promise.all([new Promise(r=>smtp.listen(2525,'127.0.0.1',r)),new Promise(r=>mailWeb.listen(2528,'127.0.0.1',r))]);}
++function mailHarness(){const mailbox=new Map();smtp=net.createServer(socket=>{socket.write('220 synthetic SMTP\r\n');let pending='',body=false,message='',to='';socket.on('data',bytes=>{pending+=bytes.toString();while(pending.includes('\r\n')){const n=pending.indexOf('\r\n'),line=pending.slice(0,n);pending=pending.slice(n+2);if(body){if(line!=='.'){message+=(line.startsWith('..')?line.slice(1):line)+'\r\n';continue;}const parsed=spawnSync(process.env.PYTHON??'python3',[join(root,'verification-tools/mail-mime.py')],{input:message,encoding:'utf8'});if(parsed.error||parsed.status!==0)throw Error('Synthetic MIME parsing failed');const record=JSON.parse(parsed.stdout);if(record.url)mailbox.set(to,record);message='';body=false;socket.write('250 accepted\r\n');continue;}if(/^EHLO|^HELO/i.test(line))socket.write('250-synthetic\r\n250 8BITMIME\r\n');else if(/^RCPT TO:/i.test(line)){to=line.match(/<([^>]+)>/)?.[1]??'';socket.write('250 OK\r\n');}else if(/^DATA$/i.test(line)){body=true;socket.write('354 send data\r\n');}else if(/^QUIT$/i.test(line)){socket.end('221 Bye\r\n');}else socket.write('250 OK\r\n');}});});mailWeb=http.createServer((req,res)=>{const to=new URL(req.url,'http://localhost').searchParams.get('to');res.setHeader('Content-Type','application/json');res.end(JSON.stringify(mailbox.get(to)??{}));});return Promise.all([new Promise(r=>smtp.listen(2525,'127.0.0.1',r)),new Promise(r=>mailWeb.listen(2528,'127.0.0.1',r))]);}
+ try{guard();await run(join(bin,'initdb'),['-D',data,'-U','postgres','--auth=trust','--locale=C','--encoding=UTF8'],pgEnv,'pg-init');pg=launch(join(bin,'postgres'),['-D',data,'-h','127.0.0.1','-p','55454','-k','','-c','timezone=UTC','-c','jit=off'],pgEnv,'postgres');await poll(async()=>{const p=new Pool({connectionString:url('postgres'),connectionTimeoutMillis:100});try{return(await p.query('SHOW data_directory')).rows[0].data_directory===data}catch{return false}finally{await p.end()}});
+ if(mode==='preflight'){
+  const d=await database('j1_launch');await appStart(d,'production-next');const {chromium,request}=require('@playwright/test');const api=await request.newContext({baseURL:d.APP_URL});const response=await api.post('/api/auth/login',{headers:{Origin:d.APP_URL},data:{email:d.SEED_ADMIN_EMAIL,password:d.SEED_ADMIN_PASSWORD}});const profile=await api.get('/api/auth/me');const state=await api.storageState();
+--- /dev/null
++++ b/verification-tools/mail-mime.py
+@@ -0,0 +1,47 @@
++#!/usr/bin/env python3
++"""Decode synthetic SMTP messages using the installed standard-library MIME parser."""
++import json
++import re
++import sys
++from email import policy
++from email.parser import BytesParser
++from html.parser import HTMLParser
++
++
++class HtmlLinks(HTMLParser):
++    def __init__(self):
++        super().__init__(convert_charrefs=True)
++        self.links = []
++        self.text = []
++
++    def handle_starttag(self, tag, attrs):
++        if tag.lower() == 'a':
++            self.links.extend(value for name, value in attrs if name.lower() == 'href' and value)
++
++    def handle_data(self, data):
++        self.text.append(data)
++
++
++def mailbox_record(raw):
++    message = BytesParser(policy=policy.default).parsebytes(raw)
++    plain = []
++    html = []
++    for part in message.walk():
++        if part.is_multipart() or part.get_content_disposition() == 'attachment':
++            continue
++        if part.get_content_type() == 'text/plain':
++            plain.append(part.get_content())
++        elif part.get_content_type() == 'text/html':
++            parsed = HtmlLinks()
++            parsed.feed(part.get_content())
++            html.extend(parsed.links + [' '.join(parsed.text)])
++    # Preserve the mailbox API and let the unchanged canonical test validate the URL.
++    for body in plain + html:
++        match = re.search(r'https?://[^\s<>\"\']+', body)
++        if match:
++            return {'url': match[0]}
++    return {}
++
++
++if __name__ == '__main__':
++    print(json.dumps(mailbox_record(sys.stdin.buffer.read())))

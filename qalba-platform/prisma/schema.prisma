@@ -1,0 +1,1160 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+enum GameStatus {
+  LOBBY
+  READY
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+enum QuestionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+enum QuestionType {
+  TEXT
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  IMAGE
+  AUDIO
+  RANKING
+  SURVEY
+  LETTER
+  PASSWORD
+}
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+enum ReportReason {
+  WRONG_ANSWER
+  OUTDATED
+  DUPLICATE
+  UNCLEAR
+  SPELLING
+  INAPPROPRIATE
+  OTHER
+}
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+enum PurchaseStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+  VOIDED
+  REFUNDED
+}
+enum ParticipantRole {
+  HOST
+  PLAYER
+  SPECTATOR
+}
+
+model User {
+  id                String @id @default(cuid())
+  email             String @unique @db.VarChar(320)
+  name              String @db.VarChar(80)
+  passwordHash      String?
+  role              Role @default(USER)
+  suspendedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  sessions          AuthSession[]
+  passwordResets    PasswordReset[]
+  externalAccounts  ExternalAccount[]
+  hostedGames       GameSession[] @relation("Host")
+  players           Player[]
+  history           QuestionHistory[]
+  reports           QuestionReport[]
+  purchases         Purchase[]
+  wallet            CreditWallet?
+  creditEntries     GameCredit[]
+  rooms             Room[] @relation("RoomHost")
+  roomParticipants  RoomParticipant[]
+  analytics         AnalyticsEvent[]
+}
+
+model ExternalAccount {
+  id String @id @default(cuid())
+  userId String
+  provider String @db.VarChar(40)
+  providerAccountId String @db.VarChar(200)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model AuthSession {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique @db.Char(64)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique @db.Char(64)
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model AuthAttempt {
+  key String @id @db.Char(64)
+  count Int @default(0)
+  windowStart DateTime
+  blockedUntil DateTime?
+  @@index([windowStart])
+}
+
+model GameType {
+  id String @id @default(cuid())
+  slug String @unique @db.VarChar(60)
+  title String @db.VarChar(100)
+  description String @db.VarChar(300)
+  enabled Boolean @default(false)
+  config Json @default("{}")
+  createdAt DateTime @default(now())
+  sessions GameSession[]
+  questions Question[]
+  powerUps PowerUp[]
+}
+
+model Category {
+  id String @id @default(cuid())
+  slug String @unique @db.VarChar(100)
+  title String @db.VarChar(100)
+  description String? @db.VarChar(300)
+  active Boolean @default(true)
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  questions Question[]
+  secretWords SecretWord[]
+  letterQuestions LetterQuestion[]
+  surveyQuestions SurveyQuestion[]
+  forbiddenWordCards ForbiddenWordCard[]
+  bluffQuestions BluffQuestion[]
+  rankedLists RankedListQuestion[]
+  lightningQuestions LightningQuestion[]
+  orderingQuestions OrderingQuestion[]
+  courtCases CourtCase[]
+}
+
+model Question {
+  id String @id @default(cuid())
+  gameTypeId String
+  categoryId String
+  subcategory String? @db.VarChar(100)
+  question String @db.Text
+  answer String @db.Text
+  alternativeAnswers String[]
+  explanation String? @db.Text
+  difficulty Difficulty
+  pointValue Int
+  type QuestionType
+  options Json?
+  imageUrl String? @db.VarChar(2048)
+  source String? @db.VarChar(500)
+  status QuestionStatus @default(DRAFT)
+  language String @default("ar") @db.VarChar(10)
+  country String? @db.VarChar(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  gameType GameType @relation(fields: [gameTypeId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  rankedAnswers Answer[]
+  history QuestionHistory[]
+  reports QuestionReport[]
+  sessionQuestions SessionQuestion[]
+  responses PlayerResponse[]
+  @@index([gameTypeId, categoryId, status, difficulty])
+}
+
+model Answer {
+  id String @id @default(cuid())
+  questionId String
+  text String @db.VarChar(300)
+  aliases String[]
+  rank Int?
+  value Int?
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@index([questionId, rank])
+}
+
+model QuestionHistory {
+  userId String
+  questionId String
+  lastPlayedAt DateTime @default(now())
+  playCount Int @default(1)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@id([userId, questionId])
+  @@index([userId, lastPlayedAt])
+}
+
+model QuestionReport {
+  id String @id @default(cuid())
+  questionId String
+  userId String
+  reason ReportReason
+  details String? @db.VarChar(1000)
+  status ReportStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+  question Question @relation(fields: [questionId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  @@index([status, createdAt])
+  @@unique([userId, questionId])
+}
+
+model GameSession {
+  id String @id @default(cuid())
+  gameTypeId String
+  hostId String
+  status GameStatus @default(LOBBY)
+  config Json @default("{}")
+  state Json @default("{}")
+  stateVersion Int @default(0)
+  currentRoundNumber Int @default(0)
+  currentQuestionId String?
+  creditConsumedAt DateTime?
+  createdAt DateTime @default(now())
+  startedAt DateTime?
+  endedAt DateTime?
+  updatedAt DateTime @updatedAt
+  gameType GameType @relation(fields: [gameTypeId], references: [id])
+  host User @relation("Host", fields: [hostId], references: [id])
+  players Player[]
+  teams Team[]
+  rounds GameRound[]
+  usedQuestions SessionQuestion[]
+  scoreEvents ScoreEvent[]
+  commands GameCommand[]
+  powerUps SessionPowerUp[]
+  displayAccesses DisplayAccess[]
+  room Room?
+  socialParticipants SocialParticipant[]
+  socialRounds SocialRound[]
+  letterQuestionUses LetterQuestionUse[]
+  surveyQuestionUses SurveyQuestionUse[]
+  forbiddenWordUses ForbiddenWordCardUse[]
+  forbiddenClueAccesses ForbiddenClueAccess[]
+  bluffParticipants BluffParticipant[]
+  bluffRounds BluffRound[]
+  rankedUses RankedListUse[]
+  @@index([hostId, createdAt])
+  @@index([status, endedAt, id])
+  lightningUses LightningQuestionUse[]
+  orderingUses OrderingQuestionUse[]
+  orderingAccess OrderingControllerAccess[]
+  courtParticipants CourtParticipant[]
+  courtRounds CourtRound[]
+  buzzerAccess LightningBuzzerAccess[]
+}
+
+model Team {
+  id String @id @default(cuid())
+  sessionId String
+  name String @db.VarChar(60)
+  color String @db.VarChar(20)
+  score Int @default(0)
+  position Int @default(0)
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  players Player[]
+  scoreEvents ScoreEvent[]
+  powerUps SessionPowerUp[]
+  @@unique([sessionId, name])
+  buzzerAccess LightningBuzzerAccess[]
+  orderingControllers OrderingControllerAccess[]
+}
+
+model ForbiddenWordCard {
+  id String @id @default(cuid())
+  targetWord String @db.VarChar(100)
+  forbiddenWords String[]
+  categoryId String
+  difficulty Difficulty @default(EASY)
+  locale String @default("ar-SA") @db.VarChar(10)
+  status QuestionStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields: [categoryId], references: [id])
+  uses ForbiddenWordCardUse[]
+  @@index([status, locale, categoryId, difficulty])
+}
+
+/// Immutable match deck. Only the current snapshot enters private projections.
+model ForbiddenWordCardUse {
+  id String @id @default(cuid())
+  sessionId String
+  cardId String
+  matchNumber Int
+  position Int
+  snapshot Json
+  roundIndex Int?
+  servedAt DateTime?
+  resolvedAt DateTime?
+  result String? @db.VarChar(20)
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  card ForbiddenWordCard @relation(fields: [cardId], references: [id])
+  @@unique([sessionId, matchNumber, cardId])
+  @@unique([sessionId, matchNumber, position])
+  @@index([cardId, servedAt])
+}
+
+/// Read-only clue device authorization, scoped to one match and round.
+model ForbiddenClueAccess {
+  id String @id @default(cuid())
+  sessionId String
+  tokenHash String @unique @db.Char(64)
+  matchNumber Int
+  roundIndex Int
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([sessionId, expiresAt])
+  @@index([expiresAt])
+}
+
+model DisplayAccess {
+  id String @id @default(cuid())
+  sessionId String
+  tokenHash String @unique @db.Char(64)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([sessionId, expiresAt])
+  @@index([expiresAt])
+}
+
+model Player {
+  id String @id @default(cuid())
+  sessionId String
+  userId String?
+  teamId String?
+  name String @db.VarChar(60)
+  score Int @default(0)
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  responses PlayerResponse[]
+  scoreEvents ScoreEvent[]
+  roomParticipant RoomParticipant?
+  @@index([sessionId, userId])
+}
+
+model GameRound {
+  id String @id @default(cuid())
+  sessionId String
+  number Int
+  state Json @default("{}")
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  responses PlayerResponse[]
+  rankedUse RankedListUse?
+  votes RoomVote[]
+  scoreEvents ScoreEvent[]
+  @@unique([sessionId, number])
+  lightningUse LightningQuestionUse?
+  orderingUse OrderingQuestionUse?
+  courtRound CourtRound?
+}
+
+model SessionQuestion {
+  sessionId String
+  questionId String
+  openedAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+  @@id([sessionId, questionId])
+}
+
+model PlayerResponse {
+  id String @id @default(cuid())
+  roundId String
+  playerId String
+  questionId String?
+  response Json
+  submittedAt DateTime @default(now())
+  round GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  question Question? @relation(fields: [questionId], references: [id])
+  @@unique([roundId, playerId])
+}
+
+model ScoreEvent {
+  id String @id @default(cuid())
+  sessionId String
+  roundId String?
+  teamId String?
+  playerId String?
+  delta Int
+  reason String @db.VarChar(120)
+  commandKey String @unique @db.VarChar(120)
+  createdAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round GameRound? @relation(fields: [roundId], references: [id], onDelete: SetNull)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  player Player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  @@index([sessionId, createdAt])
+}
+
+/// One accepted host action per key. State versions serialize retries and competing controls.
+model GameCommand {
+  id String @id @default(cuid())
+  sessionId String
+  key String @db.VarChar(80)
+  type String @db.VarChar(40)
+  payloadHash String? @db.Char(64)
+  stateVersion Int
+  createdAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@unique([sessionId, key])
+  @@index([sessionId, createdAt])
+}
+
+model PowerUp {
+  id String @id @default(cuid())
+  gameTypeId String
+  slug String @db.VarChar(60)
+  title String @db.VarChar(100)
+  enabled Boolean @default(true)
+  config Json @default("{}")
+  gameType GameType @relation(fields: [gameTypeId], references: [id])
+  usage SessionPowerUp[]
+  @@unique([gameTypeId, slug])
+}
+
+model SessionPowerUp {
+  id String @id @default(cuid())
+  sessionId String
+  teamId String?
+  powerUpId String
+  remaining Int @default(1)
+  usedAt DateTime?
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  powerUp PowerUp @relation(fields: [powerUpId], references: [id])
+  @@index([sessionId, teamId])
+}
+
+model Room {
+  id String @id @default(cuid())
+  code String @unique @db.Char(6)
+  hostId String
+  sessionId String? @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  version Int @default(0)
+  host User @relation("RoomHost", fields: [hostId], references: [id])
+  session GameSession? @relation(fields: [sessionId], references: [id])
+  participants RoomParticipant[]
+  @@index([expiresAt])
+}
+
+/// This game's private data is deliberately outside GameSession.state.
+model SecretWord {
+  id String @id @default(cuid())
+  word String @db.VarChar(100)
+  categoryId String
+  difficulty Difficulty @default(EASY)
+  language String @default("ar") @db.VarChar(10)
+  status QuestionStatus @default(PUBLISHED)
+  alternativeAnswers String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields: [categoryId], references: [id])
+  socialRounds SocialRound[]
+  @@index([status, language, categoryId])
+}
+
+model LetterQuestion {
+  id String @id @default(cuid())
+  letter String @db.VarChar(2)
+  question String @db.Text
+  answer String @db.VarChar(200)
+  alternativeAnswers String[]
+  difficulty Difficulty @default(EASY)
+  categoryId String
+  status QuestionStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields: [categoryId], references: [id])
+  uses LetterQuestionUse[]
+  @@index([letter, status])
+  @@index([categoryId, difficulty])
+}
+
+/// Immutable server-side question/answer snapshot.
+model LetterQuestionUse {
+  id String @id @default(cuid())
+  sessionId String
+  questionId String
+  matchNumber Int
+  cellId String @db.VarChar(12)
+  questionSnapshot String @db.Text
+  answerSnapshot String @db.VarChar(200)
+  alternativesSnapshot String[]
+  openedAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question LetterQuestion @relation(fields: [questionId], references: [id])
+  @@index([sessionId, matchNumber])
+  @@index([questionId, openedAt])
+}
+
+model SocialParticipant {
+  id String @id @default(cuid())
+  sessionId String
+  tokenHash String @unique @db.Char(64)
+  name String @db.VarChar(60)
+  position Int
+  joinedAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  outsiderRounds SocialRound[] @relation("Outsider")
+  votes SocialVote[] @relation("Voter")
+  targetedVotes SocialVote[] @relation("Target")
+  @@unique([sessionId, name])
+  @@unique([sessionId, position])
+}
+
+model SocialRound {
+  id String @id @default(cuid())
+  sessionId String
+  number Int
+  secretWordId String
+  wordSnapshot String @db.VarChar(100)
+  alternativesSnapshot String[]
+  snapshotOrigin String @default("ROUND_CREATION") @db.VarChar(30)
+  outsiderId String
+  winner String? @db.VarChar(20)
+  suspectedId String?
+  guess String? @db.VarChar(100)
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  /// Only counts survive removal of obsolete voter/choice links.
+  retainedVoteCounts Json @default("{}")
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  secretWord SecretWord @relation(fields: [secretWordId], references: [id])
+  outsider SocialParticipant @relation("Outsider", fields: [outsiderId], references: [id])
+  votes SocialVote[]
+  @@unique([sessionId, number])
+  @@index([sessionId, startedAt])
+}
+
+model SocialVote {
+  id String @id @default(cuid())
+  roundId String
+  ballot Int
+  voterId String
+  targetId String
+  createdAt DateTime @default(now())
+  round SocialRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  voter SocialParticipant @relation("Voter", fields: [voterId], references: [id])
+  target SocialParticipant @relation("Target", fields: [targetId], references: [id])
+  @@unique([roundId, ballot, voterId])
+  @@index([roundId, ballot])
+}
+
+model RoomParticipant {
+  id String @id @default(cuid())
+  roomId String
+  userId String?
+  playerId String? @unique
+  tokenHash String? @unique @db.Char(64)
+  teamId String?
+  name String @db.VarChar(60)
+  role ParticipantRole @default(PLAYER)
+  ready Boolean @default(false)
+  joinedAt DateTime @default(now())
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  player Player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  votes RoomVote[]
+  @@index([roomId, joinedAt])
+}
+
+model RoomVote {
+  id String @id @default(cuid())
+  roundId String
+  participantId String
+  option String @db.VarChar(300)
+  createdAt DateTime @default(now())
+  participant RoomParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  round GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  @@unique([roundId, participantId])
+}
+
+model CreditWallet {
+  /// The database migration also enforces balance >= 0.
+  userId String @id
+  balance Int @default(0)
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GameCredit {
+  id String @id @default(cuid())
+  userId String
+  delta Int
+  reason String @db.VarChar(80)
+  idempotencyKey String @unique @db.VarChar(150)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id])
+  refundCompensation PurchaseRefund?
+  @@index([userId, createdAt])
+}
+
+model Product {
+  id String @id @default(cuid())
+  slug String @unique @db.VarChar(80)
+  title String @db.VarChar(100)
+  credits Int
+  priceHalalas Int
+  currency String @default("SAR") @db.Char(3)
+  active Boolean @default(false)
+  purchases Purchase[]
+}
+
+model Coupon {
+  id String @id @default(cuid())
+  code String @unique @db.VarChar(40)
+  discountPercent Int?
+  discountHalalas Int?
+  maxUses Int?
+  usedCount Int @default(0)
+  reservedCount Int @default(0)
+  expiresAt DateTime?
+  active Boolean @default(false)
+  purchases Purchase[]
+}
+
+model Purchase {
+  id String @id @default(cuid())
+  userId String
+  productId String
+  couponId String?
+  status PurchaseStatus @default(PENDING)
+  amountHalalas Int
+  credits Int @default(0)
+  checkoutUrl String? @db.VarChar(500)
+  expiresAt DateTime?
+  couponReserved Boolean @default(false)
+  provider String? @db.VarChar(60)
+  providerReference String? @unique @db.VarChar(200)
+  invoiceCreationState String @default("NOT_CREATED") @db.VarChar(30)
+  invoiceCreationAttemptAt DateTime?
+  lastReconcileAttemptAt DateTime?
+  nextReconcileAt DateTime @default(now())
+  reconcileAttemptCount Int @default(0)
+  reconcileLeaseId String? @db.VarChar(36)
+  idempotencyKey String @unique @db.VarChar(150)
+  createdAt DateTime @default(now())
+  paidAt DateTime?
+  user User @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  coupon Coupon? @relation(fields: [couponId], references: [id])
+  paymentEvents PaymentEvent[]
+  refund PurchaseRefund?
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+  @@index([status, nextReconcileAt, createdAt])
+}
+
+model PaymentEvent {
+  id String @id @default(cuid())
+  provider String @db.VarChar(60)
+  externalId String @db.VarChar(200)
+  receivedAt DateTime @default(now())
+  processedAt DateTime?
+  // Nullable only for pre-migration audit rows; do not fabricate their history.
+  purchaseId String?
+  providerReference String? @db.VarChar(200)
+  paymentReference String? @db.VarChar(200)
+  source String? @db.VarChar(30)
+  eventType String? @db.VarChar(40)
+  observedState String? @db.VarChar(30)
+  processingResult String? @db.VarChar(30)
+  operatorId String? @db.VarChar(100)
+  purchase Purchase? @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  @@index([purchaseId, receivedAt])
+  @@unique([provider, externalId])
+}
+
+/// One immutable full-refund/reversal compensation; PAID Purchase and original grant stay intact.
+model PurchaseRefund {
+  id String @id @default(cuid())
+  purchaseId String @unique
+  provider String @db.VarChar(60)
+  providerReference String @db.VarChar(200)
+  paymentReference String @db.VarChar(200)
+  state String @db.VarChar(30)
+  amountHalalas Int
+  currency String @db.Char(3)
+  grantedCredits Int
+  recoveredCredits Int
+  unresolvedCredits Int
+  supportStatus String @db.VarChar(30)
+  ledgerKey String @unique @db.VarChar(150)
+  operatorId String? @db.VarChar(100)
+  confirmedAt DateTime
+  recordedAt DateTime @default(now())
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  compensation GameCredit @relation(fields: [ledgerKey], references: [idempotencyKey], onDelete: Restrict)
+  @@unique([provider, paymentReference])
+  @@index([supportStatus, recordedAt])
+}
+
+model FeatureFlag {
+  key String @id @db.VarChar(100)
+  enabled Boolean @default(false)
+  config Json @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id String @id @default(cuid())
+  userId String?
+  name String @db.VarChar(80)
+  properties Json @default("{}")
+  occurredAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([name, occurredAt])
+  @@index([occurredAt])
+}
+
+model SurveyQuestion {
+  id String @id @default(cuid())
+  question String @db.Text
+  categoryId String
+  difficulty Difficulty
+  status QuestionStatus @default(DRAFT)
+  locale String @default("ar-SA") @db.VarChar(10)
+  sourceType String @default("CURATED") @db.VarChar(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields: [categoryId], references: [id])
+  answers SurveyAnswer[]
+  uses SurveyQuestionUse[]
+  @@index([status, categoryId, difficulty])
+}
+model SurveyAnswer {
+  id String @id @default(cuid())
+  surveyQuestionId String
+  answer String @db.VarChar(200)
+  alternativeAnswers String[]
+  points Int
+  position Int
+  question SurveyQuestion @relation(fields: [surveyQuestionId], references: [id], onDelete: Cascade)
+  @@unique([surveyQuestionId, position])
+}
+model SurveyQuestionUse {
+  id String @id @default(cuid())
+  sessionId String
+  questionId String
+  matchNumber Int
+  roundNumber Int
+  snapshot Json
+  openedAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question SurveyQuestion @relation(fields: [questionId], references: [id])
+  @@unique([sessionId, matchNumber, roundNumber])
+  @@unique([sessionId, matchNumber, questionId])
+  @@index([questionId, openedAt])
+}
+
+/// Dedicated original content; normalization provides a database duplicate guard.
+model BluffQuestion {
+  id String @id @default(cuid())
+  question String @db.VarChar(500)
+  normalizedQuestion String @unique @db.VarChar(500)
+  correctAnswer String @db.VarChar(160)
+  alternativeCorrectAnswers String[]
+  categoryId String
+  difficulty Difficulty @default(MEDIUM)
+  locale String @default("ar-SA") @db.VarChar(10)
+  status QuestionStatus @default(DRAFT)
+  explanation String? @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields: [categoryId], references: [id])
+  rounds BluffRound[]
+  @@index([status, categoryId, difficulty])
+}
+
+/// Credentials are session scoped, hashed, and never enter a projection.
+model BluffParticipant {
+  id String @id @default(cuid())
+  sessionId String
+  tokenHash String @unique @db.Char(64)
+  name String @db.VarChar(60)
+  position Int
+  score Int @default(0)
+  joinedAt DateTime @default(now())
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  answers BluffAnswer[]
+  votes BluffVote[]
+  scores BluffScore[]
+  @@unique([sessionId, name])
+  @@unique([sessionId, position])
+}
+
+/// Answer/alternatives and choice ownership stay in this server-only snapshot.
+model BluffRound {
+  id String @id @default(cuid())
+  sessionId String
+  questionId String
+  matchNumber Int
+  number Int
+  snapshot Json
+  choices Json @default("[]")
+  selectedAt DateTime @default(now())
+  openedAt DateTime?
+  submissionsClosedAt DateTime?
+  scoredAt DateTime?
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question BluffQuestion @relation(fields: [questionId], references: [id])
+  answers BluffAnswer[]
+  votes BluffVote[]
+  scores BluffScore[]
+  moderation BluffModerationAudit[]
+  @@unique([sessionId, matchNumber, number])
+  @@unique([sessionId, matchNumber, questionId])
+  @@index([questionId, openedAt])
+}
+
+model BluffAnswer {
+  id String @id @default(cuid())
+  roundId String
+  participantId String
+  text String @db.VarChar(160)
+  normalizedText String @db.VarChar(160)
+  hiddenAt DateTime?
+  createdAt DateTime @default(now())
+  round BluffRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  participant BluffParticipant @relation(fields: [participantId], references: [id])
+  moderation BluffModerationAudit[]
+  @@unique([roundId, participantId])
+  @@unique([roundId, normalizedText])
+}
+
+model BluffVote {
+  id String @id @default(cuid())
+  roundId String
+  participantId String
+  choiceId String @db.VarChar(80)
+  createdAt DateTime @default(now())
+  round BluffRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  participant BluffParticipant @relation(fields: [participantId], references: [id])
+  @@unique([roundId, participantId])
+}
+
+/// Exactly one scoring audit per player per round, including zero-point rounds.
+model BluffScore {
+  id String @id @default(cuid())
+  roundId String
+  participantId String
+  correctPoints Int
+  bluffPoints Int
+  total Int
+  createdAt DateTime @default(now())
+  round BluffRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  participant BluffParticipant @relation(fields: [participantId], references: [id])
+  @@unique([roundId, participantId])
+}
+
+model BluffModerationAudit {
+  id String @id @default(cuid())
+  roundId String
+  answerId String
+  hostId String
+  reason String @db.VarChar(200)
+  createdAt DateTime @default(now())
+  round BluffRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  answer BluffAnswer @relation(fields: [answerId], references: [id])
+  @@index([roundId, createdAt])
+}
+
+model RankedListQuestion {
+ id String @id @default(cuid())
+ title String @db.VarChar(250)
+ normalizedTitle String @unique @db.VarChar(250)
+ description String? @db.Text
+ categoryId String
+ difficulty Difficulty
+ locale String @default("ar-SA") @db.VarChar(10)
+ status QuestionStatus @default(DRAFT)
+ kind String @db.VarChar(20)
+ sourceLabel String? @db.VarChar(200)
+ sourceUrl String? @db.VarChar(2048)
+ sourceDate String? @db.VarChar(10)
+ notes String? @db.Text
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ category Category @relation(fields:[categoryId],references:[id])
+ entries RankedListEntry[]
+ uses RankedListUse[]
+ @@index([status,locale,categoryId,difficulty])
+}
+model RankedListEntry {
+ id String @id @default(cuid())
+ questionId String
+ rank Int
+ answer String @db.VarChar(160)
+ alternativeAnswers String[]
+ points Int
+ displayValue String? @db.VarChar(100)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ question RankedListQuestion @relation(fields:[questionId],references:[id],onDelete:Cascade)
+ @@unique([questionId,rank])
+}
+model RankedListUse {
+ id String @id @default(cuid())
+ sessionId String
+ questionId String
+ matchNumber Int
+ roundIndex Int
+ gameRoundId String @unique
+ gameRound GameRound @relation(fields:[gameRoundId],references:[id],onDelete:Cascade)
+ snapshot Json
+ selectedAt DateTime @default(now())
+ session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+ question RankedListQuestion @relation(fields:[questionId],references:[id])
+ @@unique([sessionId,matchNumber,roundIndex])
+ @@unique([sessionId,matchNumber,questionId])
+ @@index([sessionId,selectedAt])
+}
+
+
+/// Dedicated Lightning content. Never sent as a complete match bank.
+model LightningQuestion {
+  id String @id @default(cuid())
+  question String @db.VarChar(500)
+  normalizedQuestion String @unique @db.VarChar(500)
+  answer String @db.VarChar(160)
+  alternativeAnswers String[]
+  categoryId String
+  difficulty Difficulty @default(EASY)
+  locale String @default("ar-SA") @db.VarChar(10)
+  status QuestionStatus @default(DRAFT)
+  explanation String? @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  category Category @relation(fields:[categoryId],references:[id])
+  uses LightningQuestionUse[]
+  @@index([status,locale,categoryId,difficulty])
+}
+
+/// Private immutable question snapshot for each match position.
+model LightningQuestionUse {
+  id String @id @default(cuid())
+  sessionId String
+  questionId String
+  matchNumber Int
+  questionIndex Int
+  gameRoundId String @unique
+  snapshot Json
+  selectedAt DateTime @default(now())
+  openedAt DateTime?
+  endedAt DateTime?
+  session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+  question LightningQuestion @relation(fields:[questionId],references:[id])
+  gameRound GameRound @relation(fields:[gameRoundId],references:[id],onDelete:Cascade)
+  @@unique([sessionId,matchNumber,questionIndex])
+  @@unique([sessionId,matchNumber,questionId])
+  @@index([sessionId,selectedAt])
+}
+
+/// Separate from TV authorization. Only reads a safe team projection and BUZZes.
+model LightningBuzzerAccess {
+  id String @id @default(cuid())
+  sessionId String
+  teamId String
+  matchNumber Int
+  tokenHash String @unique @db.Char(64)
+  permission String @db.VarChar(20)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+  team Team @relation(fields:[teamId],references:[id],onDelete:Cascade)
+  @@index([sessionId,teamId,expiresAt])
+  @@index([expiresAt])
+}
+
+/// Ordering content and nested items. Correct positions never project before reveal.
+model OrderingQuestion {
+ id String @id @default(cuid())
+ title String @db.VarChar(200)
+ normalizedTitle String @unique @db.VarChar(200)
+ instruction String @db.VarChar(500)
+ categoryId String
+ difficulty Difficulty @default(EASY)
+ locale String @default("ar-SA") @db.VarChar(10)
+ status QuestionStatus @default(DRAFT)
+ orderingType String @db.VarChar(30)
+ factual Boolean @default(true)
+ sourceLabel String? @db.VarChar(200)
+ sourceUrl String? @db.VarChar(500)
+ sourceDate DateTime? @db.Date
+ explanation String? @db.VarChar(1000)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ category Category @relation(fields:[categoryId],references:[id])
+ items OrderingItem[]
+ uses OrderingQuestionUse[]
+ @@index([status,locale,categoryId,difficulty])
+}
+model OrderingItem {
+ id String @id @default(cuid())
+ questionId String
+ label String @db.VarChar(160)
+ correctPosition Int
+ acceptedAliases String[]
+ displayValue String? @db.VarChar(160)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ question OrderingQuestion @relation(fields:[questionId],references:[id],onDelete:Cascade)
+ @@unique([questionId,correctPosition])
+}
+model OrderingQuestionUse {
+ id String @id @default(cuid())
+ sessionId String
+ questionId String
+ matchNumber Int
+ roundIndex Int
+ gameRoundId String @unique
+ snapshot Json
+ scoreAudit Json?
+ selectedAt DateTime @default(now())
+ openedAt DateTime?
+ endedAt DateTime?
+ session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+ question OrderingQuestion @relation(fields:[questionId],references:[id])
+ gameRound GameRound @relation(fields:[gameRoundId],references:[id],onDelete:Cascade)
+ @@unique([sessionId,matchNumber,roundIndex])
+ @@unique([sessionId,matchNumber,questionId])
+ @@index([sessionId,selectedAt])
+}
+model OrderingControllerAccess {
+ id String @id @default(cuid())
+ sessionId String
+ teamId String
+ matchNumber Int
+ tokenHash String @unique @db.Char(64)
+ permission String @db.VarChar(20)
+ createdAt DateTime @default(now())
+ expiresAt DateTime
+ revokedAt DateTime?
+ session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+ team Team @relation(fields:[teamId],references:[id],onDelete:Cascade)
+  @@index([sessionId,teamId,expiresAt])
+  @@index([expiresAt])
+}
+
+/// Fictional low-stakes party cases. No hidden evidence.
+model CourtCase {
+ id String @id @default(cuid())
+ title String @db.VarChar(180)
+ normalizedTitle String @unique @db.VarChar(180)
+ scenario String @db.VarChar(800)
+ prosecutionPrompt String @db.VarChar(400)
+ defensePrompt String @db.VarChar(400)
+ rebuttalPrompt String? @db.VarChar(300)
+ categoryId String
+ difficulty Difficulty @default(EASY)
+ locale String @default("ar-SA") @db.VarChar(10)
+ status QuestionStatus @default(DRAFT)
+ contentRating String @default("FICTIONAL_PARTY") @db.VarChar(30)
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ category Category @relation(fields:[categoryId],references:[id])
+ facts CourtCaseFact[]
+ rounds CourtRound[]
+ @@index([status,locale,categoryId,difficulty])
+}
+model CourtCaseFact {
+ id String @id @default(cuid())
+ caseId String
+ text String @db.VarChar(220)
+ position Int
+ case CourtCase @relation(fields:[caseId],references:[id],onDelete:Cascade)
+ @@unique([caseId,position])
+}
+model CourtParticipant {
+ id String @id @default(cuid())
+ sessionId String
+ name String @db.VarChar(60)
+ tokenHash String @unique @db.Char(64)
+ position Int
+ active Boolean @default(true)
+ revokedAt DateTime?
+ createdAt DateTime @default(now())
+ session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+ votes CourtRoundVote[]
+ @@index([sessionId,active,position])
+}
+model CourtRound {
+ id String @id @default(cuid())
+ sessionId String
+ caseId String
+ matchNumber Int
+ number Int
+ gameRoundId String @unique
+ snapshot Json
+ scoreAudit Json?
+ selectedAt DateTime @default(now())
+ scoredAt DateTime?
+  voidedAt DateTime?
+  /// Historical progress count without individual juror choices.
+  retainedVoteCount Int @default(0)
+ session GameSession @relation(fields:[sessionId],references:[id],onDelete:Cascade)
+ case CourtCase @relation(fields:[caseId],references:[id])
+ gameRound GameRound @relation(fields:[gameRoundId],references:[id],onDelete:Cascade)
+ votes CourtRoundVote[]
+ @@unique([sessionId,matchNumber,number])
+ @@unique([sessionId,matchNumber,caseId])
+ @@index([sessionId,selectedAt])
+}
+model CourtRoundVote {
+ id String @id @default(cuid())
+ roundId String
+ participantId String
+ choice String @db.VarChar(20)
+ createdAt DateTime @default(now())
+ round CourtRound @relation(fields:[roundId],references:[id],onDelete:Cascade)
+ participant CourtParticipant @relation(fields:[participantId],references:[id])
+ @@unique([roundId,participantId])
+}

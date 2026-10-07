@@ -1,0 +1,160 @@
+name: Quddam PHASE 5.0J-2-RG03 Release Verification
+
+# Manual verification only. No push/PR/deployment trigger, no repository write permission.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quddam-rg03-release-verification
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+  TZ: UTC
+  NEXT_TELEMETRY_DISABLED: '1'
+  DISABLE_PRISMA_TELEMETRY: 'true'
+  PG_BIN: /usr/lib/postgresql/16/bin
+  # Public test-only credentials, not production secrets. Never used outside this ephemeral runner.
+  DATABASE_URL: postgresql://rg03_test:rg03-isolated-ci-only@127.0.0.1:5432/rg03_verification
+  CHECKPOINT_DISABLE: '1'
+
+jobs:
+  runtime-readiness:
+    name: Runtime readiness — no mandatory tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rg03_test
+          POSTGRES_PASSWORD: rg03-isolated-ci-only
+          POSTGRES_DB: rg03_verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/rg03-runtime
+      - name: Preserve first prerequisite failure without testing
+        if: ${{ failure() }}
+        run: python3 ci/package.py blocked
+      - name: Export safe readiness evidence
+        if: ${{ always() }}
+        run: python3 ci/evidence.py export
+      - name: Upload readiness receipts even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: rg03-readiness-${{ github.run_id }}
+          path: |
+            safe-artifacts/
+            deliverables/
+          if-no-files-found: warn
+          retention-days: 14
+
+  targeted-m05:
+    name: Unchanged M05 first, related auth/reset, then freeze
+    needs: runtime-readiness
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rg03_test
+          POSTGRES_PASSWORD: rg03-isolated-ci-only
+          POSTGRES_DB: rg03_verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      # Jobs have fresh hosts; each must independently prove readiness, not reuse binaries/DBs.
+      - uses: ./.github/actions/rg03-runtime
+      - name: Prepare clean production build — not final quality gate counts
+        run: node ci/run.mjs prepare
+      - name: FIRST mandatory test — unchanged canonical M05 with authorized MIME patch
+        run: node ci/run.mjs m05
+      - name: Required related auth/reset browser identities, only after M05 PASS
+        run: node ci/run.mjs related
+      - name: Freeze RG03 only after all targeted verification PASS
+        run: python3 ci/package.py freeze
+      - name: Preserve first failure and latest safe checkpoint
+        if: ${{ failure() }}
+        run: python3 ci/package.py blocked
+      - name: Export safe targeted evidence
+        if: ${{ always() }}
+        run: python3 ci/evidence.py export
+      - name: Upload targeted results / newly frozen checkpoint if available
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: rg03-targeted-${{ github.run_id }}
+          path: |
+            safe-artifacts/
+            deliverables/
+          if-no-files-found: warn
+          retention-days: 14
+
+  complete-final-gate:
+    name: Fresh frozen RG03 complete release gate from identity 001
+    needs: targeted-m05
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rg03_test
+          POSTGRES_PASSWORD: rg03-isolated-ci-only
+          POSTGRES_DB: rg03_verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Obtain checkpoint frozen by this workflow's successful targeted job
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: rg03-targeted-${{ github.run_id }}
+          path: incoming/
+      - uses: ./.github/actions/rg03-runtime
+      - name: Fresh full quality / 186 native / 223 canonical / 38 supplemental, serial stop-first
+        run: node ci/run.mjs full
+      - name: Create Release Candidate ONLY after independently audited complete PASS
+        run: python3 ci/package.py release
+      - name: Preserve first failure; never retry or continue mandatory identities
+        if: ${{ failure() }}
+        run: python3 ci/package.py blocked
+      - name: Export safe final / first-failure evidence
+        if: ${{ always() }}
+        run: python3 ci/evidence.py export
+      - name: Upload useful safe artifacts even on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: rg03-final-${{ github.run_id }}
+          path: |
+            safe-artifacts/
+            deliverables/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,7 @@
+import { NextRequest,NextResponse } from "next/server";
+import { currentUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { errorResponse,forbidden,parseJson,requireSameOrigin } from "@/lib/http";
+import { surveySchema } from "@/lib/games/survey-battle/validation";
+export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:string}>}){if(!requireSameOrigin(request))return forbidden();try{if((await currentUser())?.role!=="ADMIN")return forbidden();const {answers,...question}=await parseJson(request,surveySchema);if(!await db().category.findUnique({where:{id:question.categoryId}}))return NextResponse.json({error:"الفئة غير موجودة"},{status:400});const id=(await params).id;return NextResponse.json(await db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT "id" FROM "SurveyQuestion" WHERE "id"=$1 FOR UPDATE',id);await tx.surveyAnswer.deleteMany({where:{surveyQuestionId:id}});return tx.surveyQuestion.update({where:{id},data:{...question,answers:{create:answers}},include:{category:{select:{title:true}},answers:{orderBy:{position:"asc"}}}});}));}catch(error){return errorResponse(error);}}
+export async function DELETE(request:NextRequest,{params}:{params:Promise<{id:string}>}){if(!requireSameOrigin(request))return forbidden();try{if((await currentUser())?.role!=="ADMIN")return forbidden();return NextResponse.json(await db().surveyQuestion.update({where:{id:(await params).id},data:{status:"ARCHIVED"}}));}catch(error){return errorResponse(error);}}

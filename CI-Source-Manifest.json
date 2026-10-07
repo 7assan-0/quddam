@@ -1,0 +1,21 @@
+{
+  "ciFingerprint": "6b198eb60247398cae3189d5e4f7bfa032a5af4515f8b759659536ca8e877b71",
+  "fileCount": 14,
+  "algorithm": "SHA256(sorted path + NUL + file SHA256 + LF)",
+  "files": {
+    "ci/baseline.py": "fd023345b3d08bb278b4fa73492fe3f82b921b6dc805fc310c582f38ea203a28",
+    "ci/install-postgres.sh": "5df71439044c454b81c5c7a8ae6346f7330c6367f5223a0c969689d55ec541b8",
+    "ci/package.py": "d6c8cb447f2542e14ac2716ce10df141b2eb69ed39be10bf065540a0da1e7640",
+    "ci/evidence.py": "6ab00a2cc44489e1b2dd977a9fbd1ea4376c99f773b7a55ad68815868d7e7b04",
+    "ci/run.mjs": "8c22a2055289f6338620e476c335987913bf51e23e316b9bd7e7ac5c0dfec71f",
+    "ci/static-checks.py": "19cb06c5f41ad0d4f6e8782973230727064a39f8db1d389814a9215b22dddc0c",
+    "ci/native-location.mjs": "90653bcb276cb5583a1fc3b9b3439d5116ab2c23ddf43299e55d499aceb64242",
+    "ci/adapter.mjs": "3632c13f7db3f8d83582153d3d1f6d2cdecb1543f8fc2f4da3e673d1dd10a2cd",
+    "ci/task.py": "b7eae9687a2bcd68f56a16cb979ced36ed5f4b40b44b6c5a1f2c82eefcf16b75",
+    "ci/readiness.mjs": "c4c2d8af7f88ced660f89a38f158f4ff9eccb93c463fa8b8f5395e754ff00436",
+    "ci/results.py": "4436fef2bda53bb50428d6a29316ef5d0b12b48eeefaa3f2cc88552685a6e5d4",
+    ".github/workflows/quddam-rg03-release-verification.yml": "596992ff71b9068ce58632952e3dae4fd39ce41e8c205f270a8e2f44544eadfe",
+    ".github/actions/rg03-runtime/action.yml": "5a0c374a83f43cfb89e56453ba501581c380be8e0b016597d1d6599214c8b866",
+    ".gitignore": "19f7ccb6814f8025876eaaa9e392441f6e1af4f79fd51d4fb74aaa9cd25fb4e9"
+  }
+}

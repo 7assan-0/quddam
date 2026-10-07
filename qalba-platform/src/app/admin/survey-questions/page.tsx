@@ -1,0 +1,5 @@
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { SurveyQuestionManager } from "@/components/survey-question-manager";
+export default async function SurveyQuestionsPage(){const user=await requireUser();if(user.role!=="ADMIN")notFound();const [questions,categories]=await Promise.all([db().surveyQuestion.findMany({include:{answers:{orderBy:{position:"asc"}}},orderBy:{createdAt:"desc"},take:200}),db().category.findMany({where:{active:true},select:{id:true,title:true},orderBy:{sortOrder:"asc"}})]);return <div className="shell survey-page"><div className="page-title"><span className="eyebrow">إدارة المحتوى</span><h1>أسئلة قالوا الناس</h1><p>أوزان محرّرة للعبة. ثلاث إجابات أو أكثر مرتبة بالنقاط، دون إجابات أو بدائل متداخلة. التعديل يحفظ نسخ المباريات.</p></div><SurveyQuestionManager initial={questions.map(q=>({id:q.id,question:q.question,categoryId:q.categoryId,difficulty:q.difficulty,status:q.status,answers:q.answers.map(a=>({answer:a.answer,alternativeAnswers:a.alternativeAnswers,points:a.points,position:a.position}))}))} categories={categories}/></div>;}

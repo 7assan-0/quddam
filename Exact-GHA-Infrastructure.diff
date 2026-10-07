@@ -1,0 +1,1635 @@
+--- /dev/null
++++ b/.github/actions/rg03-runtime/action.yml
+@@ -0,0 +1,34 @@
++name: Frozen RG03 runtime readiness
++description: Verify inputs, npm ci, official Chromium, service PG16 and native PG16 lifecycle capabilities
++runs:
++  using: composite
++  steps:
++    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0, Node24 action
++      with:
++        node-version: '24.19.0'
++        package-manager-cache: false
++    - name: Verify exact frozen input integrity before provisioning
++      shell: bash
++      run: python3 ci/task.py frozen-input-integrity -- python3 ci/baseline.py verify
++    - name: Refuse reruns that overwrite first-failure provenance
++      shell: bash
++      run: test "$GITHUB_RUN_ATTEMPT" = 1
++    - name: Install project dependencies without changing the lockfile
++      shell: bash
++      run: |
++        python3 ci/task.py npm-ci --cwd qalba-platform -- npm ci
++        python3 - <<'PY'
++        import os
++        with open(os.environ['GITHUB_ENV'], 'a') as f:
++            f.write('RG03_NPM_CI_COMPLETE=1\n')
++        PY
++    - name: Provision official signed native PostgreSQL 16 tooling
++      shell: bash
++      run: python3 ci/task.py native-postgres-provisioning -- bash ci/install-postgres.sh
++    - name: Install the locked Playwright version's official Chromium and system dependencies
++      shell: bash
++      run: python3 ci/task.py official-chromium-install --cwd qalba-platform -- node node_modules/playwright/cli.js install --with-deps chromium
++    - name: Prove every runtime-readiness condition before mandatory verification
++      shell: bash
++      run: python3 ci/task.py runtime-readiness -- node ci/readiness.mjs
++
+--- /dev/null
++++ b/.github/workflows/quddam-rg03-release-verification.yml
+@@ -0,0 +1,160 @@
++name: Quddam PHASE 5.0J-2-RG03 Release Verification
++
++# Manual verification only. No push/PR/deployment trigger, no repository write permission.
++on:
++  workflow_dispatch:
++
++permissions:
++  contents: read
++
++concurrency:
++  group: quddam-rg03-release-verification
++  cancel-in-progress: false
++
++env:
++  CI: 'true'
++  TZ: UTC
++  NEXT_TELEMETRY_DISABLED: '1'
++  DISABLE_PRISMA_TELEMETRY: 'true'
++  PG_BIN: /usr/lib/postgresql/16/bin
++  # Public test-only credentials, not production secrets. Never used outside this ephemeral runner.
++  DATABASE_URL: postgresql://rg03_test:rg03-isolated-ci-only@127.0.0.1:5432/rg03_verification
++  CHECKPOINT_DISABLE: '1'
++
++jobs:
++  runtime-readiness:
++    name: Runtime readiness — no mandatory tests
++    runs-on: ubuntu-24.04
++    timeout-minutes: 45
++    services:
++      postgres:
++        image: postgres:16
++        env:
++          POSTGRES_USER: rg03_test
++          POSTGRES_PASSWORD: rg03-isolated-ci-only
++          POSTGRES_DB: rg03_verification
++        ports:
++          - 5432:5432
++        options: >-
++          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
++          --health-interval 10s --health-timeout 5s --health-retries 5
++    steps:
++      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
++        with:
++          persist-credentials: false
++          ref: ${{ github.sha }}
++      - uses: ./.github/actions/rg03-runtime
++      - name: Preserve first prerequisite failure without testing
++        if: ${{ failure() }}
++        run: python3 ci/package.py blocked
++      - name: Export safe readiness evidence
++        if: ${{ always() }}
++        run: python3 ci/evidence.py export
++      - name: Upload readiness receipts even on failure
++        if: ${{ always() }}
++        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
++        with:
++          name: rg03-readiness-${{ github.run_id }}
++          path: |
++            safe-artifacts/
++            deliverables/
++          if-no-files-found: warn
++          retention-days: 14
++
++  targeted-m05:
++    name: Unchanged M05 first, related auth/reset, then freeze
++    needs: runtime-readiness
++    runs-on: ubuntu-24.04
++    timeout-minutes: 90
++    services:
++      postgres:
++        image: postgres:16
++        env:
++          POSTGRES_USER: rg03_test
++          POSTGRES_PASSWORD: rg03-isolated-ci-only
++          POSTGRES_DB: rg03_verification
++        ports:
++          - 5432:5432
++        options: >-
++          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
++          --health-interval 10s --health-timeout 5s --health-retries 5
++    steps:
++      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
++        with:
++          persist-credentials: false
++          ref: ${{ github.sha }}
++      # Jobs have fresh hosts; each must independently prove readiness, not reuse binaries/DBs.
++      - uses: ./.github/actions/rg03-runtime
++      - name: Prepare clean production build — not final quality gate counts
++        run: node ci/run.mjs prepare
++      - name: FIRST mandatory test — unchanged canonical M05 with authorized MIME patch
++        run: node ci/run.mjs m05
++      - name: Required related auth/reset browser identities, only after M05 PASS
++        run: node ci/run.mjs related
++      - name: Freeze RG03 only after all targeted verification PASS
++        run: python3 ci/package.py freeze
++      - name: Preserve first failure and latest safe checkpoint
++        if: ${{ failure() }}
++        run: python3 ci/package.py blocked
++      - name: Export safe targeted evidence
++        if: ${{ always() }}
++        run: python3 ci/evidence.py export
++      - name: Upload targeted results / newly frozen checkpoint if available
++        if: ${{ always() }}
++        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
++        with:
++          name: rg03-targeted-${{ github.run_id }}
++          path: |
++            safe-artifacts/
++            deliverables/
++          if-no-files-found: warn
++          retention-days: 14
++
++  complete-final-gate:
++    name: Fresh frozen RG03 complete release gate from identity 001
++    needs: targeted-m05
++    runs-on: ubuntu-24.04
++    timeout-minutes: 360
++    services:
++      postgres:
++        image: postgres:16
++        env:
++          POSTGRES_USER: rg03_test
++          POSTGRES_PASSWORD: rg03-isolated-ci-only
++          POSTGRES_DB: rg03_verification
++        ports:
++          - 5432:5432
++        options: >-
++          --health-cmd "pg_isready -U rg03_test -d rg03_verification"
++          --health-interval 10s --health-timeout 5s --health-retries 5
++    steps:
++      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
++        with:
++          persist-credentials: false
++          ref: ${{ github.sha }}
++      - name: Obtain checkpoint frozen by this workflow's successful targeted job
++        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
++        with:
++          name: rg03-targeted-${{ github.run_id }}
++          path: incoming/
++      - uses: ./.github/actions/rg03-runtime
++      - name: Fresh full quality / 186 native / 223 canonical / 38 supplemental, serial stop-first
++        run: node ci/run.mjs full
++      - name: Create Release Candidate ONLY after independently audited complete PASS
++        run: python3 ci/package.py release
++      - name: Preserve first failure; never retry or continue mandatory identities
++        if: ${{ failure() }}
++        run: python3 ci/package.py blocked
++      - name: Export safe final / first-failure evidence
++        if: ${{ always() }}
++        run: python3 ci/evidence.py export
++      - name: Upload useful safe artifacts even on failure
++        if: ${{ always() }}
++        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
++        with:
++          name: rg03-final-${{ github.run_id }}
++          path: |
++            safe-artifacts/
++            deliverables/
++          if-no-files-found: warn
++          retention-days: 14
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,15 @@
++# Verification outputs are ephemeral; do not commit private synthetic runtime state.
++qalba-platform/node_modules/
++qalba-platform/.next/
++qalba-platform/src/generated/
++qalba-platform/tsconfig.tsbuildinfo
++qalba-platform/test-results/
++qalba-platform/playwright-report/
++ci/__pycache__/
++receipts/
++results/
++safe-artifacts/
++deliverables/
++incoming/
++verification/
++verification-tools/.ci-*.mjs
+--- /dev/null
++++ b/CI-Source-Manifest.json
+@@ -0,0 +1,21 @@
++{
++  "ciFingerprint": "6b198eb60247398cae3189d5e4f7bfa032a5af4515f8b759659536ca8e877b71",
++  "fileCount": 14,
++  "algorithm": "SHA256(sorted path + NUL + file SHA256 + LF)",
++  "files": {
++    "ci/baseline.py": "fd023345b3d08bb278b4fa73492fe3f82b921b6dc805fc310c582f38ea203a28",
++    "ci/install-postgres.sh": "5df71439044c454b81c5c7a8ae6346f7330c6367f5223a0c969689d55ec541b8",
++    "ci/package.py": "d6c8cb447f2542e14ac2716ce10df141b2eb69ed39be10bf065540a0da1e7640",
++    "ci/evidence.py": "6ab00a2cc44489e1b2dd977a9fbd1ea4376c99f773b7a55ad68815868d7e7b04",
++    "ci/run.mjs": "8c22a2055289f6338620e476c335987913bf51e23e316b9bd7e7ac5c0dfec71f",
++    "ci/static-checks.py": "19cb06c5f41ad0d4f6e8782973230727064a39f8db1d389814a9215b22dddc0c",
++    "ci/native-location.mjs": "90653bcb276cb5583a1fc3b9b3439d5116ab2c23ddf43299e55d499aceb64242",
++    "ci/adapter.mjs": "3632c13f7db3f8d83582153d3d1f6d2cdecb1543f8fc2f4da3e673d1dd10a2cd",
++    "ci/task.py": "b7eae9687a2bcd68f56a16cb979ced36ed5f4b40b44b6c5a1f2c82eefcf16b75",
++    "ci/readiness.mjs": "c4c2d8af7f88ced660f89a38f158f4ff9eccb93c463fa8b8f5395e754ff00436",
++    "ci/results.py": "4436fef2bda53bb50428d6a29316ef5d0b12b48eeefaa3f2cc88552685a6e5d4",
++    ".github/workflows/quddam-rg03-release-verification.yml": "596992ff71b9068ce58632952e3dae4fd39ce41e8c205f270a8e2f44544eadfe",
++    ".github/actions/rg03-runtime/action.yml": "5a0c374a83f43cfb89e56453ba501581c380be8e0b016597d1d6599214c8b866",
++    ".gitignore": "19f7ccb6814f8025876eaaa9e392441f6e1af4f79fd51d4fb74aaa9cd25fb4e9"
++  }
++}
+--- /dev/null
++++ b/Quddam-Phase-5.0J-2-GHA-Owner-Instructions.md
+@@ -0,0 +1,99 @@
++# PHASE 5.0J-2-RG03 — Repository-owner run instructions
++
++Status: CI PREPARED, NOT EXECUTED. This package is verification infrastructure, not a Release Candidate. No deployment is configured.
++
++## 1. Use an authorized isolated verification repository
++
++The supplied runner package contains the unchanged `qalba-platform/` application, the exact authorized RG03 MIME harness, the two original input archives, the authoritative manifest, and CI-only files.
++
++Extract the contents of `Quddam-Phase-5.0J-2-GHA-Verification-Runner.zip` into the root of a dedicated private verification repository. Keep `.github/` and `.gitignore`, including when your file browser hides them. Do not overlay a different application checkout, merge missing source from another phase, or flatten `qalba-platform/`.
++
++At repository root these paths must exist:
++
++| Path | Purpose |
++| --- | --- |
++| `.github/workflows/quddam-rg03-release-verification.yml` | Manual-only three-job workflow |
++| `.github/actions/rg03-runtime/action.yml` | Shared provisioning/readiness procedure |
++| `ci/` | Integrity, CI adapters, orchestration, accounting, safe packaging |
++| `qalba-platform/` | Exact 670-file frozen RG02 application |
++| `verification-tools/` | Exact authorized 22-file RG03 harness |
++| `inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip` | Original baseline; latest safe checkpoint |
++| `inputs/Quddam-Phase-5.0J-2-RG03-Evidence.zip` | Original authorized MIME correction/provenance |
++| `Source-Manifest.json` | Authoritative application file hashes |
++| `CI-Source-Manifest.json` | Exact prepared CI file hashes |
++| `Quddam-Phase-5.0J-2-Test-Manifest.json` | All 447 mandatory identities, initially NOT_EXECUTED |
++
++The repository owner, using their own authorization, must make the files available on the repository's default branch. This preparation session has not initialized a Git repository, committed, pushed, opened a PR, configured credentials or dispatched a workflow. Publishing these verification files is the owner's separate action; no product-repository change is needed.
++
++Before uploading, an owner with Python 3 can run the read-only integrity check from the extracted package root:
++
++```bash
++python3 ci/baseline.py verify
++```
++
++Do not add a production `.env`, database URL, SMTP credentials, payment keys or customer data. No repository secrets are required by this workflow. The service uses explicitly test-only credentials; auth/cron/callback secrets are generated by the preserved verification runners. Payment tests use the existing local synthetic provider contracts, not real-money operations.
++
++Enable GitHub Actions and allow the pinned official `actions/*` actions. Use GitHub.com Ubuntu-hosted runners, not GitHub Enterprise Server artifact backends or an unreviewed self-hosted machine. The repository account must have enough Actions minutes/storage for a potentially multi-hour gate. Each job has a fresh isolated PostgreSQL service and independently re-proves readiness.
++
++## 2. Start ONE fresh workflow
++
++In the repository, open **Actions → Quddam PHASE 5.0J-2-RG03 Release Verification → Run workflow**. Select the default branch containing the exact package and click **Run workflow** once.
++
++Alternatively, from an already-authorized owner session in that repository:
++
++```bash
++gh workflow run quddam-rg03-release-verification.yml --ref main
++gh run watch
++```
++
++Replace `main` only if the repository has a different default branch. Do not use an older source ref. No command above was executed by this preparation session.
++
++Manual workflow dispatch requires the workflow to exist on the default branch and the operator to have repository write access. See the [official GitHub manual-run instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
++
++## 3. What must happen, in order
++
++| Job / stage | Mandatory prerequisite and behavior |
++| --- | --- |
++| `runtime-readiness` | Exact input hashes; Node 24.19.0; `npm ci`; signed native PG16 packages; official locked Playwright Chromium; real PG16 connection and all 24 migrations; native startup/locking/immediate-stop/restart/dump/restore/shutdown smoke; browser launch; unchanged app/harness/CI hashes |
++| `targeted-m05` preparation | Independently re-prove readiness on the new host; generate route types and prepare a clean production build, with frozen generated declaration bytes restored |
++| First targeted identity | Unchanged canonical M05 reset-mail scenario, 60-second canonical timeout, original assertions, exact authorized MIME decoding |
++| Related targeted identities | Five other public-ingress M05 auth/abuse identities and five H01 Host-session revocation identities, including password-reset revocation; 10 total |
++| RG03 freeze | Only after 1/1 M05 and 10/10 related PASS, zero retries/skips; application/harness/CI/combined fingerprints and runtime receipt included |
++| `complete-final-gate` | New host, fresh readiness; verify the checkpoint from this same run/SHA; fresh full quality/unit/content/operations gates; native identity 001; canonical identity 001; M13 and all supplemental groups; independent exact-count audit |
++| Final packaging | Release Candidate and five required final deliverables ONLY after 223 + 38 + 186 and 1185 unit/integration, all quality gates, zero failures/skips/retries/flaky |
++
++Browser CLI uses `--max-failures=1 --retries=0`, one worker. Vitest uses one file worker with bail 1 and retry 0. No assertion or timeout was increased. A failed step prevents later mandatory jobs/stages; only evidence export/upload runs after failure.
++
++The original native main suites execute 163 identities; M13 adds 23, totaling 186. Existing M13/launch flags suppress redundant copies of already-covered native suites, not mandatory identities. Supplemental content/launch setup may re-exercise passed native fixture logic in fresh databases; those extra fixture checks never inflate the 186 unique identity count.
++
++PostgreSQL service container is not used to impersonate M13. Native runners execute real runner-owned PostgreSQL 16 binaries in disposable loopback-only clusters with their original lifecycle control and fixture assertions.
++
++## 4. Preserve the first failure and STOP
++
++Do not click **Re-run jobs**, retry a failed identity, change a timeout, weaken an assertion, skip a test, or patch product/canonical tests. Workflow attempts above 1 are refused so they cannot replace the original run evidence. Diagnose the preserved failure under a separate explicit authorization before any further attempt.
++
++If an installation, migration, launch, source guard or mandatory identity fails, the workflow stops. Cause remains **D — UNRESOLVED** until the original evidence proves A product defect, B harness defect or C CI/environment failure. A native source callback/stack is used for exact identity attribution where available; errors outside a case retain the exact source/task and are not mislabeled as a product identity failure.
++
++If GitHub's platform fails before checkout or job startup, use its native job/platform error log; custom receipts cannot exist before repository code executes. If the hosted job reaches GitHub's six-hour limit, that is an incomplete gate, never a PASS; do not resume counts from it. Do not introduce automatic reruns/sharding to claim completion.
++
++## 5. Download artifacts promptly
++
++Artifacts are kept for 14 days:
++
++| Artifact name | Contents |
++| --- | --- |
++| `rg03-readiness-RUN_ID` | Runtime/source receipts; safe prerequisite errors if any |
++| `rg03-targeted-RUN_ID` | Actual M05/related results; first failure evidence OR newly frozen RG03 checkpoint |
++| `rg03-final-RUN_ID` | Fresh manifest/counts, safe logs/diagnostic trace, source/runtime receipts, latest safe checkpoint, blocked report OR complete release deliverables |
++
++Shared evidence is intentionally allowlisted and redacted. Raw browser traces, cookies, request bodies, DOM snapshots, screenshots/QR resources, SMTP messages, private fixtures, database dumps, TLS keys and generated credentials are not uploaded. The safe trace is a diagnostic event stream, not a replayable raw Playwright trace. Original private-file hashes preserve provenance without publishing their contents.
++
++An artifact's existence is not a release PASS. Accept only the actual final report stating **READY FOR RELEASE VERIFICATION**, accompanied by the independent manifest showing 223/223 canonical, 38/38 supplemental, 186/186 native, 1185/1185 unit/integration, all required quality gates, zero failed/skipped/retries/flaky.
++
++If blocked, preserve the first-failure run URL, safe evidence ZIP, report, exact source fingerprints and latest safe checkpoint. RG02 remains latest safe until targeted M05 and related tests actually produce an RG03 freeze.
++
++## 6. Hard stop
++
++This workflow does not deploy, use production databases, perform real-money transactions, enforce CSP, add features, redesign Quddam, commit/push, create releases, or begin another phase. CSP remains `Content-Security-Policy-Report-Only`.
++
++Stop after the actual complete PASS or first blocker. Return the run URL and artifacts for review; do not perform a production deployment from this verification workflow.
+--- /dev/null
++++ b/Quddam-Phase-5.0J-2-GHA-Preparation-Report.md
+@@ -0,0 +1,107 @@
++# PHASE 5.0J-2-RG03 — GitHub Actions runner preparation
++
++**Outcome: CI PREPARED AND LOCALLY VALIDATED — GITHUB ACTIONS NOT EXECUTED.**
++
++This is a continuation of release verification, not a product phase. No repository/run authorization was supplied. The workflow and helper files are prepared for the repository owner; no GitHub Actions run, product PASS, RG03 freeze or Release Candidate is fabricated.
++
++## Input integrity and source freeze
++
++Both supplied archives passed ZIP CRC validation and exact SHA256 verification:
++
++| Supplied archive | SHA256 |
++| --- | --- |
++| RG02 frozen checkpoint | `55f544c7b8a3b2276adeaab00f7f64d79f8aec34ca29be68287542778333af34` |
++| RG03 original evidence | `9d5e6aca903f092ab1d9e4eec3e9f6c38be015fb00a7800e9c8cd9cb0fa42017` |
++
++All **670 authored application files are byte-identical** to the application members of the supplied RG02 checkpoint. Exact application/product/canonical assertion/timeout/schema/migration/dependency diff: **EMPTY**.
++
++| Fingerprint | Value |
++| --- | --- |
++| Application, 670 files | `bbb44ee4250b85a9baeba7d441676d2fdfe10e38b32e8d55ee301d4598db72df` |
++| Authorized RG03 external harness, 22 files | `47704bed3bc1d25e1ce50f14d2a5b1eaad74c67d0598119d8d9ad73009a7ff52` |
++| Application + authorized harness, 692 files | `9d64d4c08e8df1af80eff4bb4eb5feed3a7946eeb20e025de9be8e93c068f510` |
++| package-lock.json | `c3fcb1733f2281008ef45ace458ce5659de2a51c5aa9350688a01b212aa5602c` |
++| Prisma schema | `908f851226554d0a451ebd3bbca9e9d3a185643bd91d97cce5c9ceda64e4a23c` |
++| New CI code/config, 14 files | `6b198eb60247398cae3189d5e4f7bfa032a5af4515f8b759659536ca8e877b71` |
++| CI code/config + its source manifest, 15 files | `e214ecca8a7e2e6d389b5dd60cba76534c940c9f4c7df56eea4c439bef4371e5` |
++| Deterministic CI orchestration copies, 6 files | `694d8164d3e0706d8adae939f8679fc7e3383543bc7e686420f84b2a389691fa` |
++| Combined executable verification source, 713 files | `4e8f95ad4d07d247def3ea6a1d6c2ec60357583e09ef3209b9c0e4cc55de6d7b` |
++
++Fingerprint algorithm: SHA256 of sorted `path + NUL + file SHA256 + LF`. Every one of the 24 SQL migration files and the migration lock file was checked, unchanged; individual hashes are in `Migration-Integrity.json` and the source-integrity receipt. No migration was introduced.
++
++The RG03 MIME correction is restored **exactly** from the provided evidence. Its two files remain unchanged: `verification-tools/consolidated-runner.mjs` and `verification-tools/mail-mime.py`. The SMTP/MIME function remains byte-identical even in the derived CI runner. The accepted M05 diagnosis and previous environment diagnosis were not repeated. No prior PASS result was counted as execution here.
++
++## Prepared CI environment
++
++The manual-only workflow uses Ubuntu **24.04**, Node **24.19.0** (satisfies the frozen project's engines), `npm ci`, and locked Playwright **1.56.1**. Official project CLI installation requests Chromium **141.0.7390.37**, revision **1194**, with its official system dependencies. No project dependency upgrade, `npm install`, lockfile rewrite, unofficial mirror, TLS disablement or production secret is configured.
++
++Each job uses the official **postgres:16** service with an isolated test database, explicit test-only credentials, localhost access and a health check. Readiness proves `SELECT version()` and major version 16, Prisma generation and the existing 24-migration chain.
++
++M13/native tooling was inspected. It requires real `postgres`, `initdb`, `pg_ctl`, `pg_dump`, `pg_restore` and direct application/database lifecycle control. The workflow additionally uses Ubuntu's native PostgreSQL 16 client/server tooling under the non-root runner user. Its isolated capability smoke initializes/starts/connects, proves independent locking, dumps data, performs an immediate stop and same-data-directory restart, restores into a new database, and shuts down cleanly. The service container does not substitute for any native lifecycle assertion.
++
++Actual browser launch, native cluster smoke and GitHub runner readiness are **NOT EXECUTED in this preparation session**. They are mandatory runtime gates in the prepared workflow and must succeed there before any release identity begins.
++
++## Exact allowed infrastructure diff
++
++New files are confined to `.github/`, `ci/`, root verification ignore/hash metadata and owner/preparation documentation. The 14-file code/config inventory is recorded in `CI-Source-Manifest.json`; the exact new-file diff is `Exact-GHA-Infrastructure.diff`.
++
++Original application and authorized harness files are not edited. Six derived CI-only orchestration copies provide:
++
++- Native PostgreSQL binary paths without the old managed-workspace UID/preload shim.
++- Separate targeted evidence directories and explicit identity selection for unchanged M05 / related cases.
++- Browser `--max-failures=1 --retries=0` for every required browser group.
++- Single-worker, bail-1, retry-0 unit execution with machine-readable results.
++- Security reporter worker metadata to distinguish identities not started after first failure.
++
++`receipts/Exact-CI-Adapter.diff` records every derived-runner change. None changes canonical assertions, their timeouts, test bodies, fixtures, product behavior or the MIME implementation. Read-only stack/source parsing attributes native failures without editing or instrumenting canonical test code.
++
++The obsolete original final-gate path binding is preserved unchanged but is not invoked. CI orchestration executes the same authoritative native/canonical/M13/content/launch/security groups with faithful paths and fresh full quality gates. It never resumes case 149 or inherits PASS counts.
++
++## Execution sequence and failure policy
++
++Jobs are serially dependent: runtime readiness → targeted M05/related/freeze → fresh complete final gate.
++
++M05 is the first mandatory browser identity. All original registration, bounded-recovery, PasswordReset row, reset-mail URL, password-change, one-use, existing-session invalidation, recovery-aging and subsequent-login assertions stay in the unchanged source. It retains the existing 60-second canonical test timeout and unchanged expectation limits.
++
++The related targeted gate contains ten unchanged identities: five other public-ingress M05 cases and five H01 Host-session revocation cases, including password-reset stream revocation. Only actual 1/1 M05 and 10/10 related PASS with zero skips/retries permit an RG03 freeze.
++
++The final gate runs fresh full unit/integration/content/operations/lint/typecheck/build, then native identity 001 (`A/B concurrent paid`) and canonical identity 001 (`Arabic landing and account entry points render on desktop and mobile`), followed by required M13 and supplemental groups. Counts must independently prove 223 canonical, 38 supplemental, 186 native and 1185 unit/integration PASS. Targeted results are excluded from these final counts.
++
++First failure stops mandatory execution. Only evidence processing/upload continues. Cause is not guessed; unresolved failures remain D until evidence establishes A product, B harness or C environment. Failed workflow attempts cannot be automatically rerun to replace evidence. No automatic product/test fix is present.
++
++Only successful targeted M05/related verification can create the RG03 checkpoint. Only the fully successful fresh final gate can create the Release-Candidate/report/evidence/manifest/checklist. A failed job instead preserves a blocked report, first-failure evidence and latest safe checkpoint.
++
++## What was actually validated locally
++
++**12/12 CI infrastructure preparation checks PASS**, zero failures/errors/skips. These are new CI preparation checks, not a repeat of the historical 12 MIME checks and not Quddam release tests.
++
++Validated: archive/source/harness integrity; YAML parsing/job dependencies/manual trigger/read permissions; signed PG/official browser provisioning commands; Python/Node/bash syntax; exact bounded CI adapter diffs; unchanged 60-second browser configuration and assertions; complete authoritative inventory; targeted identity selection; refusal to freeze without actual runtime/targeted proof; refusal to create a candidate with an unexecuted gate; safe redaction with preserved required fingerprints; genuine native M13 operations; read-only native source/stack attribution.
++
++Playwright's actual installed CLI was used for **list/discovery only**: 261 unique browser/API identities matched their frozen source hashes (223 canonical + 38 supplemental). No browser was launched and no scenario assertion executed by discovery. All 186 native identities and source hashes also match the authoritative manifest.
++
++Actionlint is not installed in this environment. YAML/Node/bash/Python validation is complete, but actual GitHub workflow-engine acceptance, action downloads, hosted image provisioning and runtime performance remain for the owner-run readiness job. No local PostgreSQL/Chromium recovery or old diagnoses were repeated.
++
++## Fresh mandatory execution counts
++
++| Required verification | PASS | FAILED | NOT_EXECUTED |
++| --- | ---: | ---: | ---: |
++| Targeted canonical M05 | 0 | 0 | 1 |
++| Targeted related auth/reset | 0 | 0 | 10 |
++| Final canonical browser/API | 0 | 0 | 223 |
++| Final supplemental browser/API | 0 | 0 | 38 |
++| Final native PostgreSQL | 0 | 0 | 186 |
++| Final unit/integration | 0 | 0 | 1185 |
++
++Fresh content validation, operations validation, lint, typecheck and production build: **NOT_EXECUTED**. All-ten-games, billing/refund, auth/security/privacy, M13 lifecycle/recovery, responsive/mobile and CSP compatibility release results: **NOT_EXECUTED**. Zero execution does not prove zero unresolved flaky or release readiness.
++
++GitHub Actions run identity: **NONE**. No RG03 frozen checkpoint or Release-Candidate ZIP was created. Latest safe checkpoint remains the exact supplied RG02 archive, included unchanged under `inputs/`.
++
++## Artifacts, privacy and remaining execution boundary
++
++The workflow uploads allowlisted receipts, fresh results/manifest, sanitized original logs and diagnostic first-failure trace events, exact source/CI diffs, and safe deliverables even on failure. Retention: **14 days**. Raw traces, cookies, credentials, request bodies, DOM snapshots/screenshots/QR resources, synthetic private fixtures, SMTP payloads, DB dumps, TLS keys and generated secrets are excluded. The shared diagnostic trace is not a raw replayable Playwright archive. Frozen authored synthetic test constants remain part of the unchanged source.
++
++Known preparation limitations: GitHub was not executed; no owner-authorized repository was identified. Ubuntu image/package patch versions and the official PostgreSQL 16 image patch tag can advance; the actual image digest and runtime versions are recorded by readiness, while Node/Playwright/application/CI source are pinned and verified. The hosted six-hour job limit can produce an environment-blocked incomplete run, never an inherited/resumed PASS. Only Chromium is required by this authoritative manifest; Firefox/WebKit are not newly claimed as tested.
++
++Delivered preparation package, report, safe preparation evidence and exact repository-owner instructions. The owner must place the unchanged package on an authorized verification repository's default branch and manually start the workflow. No repository mutation or dispatch was performed here.
++
++**Hard stop honored:** no deployment, production database, real payment, CSP enforcement, product feature/redesign/refactor, commit, push, automatic mandatory retry or next phase. CSP remains `Content-Security-Policy-Report-Only` in the frozen source.
+--- /dev/null
++++ b/ci/adapter.mjs
+@@ -0,0 +1,71 @@
++/** CI-only copies of frozen orchestration. Assertions and MIME implementation untouched. */
++import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
++import {resolve, join} from 'node:path';
++import {createHash} from 'node:crypto';
++import {spawnSync} from 'node:child_process';
++
++export const root = resolve(import.meta.dirname, '..');
++const app = join(root, 'qalba-platform');
++const authorized = JSON.parse(readFileSync(join(root, 'Authorized-Harness-Fingerprints.json')));
++const source = JSON.parse(readFileSync(join(root, 'Source-Manifest.json')));
++export const sha = value => createHash('sha256').update(value).digest('hex');
++
++export function adapt() {
++  const audits = [];
++  function copy(file, edits, output) {
++    let text = readFileSync(join(root, file), 'utf8');
++    const before = text;
++    const expected = file.startsWith('verification-tools/') ? authorized.harnessFiles[file] : source.files[file.slice('qalba-platform/'.length)];
++    if (sha(text) !== expected) throw Error('Adapter input not frozen: ' + file);
++    for (const [old, replacement] of edits) {
++      if (text.split(old).length !== 2) throw Error('Adapter requires exactly one known match: ' + file + ' / ' + old);
++      text = text.replace(old, replacement);
++    }
++    const target = join(root, 'verification-tools', output);
++    writeFileSync(target, text);
++    // Keep the complete authorized SMTP/MIME function byte-identical, including dot unstuffing.
++    if (file.endsWith('consolidated-runner.mjs')) {
++      const mail = value => value.slice(value.indexOf('function mailHarness()'), value.indexOf('\ntry{guard();'));
++      if (mail(before) !== mail(text)) throw Error('CI adapter changed the authorized MIME correction');
++    }
++    const diff = spawnSync('diff', ['-u', '--label', file, '--label', 'ci-adapted/' + output, join(root, file), target], {encoding: 'utf8'});
++    if (![0, 1].includes(diff.status)) throw Error('Unable to record exact CI adapter diff');
++    audits.push({input: file, inputSha256: sha(before), output: 'verification-tools/' + output, outputSha256: sha(text), edits, diff: diff.stdout});
++    return target;
++  }
++  const pgReplacement = 'const bin=process.env.PG_BIN;if(!bin)throw Error("PG_BIN required: native PostgreSQL 16");const pgEnv={...process.env};delete pgEnv.LD_PRELOAD;delete pgEnv.LD_LIBRARY_PATH;';
++  const consolidated = copy('verification-tools/consolidated-runner.mjs', [
++    ["const runtime=join(root,'../phase5e1/pg-runtime'),bin=join(runtime,'ubuntu/usr/lib/postgresql/16/bin'),pgEnv={...process.env,LD_PRELOAD:join(runtime,'identity.so'),LD_LIBRARY_PATH:join(runtime,'ubuntu/usr/lib/x86_64-linux-gnu')};", pgReplacement],
++    ["out=join(root,'verification',mode)", "out=join(root,'verification',process.env.RG03_RUN_LABEL??mode)"],
++    ["c.file.startsWith('tests/e2e/')&&mode!=='neighbor'", "c.file.startsWith('tests/e2e/')&&(!process.env.RG03_CASE_IDENTITIES||JSON.parse(process.env.RG03_CASE_IDENTITIES).includes(c.identity))&&mode!=='neighbor'"],
++    ["config,c.file,'--grep'", "config,c.file,'--max-failures=1','--retries=0','--grep'"],
++  ], '.ci-consolidated.mjs');
++  const quality = copy('verification-tools/quality-runner.mjs', [
++    ["const runtime=resolve(root,'../phase5e1/pg-runtime'),bin=join(runtime,'ubuntu/usr/lib/postgresql/16/bin'),pgEnv={...process.env,LD_PRELOAD:join(runtime,'identity.so'),LD_LIBRARY_PATH:join(runtime,'ubuntu/usr/lib/x86_64-linux-gnu')};", pgReplacement],
++    ["await run('npm',['run','test'],unitEnv,'test')", "await run('npm',['run','test','--','--bail=1','--retry=0','--no-file-parallelism','--maxWorkers=1','--reporter=json','--outputFile='+join(out,'unit-native.json')],unitEnv,'test')"],
++  ], '.ci-quality.mjs');
++  const lifecycle = copy('verification-tools/lifecycle-runner.mjs', [
++    ["'--config',pwConfig,'production.browser.ts'", "'--config',pwConfig,'--max-failures=1','--retries=0','production.browser.ts'"],
++  ], '.ci-lifecycle.mjs');
++  const content = copy('verification-tools/content-runner.mjs', [
++    ["pgEnv={...process.env,LD_PRELOAD:process.env.PG_IDENTITY_PRELOAD,LD_LIBRARY_PATH:process.env.PG_LIBRARY_PATH}", "pgEnv={...process.env}"],
++    ["'--config',config],env,app,'browser'", "'--config',config,'--max-failures=1','--retries=0'],env,app,'browser'"],
++  ], '.ci-content.mjs');
++  const launch = copy('verification-tools/launch-low-runner.mjs', [
++    ["const runtime=join(root,'../phase5e1/pg-runtime'),bin=join(runtime,'ubuntu/usr/lib/postgresql/16/bin');\nconst pgEnv={...process.env,LD_PRELOAD:join(runtime,'identity.so'),LD_LIBRARY_PATH:join(runtime,'ubuntu/usr/lib/x86_64-linux-gnu')};", pgReplacement],
++    ["'--config',config],env,'browser'", "'--config',config,'--max-failures=1','--retries=0'],env,'browser'"],
++  ], '.ci-launch-low.mjs');
++  const security = copy('qalba-platform/scripts/browser-security-runner.mjs', [
++    ["'--config',config,...(process.env.I1_BROWSER_FILTER", "'--config',config,'--max-failures=1','--retries=0',...(process.env.I1_BROWSER_FILTER"],
++    ["expected:t.expectedStatus,durationMs:r.duration,retry:r.retry", "expected:t.expectedStatus,durationMs:r.duration,retry:r.retry,workerIndex:r.workerIndex"],
++  ], '.ci-security.mjs');
++  mkdirSync(join(root, 'receipts'), {recursive: true});
++  writeFileSync(join(root, 'receipts/CI-Adapter-Audit.json'), JSON.stringify({assertionsChanged: false, assertionTimeoutsChanged: false, mimeFunctionChanged: false, files: audits}, null, 2));
++  writeFileSync(join(root, 'receipts/Exact-CI-Adapter.diff'), audits.map(x => x.diff).join('\n'));
++  return {consolidated, quality, lifecycle, content, launch, security};
++}
++
++if (process.argv[1] === join(import.meta.dirname, 'adapter.mjs')) {
++  adapt();
++  console.log('Exact CI-only orchestration adapters generated; no tests executed.');
++}
+--- /dev/null
++++ b/ci/baseline.py
+@@ -0,0 +1,150 @@
++"""Verify/materialize only the two supplied archives; never import old PASS counts."""
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import zipfile
++
++ROOT = Path(__file__).resolve().parent.parent
++APP_SHA = "bbb44ee4250b85a9baeba7d441676d2fdfe10e38b32e8d55ee301d4598db72df"
++ARCHIVES = {
++    "Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip": "55f544c7b8a3b2276adeaab00f7f64d79f8aec34ca29be68287542778333af34",
++    "Quddam-Phase-5.0J-2-RG03-Evidence.zip": "9d5e6aca903f092ab1d9e4eec3e9f6c38be015fb00a7800e9c8cd9cb0fa42017",
++}
++
++
++def sha(data):
++    return hashlib.sha256(data).hexdigest()
++
++
++def fingerprint(files):
++    return sha("".join(f"{p}\0{h}\n" for p, h in sorted(files.items())).encode())
++
++
++def save(path, value):
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
++
++
++def load_inputs():
++    opened = []
++    for name, expected in ARCHIVES.items():
++        path = ROOT / "inputs" / name
++        assert sha(path.read_bytes()) == expected, f"Archive SHA256 mismatch: {name}"
++        archive = zipfile.ZipFile(path)
++        assert archive.testzip() is None, f"Archive CRC mismatch: {name}"
++        assert len(archive.namelist()) == len(set(archive.namelist())), "Duplicate ZIP member"
++        for entry in archive.infolist():
++            p = Path(entry.filename)
++            assert not p.is_absolute() and ".." not in p.parts, "Unsafe ZIP member"
++            assert (entry.external_attr >> 16) & 0o170000 != 0o120000, "ZIP symlink prohibited"
++        opened.append(archive)
++    baseline, evidence = opened
++    source = json.loads(baseline.read("Source-Manifest.json"))
++    assert source["sourceFingerprint"] == APP_SHA and source["fileCount"] == 670
++    assert len(source["files"]) == 670 and fingerprint(source["files"]) == APP_SHA
++    actual = {p: sha(baseline.read("qalba-platform/" + p)) for p in source["files"]}
++    assert actual == source["files"], "RG02 application bytes do not match source manifest"
++    assert set(n.removeprefix("qalba-platform/") for n in baseline.namelist()
++               if n.startswith("qalba-platform/") and not n.endswith("/")) == set(actual)
++    migration = json.loads(baseline.read("Migration-Integrity.json"))
++    assert actual["package-lock.json"] == migration["packageLockSha256"]
++    assert actual["prisma/schema.prisma"] == migration["schemaSha256"]
++    assert len(migration["migrationFiles"]) == 25
++    assert {p: actual[p] for p in actual if p.startswith("prisma/migrations/")} == migration["migrationFiles"]
++    harness = json.loads(evidence.read("RG03-Harness-Source-Fingerprints.json"))
++    payload = {}
++    for p, h in harness["harnessFiles"].items():
++        data = evidence.read(p) if p in evidence.namelist() else baseline.read(p)
++        assert sha(data) == h, f"Authorized harness mismatch: {p}"
++        payload[p] = data
++    assert len(payload) == 22 and fingerprint(harness["harnessFiles"]) == harness["harnessFingerprint"]
++    combined = {"qalba-platform/" + p: h for p, h in actual.items()} | harness["harnessFiles"]
++    assert fingerprint(combined) == harness["combinedAppAndHarnessFingerprint"]
++    return baseline, evidence, source, migration, harness, payload
++
++
++def materialize():
++    baseline, evidence, source, migration, harness, payload = load_inputs()
++    for p in source["files"]:
++        path = ROOT / "qalba-platform" / p
++        data = baseline.read("qalba-platform/" + p)
++        if path.exists():
++            assert path.read_bytes() == data, f"Refuse to overwrite changed application: {p}"
++        else:
++            path.parent.mkdir(parents=True, exist_ok=True)
++            path.write_bytes(data)
++    for p, data in payload.items():
++        path = ROOT / p
++        if path.exists():
++            assert path.read_bytes() == data, f"Refuse to overwrite changed harness: {p}"
++        else:
++            path.parent.mkdir(parents=True, exist_ok=True)
++            path.write_bytes(data)
++    for name in ["Source-Manifest.json", "Migration-Integrity.json"]:
++        (ROOT / name).write_bytes(baseline.read(name))
++    (ROOT / "Authorized-RG03-Mail-Harness-Patch.diff").write_bytes(evidence.read("Authorized-RG03-Mail-Harness-Patch.diff"))
++    save(ROOT / "Authorized-Harness-Fingerprints.json", harness)
++    manifest = json.loads(baseline.read("Quddam-Phase-5.0J-2-Test-Manifest.json"))
++    for group in ["browserApi", "nativePostgres"]:
++        for case in manifest[group]["cases"]:
++            for key in list(case):
++                if key.startswith("execution") or key.startswith("executed"):
++                    case.pop(key)
++            case["execution"] = "NOT_EXECUTED"
++    manifest.pop("finalCounts", None)
++    manifest.update(previousOutcomesInherited=False, automaticRetries=0)
++    save(ROOT / "Quddam-Phase-5.0J-2-Test-Manifest.json", manifest)
++    verify()
++
++
++def verify():
++    _, _, source, migration, harness, _ = load_inputs()
++    for p, h in source["files"].items():
++        assert sha((ROOT / "qalba-platform" / p).read_bytes()) == h, f"Frozen application mismatch: {p}"
++    for p, h in harness["harnessFiles"].items():
++        assert sha((ROOT / p).read_bytes()) == h, f"Frozen authorized harness mismatch: {p}"
++    # Extra generated runtime files are not authored application changes.
++    allowed_generated = {"node_modules", ".next", "src/generated", "test-results", "playwright-report"}
++    extras = []
++    for p in (ROOT / "qalba-platform").rglob("*"):
++        rel = p.relative_to(ROOT / "qalba-platform").as_posix()
++        if any(rel == x or rel.startswith(x + "/") for x in allowed_generated):
++            continue
++        if p.is_file() and rel not in source["files"] and rel not in {"tsconfig.tsbuildinfo"}:
++            extras.append(rel)
++    assert not extras, f"Unexpected authored application files: {extras}"
++    result = {
++        "status": "PASS", "authoredApplicationFiles": 670, "applicationFingerprint": APP_SHA,
++        "harnessFingerprint": harness["harnessFingerprint"],
++        "combinedApplicationHarnessFingerprint": harness["combinedAppAndHarnessFingerprint"],
++        "packageLockFingerprint": migration["packageLockSha256"],
++        "prismaSchemaFingerprint": migration["schemaSha256"],
++        "migrationFingerprints": migration["migrationFiles"], "archiveFingerprints": ARCHIVES,
++        "productDiff": [], "canonicalAssertionDiff": [], "schemaDiff": [], "migrationDiff": [],
++        "dependencyDiff": [], "rg03MimePatchByteIdenticalToEvidence": True,
++        "historicalResultsCounted": False,
++    }
++    ci_manifest = ROOT / "CI-Source-Manifest.json"
++    if ci_manifest.exists():
++        ci = json.loads(ci_manifest.read_text())
++        assert fingerprint(ci["files"]) == ci["ciFingerprint"], "CI source manifest fingerprint mismatch"
++        for p, h in ci["files"].items():
++            assert sha((ROOT / p).read_bytes()) == h, f"Prepared CI source modified: {p}"
++        result["preparedCiFingerprint"] = ci["ciFingerprint"]
++    else:
++        assert os.environ.get("GITHUB_ACTIONS") != "true", "Prepared CI source manifest missing in GitHub Actions"
++    save(ROOT / "receipts" / "Source-Integrity.json", result)
++    return result
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser()
++    parser.add_argument("command", choices=["materialize", "verify"])
++    args = parser.parse_args()
++    if args.command == "materialize":
++        materialize()
++    else:
++        verify()
++    print("Frozen application / authorized RG03 harness integrity PASS; no tests executed.")
+--- /dev/null
++++ b/ci/evidence.py
+@@ -0,0 +1,116 @@
++"""Allowlisted, redacted evidence export. Raw traces, DB backups, fixtures never uploaded."""
++import argparse
++import html
++import json
++import re
++from pathlib import Path
++import zipfile
++from baseline import ROOT, sha, save
++
++SENSITIVE_KEY = re.compile(r"password|secret|(^|_)token|token$|cookies?|authorization|credential|smtpuser|smtppass|privatekey|storageState", re.I)
++HEX_SECRET = re.compile(r"\b[0-9a-fA-F]{32,}\b")
++OPAQUE_TOKEN = re.compile(r"(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{43,128}(?![A-Za-z0-9_-])")
++
++
++def redact_text(value):
++    value = re.sub(r"\x1b\[[0-9;]*[mK]", "", value)
++    value = re.sub(r"(postgres(?:ql)?://)[^/@\s]+@", r"\1[CREDENTIALS_REDACTED]@", value, flags=re.I)
++    value = re.sub(r"([?&](?:token|access_token|callback_token|key|secret|password)=)[^\s&\"'<>]+", r"\1[REDACTED]", value, flags=re.I)
++    value = re.sub(r"((?:authorization|cookie|set-cookie|password|secret|token)\s*[=:]\s*)[^\n]+", r"\1[REDACTED]", value, flags=re.I)
++    value = re.sub(r"\b(?:e2e-[^\s\"'<>]*password[^\s\"'<>]*|synthetic-(?:admin|user)-[\w-]+|reset-new-password-[\w-]+)\b", "[REDACTED_TEST_PASSWORD]", value)
++    return OPAQUE_TOKEN.sub("[REDACTED_OPAQUE]", HEX_SECRET.sub("[REDACTED_HEX]", value))
++
++
++def redact_json(value, key="", hash_context=False):
++    if SENSITIVE_KEY.search(key) and not re.search(r"count|oneUse|invalidation|lifetime|behavior|hash|fingerprint|omitted|changed", key, re.I):
++        return "[REDACTED]"
++    hash_context = hash_context or bool(re.search(r"fingerprint|sha256|checksum|^files$|^sha$", key, re.I))
++    if isinstance(value, dict):
++        return {k: redact_json(v, k, hash_context) for k, v in value.items()}
++    if isinstance(value, list):
++        return [redact_json(x, key, hash_context) for x in value]
++    if isinstance(value, str):
++        if (hash_context or re.search(r"hash", key, re.I)) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", value):
++            return value
++        return redact_text(value)
++    return value
++
++
++def export():
++    output = ROOT / "safe-artifacts"
++    output.mkdir(exist_ok=True)
++    index = []
++    allowed = []
++    for folder in [ROOT / "receipts", ROOT / "results"]:
++        allowed.extend(p for p in folder.glob("*.json") if p.is_file())
++    # Result / completion records only; never private fixture payloads.
++    result_names = {"Execution-Results.json", "Run-Completion.json", "Browser-Results.json", "browser-native.json", "unit-native.json", "Content-Audit.json",
++                    "B01.json", "M01-M02.json", "M03.json", "M05.json", "M06-M07.json", "M08-M09.json", "M10-M11.json", "M12.json", "content-native.json", "launch-low-native.json", "Process-Lifecycle.json", "Fake-Provider-Summary.json"}
++    for p in (ROOT / "verification").rglob("*.json"):
++        if "-artifacts" in p.as_posix() or "browser-results" in p.as_posix() or "browser-artifacts" in p.as_posix():
++            continue
++        if p.name in result_names or re.fullmatch(r"\d{3}-native\.json", p.name) or re.fullmatch(r"native-(fixture|verify-upgrade|continue-active|prepare-offline|verify-offline|resume-jobs|failure-mvcc|restore-check)\.json", p.name):
++            allowed.append(p)
++    for p in [ROOT / "Quality-Gates.json", ROOT / "Target-Build-Preparation.json", ROOT / "Build-Fingerprint.json"]:
++        if p.exists():
++            allowed.append(p)
++    for path in sorted(set(allowed)):
++        rel = path.relative_to(ROOT)
++        target = output / rel
++        target.parent.mkdir(parents=True, exist_ok=True)
++        data = redact_json(json.loads(path.read_text()))
++        save(target, data)
++        index.append({"source": rel.as_posix(), "originalSha256": sha(path.read_bytes()), "safeSha256": sha(target.read_bytes()), "mode": "recursive JSON redaction"})
++    logs = list((ROOT / "receipts/private").glob("*.log")) + list((ROOT / "verification").rglob("*.log"))
++    for path in sorted(set(logs)):
++        rel = path.relative_to(ROOT)
++        target = output / "redacted-logs" / rel
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_text(redact_text(path.read_text(errors="replace")))
++        index.append({"source": rel.as_posix(), "originalSha256": sha(path.read_bytes()), "safeSha256": sha(target.read_bytes()), "mode": "text redaction"})
++    # A diagnostic first-failure trace, not a replayable archive: no request headers,
++    # network bodies, DOM snapshots, screenshots, QR resources or raw input values.
++    for path in (ROOT / "verification").rglob("trace.zip"):
++        rel = path.relative_to(ROOT)
++        target = output / "safe-traces" / rel.with_suffix(".diagnostic.jsonl")
++        target.parent.mkdir(parents=True, exist_ok=True)
++        events = []
++        with zipfile.ZipFile(path) as z:
++            for name in z.namelist():
++                if not name.endswith(".trace"):
++                    continue
++                for line in z.read(name).decode(errors="replace").splitlines():
++                    try:
++                        event = json.loads(line)
++                    except json.JSONDecodeError:
++                        continue
++                    if event.get("type") in ["before", "after", "error"]:
++                        events.append(redact_json({k: event[k] for k in ["type", "callId", "apiName", "startTime", "endTime", "error", "stack"] if k in event}))
++        target.write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in events))
++        index.append({"source": rel.as_posix(), "originalSha256": sha(path.read_bytes()), "safeSha256": sha(target.read_bytes()), "mode": "diagnostic trace; all sensitive payloads/resources excluded"})
++    for filename in ["Exact-CI-Adapter.diff"]:
++        path = ROOT / "receipts" / filename
++        if path.exists():
++            target = output / filename
++            target.write_bytes(path.read_bytes())  # Code only, no generated credentials.
++            index.append({"source": "receipts/" + filename, "safeSha256": sha(target.read_bytes()), "mode": "CI code diff"})
++    summary_file = output / "results/Final-Execution-Summary.json"
++    summary = json.loads(summary_file.read_text()) if summary_file.exists() else {"releaseTests": "NOT_EXECUTED", "reason": "Readiness or targeted gate incomplete"}
++    (output / "Safe-Results-Report.html").write_text("<!doctype html><meta charset='utf-8'><title>RG03 safe verification results</title><h1>RG03 verification — safe results</h1><p>Not a raw Playwright report. Credentials, cookies, request bodies, DOM snapshots and replay traces are excluded.</p><pre>" + html.escape(json.dumps(summary, ensure_ascii=False, indent=2)) + "</pre>")
++    save(output / "Evidence-Manifest.json", {"files": index, "rawTraceUploads": False, "databaseBackupUploads": False, "privateFixtureUploads": False, "credentialsOmitted": True, "retentionDays": 14})
++    return output
++
++
++def archive(path, folder):
++    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
++        for file in sorted(folder.rglob("*")):
++            if file.is_file():
++                z.write(file, file.relative_to(folder))
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser()
++    parser.add_argument("command", choices=["export"])
++    parser.parse_args()
++    output = export()
++    print("Safe evidence exported; raw private data excluded.")
+--- /dev/null
++++ b/ci/install-postgres.sh
+@@ -0,0 +1,10 @@
++#!/usr/bin/env bash
++set -euo pipefail
++# Ubuntu official signed packages only. Never disable signature checks or APT sandboxing.
++if [[ ! -x /usr/lib/postgresql/16/bin/postgres || ! -x /usr/lib/postgresql/16/bin/pg_restore ]]; then
++  sudo apt-get update
++  sudo apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16 libpq5 openssl
++fi
++for executable in postgres initdb pg_ctl psql createdb pg_dump pg_restore; do
++  /usr/lib/postgresql/16/bin/"$executable" --version
++done
+--- /dev/null
++++ b/ci/native-location.mjs
+@@ -0,0 +1,67 @@
++/** Read-only native failure attribution from original stack, TS source and actual PASS output. */
++import {readFileSync} from 'node:fs';
++import {createRequire} from 'node:module';
++import {join} from 'node:path';
++import {root} from './adapter.mjs';
++const require=createRequire(join(root,'qalba-platform/package.json')),ts=require('typescript');
++const source=process.argv[2],logPath=process.argv[3],log=readFileSync(logPath,'utf8');
++const manifest=JSON.parse(readFileSync(join(root,'Quddam-Phase-5.0J-2-Test-Manifest.json')));
++const cases=manifest.nativePostgres.cases.filter(c=>c.source===source);
++const completed=cases.filter(c=>log.split(/\r?\n/).some(line=>line.trim()==='PASS '+c.title)).map(c=>c.identity);
++const text=readFileSync(join(root,'qalba-platform',source),'utf8'),file=ts.createSourceFile(source,text,ts.ScriptTarget.Latest,true);
++const locations=[...log.matchAll(new RegExp(source.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+':(\\d+):(\\d+)','g'))].map(x=>({line:Number(x[1]),column:Number(x[2])}));
++const calls=[];
++function walk(node){
++ if(ts.isCallExpression(node)&&node.arguments.length>=2&&(ts.isArrowFunction(node.arguments[1])||ts.isFunctionExpression(node.arguments[1]))){
++  const first=node.arguments[0],body=node.arguments[1];
++  calls.push({node,first,body});
++ }
++ ts.forEachChild(node,walk);
++}
++walk(file);
++function expanded(first,node){
++ let bindings={};
++ for(let parent=node.parent;parent;parent=parent.parent){
++  if(!ts.isForOfStatement(parent)||!ts.isVariableDeclarationList(parent.initializer))continue;
++  const name=parent.initializer.declarations[0].name.getText(file);let array=parent.expression;
++  while(ts.isAsExpression(array)||ts.isParenthesizedExpression(array))array=array.expression;
++  if(ts.isArrayLiteralExpression(array)&&array.elements.every(ts.isStringLiteral))bindings[name]=array.elements.map(x=>x.text);
++  if(ts.isIdentifier(array)){
++   // f.name comes from literal objects pushed into the fixture list. Read the
++   // authored declarations only; never evaluate product code to infer a title.
++   const properties={};
++   const pushes=n=>{if(ts.isCallExpression(n)&&n.expression.getText(file)===array.text+'.push')for(const arg of n.arguments)if(ts.isObjectLiteralExpression(arg))for(const p of arg.properties)if(ts.isPropertyAssignment(p)&&ts.isStringLiteral(p.initializer))(properties[p.name.getText(file)]??=[]).push(p.initializer.text);ts.forEachChild(n,pushes);};
++   pushes(file);for(const[k,v]of Object.entries(properties))bindings[name+'.'+k]=v;
++   const declarations=n=>{if(ts.isVariableDeclaration(n)&&n.name.getText(file)===array.text&&n.initializer){let value=n.initializer;while(ts.isAsExpression(value)||ts.isParenthesizedExpression(value))value=value.expression;if(ts.isArrayLiteralExpression(value)&&value.elements.every(ts.isStringLiteral))bindings[name]=value.elements.map(x=>x.text);}ts.forEachChild(n,declarations);};
++   declarations(file);
++   if(array.text==='games'){
++    const fixture=ts.createSourceFile('database-lifecycle-fixtures.ts',readFileSync(join(root,'qalba-platform/scripts/database-lifecycle-fixtures.ts'),'utf8'),ts.ScriptTarget.Latest,true);
++    const gameList=n=>{if(ts.isVariableDeclaration(n)&&n.name.getText(fixture)==='games'&&n.initializer){let value=n.initializer;while(ts.isAsExpression(value)||ts.isParenthesizedExpression(value))value=value.expression;if(ts.isArrayLiteralExpression(value)&&value.elements.every(ts.isStringLiteral))bindings[name]=value.elements.map(x=>x.text);}ts.forEachChild(n,gameList);};gameList(fixture);
++   }
++  }
++ }
++ function values(expr){
++  if(ts.isStringLiteral(expr)||ts.isNoSubstitutionTemplateLiteral(expr))return[expr.text];
++  if(ts.isIdentifier(expr)||ts.isPropertyAccessExpression(expr))return bindings[expr.getText(file)]??null;
++  if(ts.isConditionalExpression(expr)){const a=values(expr.whenTrue),b=values(expr.whenFalse);return a&&b?[...a,...b]:null;}
++  if(ts.isBinaryExpression(expr)&&expr.operatorToken.kind===ts.SyntaxKind.PlusToken){const a=values(expr.left),b=values(expr.right);return a&&b?a.flatMap(x=>b.map(y=>x+y)):null;}
++  if(ts.isTemplateExpression(expr)){let output=[expr.head.text];for(const span of expr.templateSpans){const options=values(span.expression);if(!options)return null;output=output.flatMap(p=>options.map(x=>p+x+span.literal.text));}return output;}
++  return null;
++ }
++ return values(first);
++}
++let attributed=null;
++for(const loc of locations){
++ const position=file.getPositionOfLineAndCharacter(loc.line-1,loc.column-1);
++ const matched=calls.filter(x=>position>=x.body.getStart(file)&&position<x.body.end).sort((a,b)=>(a.body.end-a.body.getStart(file))-(b.body.end-b.body.getStart(file)));
++ for(const call of matched){
++  const names=expanded(call.first,call.node);if(!names)continue;
++  const candidates=names.map(name=>cases.filter(c=>c.title===name)).flat();
++  // Exact callback in the stack + literal loop enumeration + preceding observed
++  // PASS entries establish the failed invocation. No global "next case" guess.
++  const pending=candidates.filter(c=>!completed.includes(c.identity));
++  if(pending.length){attributed={identity:pending[0].identity,title:pending[0].title,originalSource:source,...loc,proof:'original callback stack; literal source enumeration; preceding actual PASS output',candidates:candidates.map(x=>x.identity)};break;}
++ }
++ if(attributed)break;
++}
++process.stdout.write(JSON.stringify({source,observedCompletedIdentities:completed,firstFailure:attributed,originalStackLocations:locations,unresolved:!attributed}));
+--- /dev/null
++++ b/ci/package.py
+@@ -0,0 +1,174 @@
++"""Freeze after real targeted PASS; Release Candidate only after independent fresh full PASS."""
++import argparse
++import json
++import os
++import shutil
++from pathlib import Path
++import zipfile
++from baseline import ROOT, fingerprint, save, sha, verify
++from evidence import export, archive, redact_text
++from results import collect
++
++FROZEN = "Quddam-Phase-5.0J-2-RG03-frozen-checkpoint.zip"
++
++
++def executable_files():
++    source = json.loads((ROOT / "Source-Manifest.json").read_text())
++    harness = json.loads((ROOT / "Authorized-Harness-Fingerprints.json").read_text())
++    files = {"qalba-platform/" + p: h for p, h in source["files"].items()} | harness["harnessFiles"]
++    ci = {}
++    for folder in [ROOT / "ci", ROOT / ".github"]:
++        for path in folder.rglob("*"):
++            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
++                ci[path.relative_to(ROOT).as_posix()] = sha(path.read_bytes())
++    adapters = {p.relative_to(ROOT).as_posix(): sha(p.read_bytes()) for p in (ROOT / "verification-tools").glob(".ci-*.mjs")}
++    for name in [".gitignore", "CI-Source-Manifest.json"]:
++        if (ROOT / name).exists():
++            ci[name] = sha((ROOT / name).read_bytes())
++    assert len(adapters) == 6, "All six CI orchestration adapters required"
++    return files | ci | adapters, ci, adapters
++
++
++def bundle(path, files, extras):
++    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
++        for name, expected in sorted(files.items()):
++            assert sha((ROOT / name).read_bytes()) == expected
++            z.write(ROOT / name, name)
++        for name in extras:
++            z.write(ROOT / name, name)
++        z.writestr("Frozen-File-Manifest.json", json.dumps(files, indent=2))
++    with zipfile.ZipFile(path) as z:
++        assert z.testzip() is None
++
++
++def freeze():
++    integrity = verify()
++    ready = json.loads((ROOT / "receipts/Runtime-Readiness.json").read_text())
++    assert ready["status"] == "PASS" and ready["readyForMandatoryTests"]
++    for phase, required in [("m05", 1), ("related", 10)]:
++        receipt = json.loads((ROOT / "receipts" / ("Phase-" + phase + ".json")).read_text())
++        assert receipt["status"] == "PASS" and receipt["passed"] == required and receipt["skipped"] == receipt["failed"] == receipt["automaticRetries"] == 0
++    files, ci, adapters = executable_files()
++    receipt = {**integrity, "status": "FROZEN", "run": ready["run"], "ciFingerprint": fingerprint(ci), "ciAdapterFingerprint": fingerprint(adapters),
++               "combinedVerificationSourceFingerprint": fingerprint(files), "combinedFileCount": len(files), "files": files, "canonicalM05AssertionsAndTimeoutUnchanged": True,
++               "finalGateResults": "NOT_EXECUTED; targeted results cannot substitute for fresh final gate"}
++    save(ROOT / "receipts/RG03-Freeze.json", receipt)
++    path = ROOT / "deliverables" / FROZEN
++    path.parent.mkdir(exist_ok=True)
++    bundle(path, files, ["Source-Manifest.json", "Migration-Integrity.json", "Authorized-Harness-Fingerprints.json", "Authorized-RG03-Mail-Harness-Patch.diff",
++                         "Quddam-Phase-5.0J-2-Test-Manifest.json", "receipts/RG03-Freeze.json", "receipts/Source-Integrity.json", "receipts/Runtime-Readiness.json", "receipts/Phase-m05.json", "receipts/Phase-related.json", "receipts/Exact-CI-Adapter.diff",
++                         "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip", "inputs/Quddam-Phase-5.0J-2-RG03-Evidence.zip"])
++    print("Fresh targeted PASS verified; RG03 checkpoint frozen. Full gate still required.")
++
++
++def verify_freeze():
++    verify()
++    paths = list((ROOT / "incoming").rglob(FROZEN))
++    assert len(paths) == 1, "One checkpoint from this workflow's targeted job is required"
++    with zipfile.ZipFile(paths[0]) as z:
++        assert z.testzip() is None
++        receipt = json.loads(z.read("receipts/RG03-Freeze.json"))
++        assert receipt["run"]["id"] == os.environ.get("GITHUB_RUN_ID") and receipt["run"]["sha"] == os.environ.get("GITHUB_SHA") and receipt["run"]["attempt"] == "1"
++        assert receipt["run"]["repository"] == os.environ.get("GITHUB_REPOSITORY")
++        files, ci, adapters = executable_files()
++        assert files == json.loads(z.read("Frozen-File-Manifest.json")) == receipt["files"], "Current executable source differs from freshly frozen RG03"
++        assert fingerprint(files) == receipt["combinedVerificationSourceFingerprint"]
++        for name, expected in files.items():
++            assert sha(z.read(name)) == expected, name
++        save(ROOT / "receipts/RG03-Freeze.json", receipt)
++    (ROOT / "deliverables").mkdir(exist_ok=True)
++    shutil.copyfile(paths[0], ROOT / "deliverables" / FROZEN)
++    print("Same-run frozen RG03 source verified; no historical PASS counts imported.")
++
++
++def release():
++    integrity = verify()
++    _, summary = collect()
++    assert summary["status"] == "PASS", "Incomplete/failed fresh gate: Release Candidate forbidden"
++    phase = json.loads((ROOT / "receipts/Phase-full.json").read_text())
++    assert phase["status"] == "PASS" and len(phase["tasks"]) == 9 and all(t["status"] == "PASS" for t in phase["tasks"])
++    ready = json.loads((ROOT / "receipts/Runtime-Readiness.json").read_text())
++    frozen = json.loads((ROOT / "receipts/RG03-Freeze.json").read_text())
++    files, _, _ = executable_files()
++    assert files == frozen["files"] and ready["status"] == "PASS"
++    output = ROOT / "deliverables"; output.mkdir(exist_ok=True)
++    safe = export()
++    archive(output / "Quddam-Phase-5.0J-2-Final-Evidence.zip", safe)
++    bundle(output / "Quddam-Phase-5.0J-2-Release-Candidate.zip", files, ["Source-Manifest.json", "Migration-Integrity.json", "Authorized-Harness-Fingerprints.json", "Authorized-RG03-Mail-Harness-Patch.diff", "Quddam-Phase-5.0J-2-Test-Manifest.json", "receipts/RG03-Freeze.json", "receipts/Exact-CI-Adapter.diff", "receipts/Runtime-Readiness.json", "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip", "inputs/Quddam-Phase-5.0J-2-RG03-Evidence.zip"])
++    (output / "Quddam-Phase-5.0J-2-Test-Manifest.json").write_bytes((ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json").read_bytes())
++    run = ready["run"]
++    report = f"""# PHASE 5.0J-2 — Final Report
++
++READY FOR RELEASE VERIFICATION
++
++GitHub Actions run: https://github.com/{run['repository']}/actions/runs/{run['id']}
++Commit: `{run['sha']}`; attempt: {run['attempt']}.
++
++Application fingerprint: `{integrity['applicationFingerprint']}` (670/670 byte-identical to RG02).
++Authorized harness fingerprint: `{integrity['harnessFingerprint']}`.
++Combined verification-source fingerprint: `{frozen['combinedVerificationSourceFingerprint']}`.
++Application / canonical assertion / schema / migration / dependency diff: EMPTY.
++Exact authorized MIME diff: Authorized-RG03-Mail-Harness-Patch.diff.
++Exact CI orchestration diff: receipts/Exact-CI-Adapter.diff; complete CI source hashes: RG03-Freeze.json.
++
++PostgreSQL: {ready['conditions']['servicePostgres']['version']}; native binary versions in runtime receipt.
++Playwright: {ready['conditions']['chromium']['playwright']}; Chromium: {ready['conditions']['chromium']['actualVersion']}; revision {ready['conditions']['chromium']['revision']}.
++
++| Required inventory | Fresh PASS |
++| --- | ---: |
++| Canonical browser/API | 223/223 |
++| Supplemental browser/API | 38/38 |
++| Native PostgreSQL | 186/186 |
++| Unit/integration | 1185/1185 |
++
++All ten games PASS: Category Board, Social/Out-of-the-Loop, Letter Network, Survey Battle, Forbidden Word, Bluff, Ranked Lists, Lightning Quiz, Ordering Challenge, Court.
++Complete required lifecycle/rematch/privacy/hidden-content/reconnect coverage PASS.
++Billing exactly-once / invoice recovery / reconciliation / refunds PASS.
++Auth / security / abuse / M05 Password Reset / session invalidation / privacy PASS.
++SSE / command-round boundaries / history-content / retention PASS.
++M13 populated upgrade / application restart / native PostgreSQL outage-recovery / backup-restore PASS.
++Responsive/mobile and Lightning buzzer geometry PASS.
++CSP compatibility PASS: Content-Security-Policy-Report-Only; no enforcement change.
++Content validation / operations / lint / typecheck / production build PASS.
++
++0 failed; 0 skipped; 0 unresolved flaky; 0 automatic mandatory retries.
++Targeted verification and historical results are excluded from these counts.
++
++Non-blocking limitations: this manifest uses Chromium only, not Firefox/WebKit. GitHub-hosted Ubuntu patch image, official PostgreSQL 16 patch image and signed Ubuntu PostgreSQL 16 package patch versions can advance; exact runtime versions are recorded. Shared trace evidence is deliberately sanitized diagnostic data, not a replayable raw browser/session trace. No deployment or production behavior was exercised.
++"""
++    (output / "Quddam-Phase-5.0J-2-Final-Report.md").write_text(report)
++    (output / "Quddam-Phase-5.0J-2-Release-Checklist.md").write_text("# Release verification checklist\n\n" + "\n".join("- [x] " + x for x in ["670 frozen application files unchanged", "223 canonical + 38 supplemental + 186 native PASS from identity 001", "1185 required unit/integration PASS", "All ten games and required release areas PASS", "Native M13 populated lifecycle/restart/restore PASS", "Content, operations, lint, typecheck and build PASS", "CSP remains Report-Only", "Zero failures/skips/retries/unresolved flaky", "No production deployment, real charge, commit or push"]) + "\n")
++    print("All independently audited fresh release criteria PASS. Release Candidate created.")
++
++
++def blocked():
++    output = ROOT / "deliverables"; output.mkdir(exist_ok=True)
++    # Keep the targeted job's same-run checkpoint even if final-job provisioning
++    # fails before the final source adapters can be generated.
++    for path in (ROOT / "incoming").rglob(FROZEN):
++        with zipfile.ZipFile(path) as z:
++            receipt = json.loads(z.read("receipts/RG03-Freeze.json"))
++            assert z.testzip() is None and receipt["status"] == "FROZEN"
++            assert receipt["run"]["id"] == os.environ.get("GITHUB_RUN_ID") and receipt["run"]["sha"] == os.environ.get("GITHUB_SHA")
++        shutil.copyfile(path, output / FROZEN)
++    _, summary = collect()
++    failed = []
++    for path in sorted((ROOT / "receipts").glob("*.json")):
++        value = json.loads(path.read_text())
++        if value.get("status") == "FAILED":
++            failed.append({"receipt": path.name, "error": value.get("originalError", value.get("originalOrchestrationError")), "label": value.get("label", value.get("stoppedAt"))})
++    targeted = {}
++    for name, count in [("m05", 1), ("related", 10)]:
++        target = ROOT / "verification" / name / "Execution-Results.json"
++        rows = json.loads(target.read_text())["runs"] if target.exists() else []
++        targeted[name] = {"PASS": sum(r["status"] == "passed" for r in rows), "FAILED": sum(r["status"] == "failed" for r in rows), "NOT_EXECUTED": count - len(rows)}
++    report = "# PHASE 5.0J-2-RG03 — GitHub Actions BLOCKED\n\nNo Release Candidate. Stop at the first failed prerequisite or mandatory identity.\n\nClassification: D — UNRESOLVED pending evidence-based diagnosis; runtime command errors/receipts may establish C. No product cause is inferred.\n\nLatest safe checkpoint: RG03 only if this run's targeted job froze it successfully; otherwise supplied RG02.\n\nFresh execution counts (PASS / FAILED / NOT_EXECUTED):\n\n```json\n" + json.dumps(summary["counts"], indent=2) + "\n```\n\nTargeted execution (excluded from final gate counts):\n\n```json\n" + json.dumps(targeted, indent=2) + "\n```\n\nFirst failure receipts (secret-bearing details redacted in exported evidence):\n\n```json\n" + redact_text(json.dumps(failed, indent=2)) + "\n```\n\nNo automatic mandatory retries. No continuation of mandatory identities after the first failure. Source and exact CI/MIME diffs are preserved.\n"
++    (output / "Quddam-Phase-5.0J-2-GHA-BLOCKED-Report.md").write_text(report)
++    archive(output / "Quddam-Phase-5.0J-2-GHA-Evidence.zip", export())
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser()
++    parser.add_argument("command", choices=["freeze", "verify-freeze", "release", "blocked"])
++    command = parser.parse_args().command
++    {"freeze": freeze, "verify-freeze": verify_freeze, "release": release, "blocked": blocked}[command]()
+--- /dev/null
++++ b/ci/readiness.mjs
+@@ -0,0 +1,113 @@
++/** Local-only readiness: service PostgreSQL + independent native lifecycle + official browser. */
++import {spawn, spawnSync} from 'node:child_process';
++import {createRequire} from 'node:module';
++import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync} from 'node:fs';
++import {join, dirname} from 'node:path';
++import {tmpdir} from 'node:os';
++import {randomUUID} from 'node:crypto';
++import {root} from './adapter.mjs';
++
++const app = join(root, 'qalba-platform'), require = createRequire(join(app, 'package.json'));
++const {Pool} = require('pg'), {chromium} = require('@playwright/test');
++const out = join(root, 'receipts'); mkdirSync(out, {recursive: true});
++const receipt = {status: 'RUNNING', mandatoryTestsStarted: false, conditions: {}, run: {
++  repository: process.env.GITHUB_REPOSITORY ?? null, sha: process.env.GITHUB_SHA ?? null,
++  id: process.env.GITHUB_RUN_ID ?? null, attempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
++  job: process.env.GITHUB_JOB ?? null, imageOS: process.env.ImageOS ?? null,
++  imageVersion: process.env.ImageVersion ?? null,
++}};
++const save = () => writeFileSync(join(out, 'Runtime-Readiness.json'), JSON.stringify(receipt, null, 2));
++const bin = process.env.PG_BIN ?? '/usr/lib/postgresql/16/bin';
++let pg, dir;
++async function command(cmd, args, env = process.env) {
++  const result = spawnSync(cmd, args, {cwd: app, env, encoding: 'utf8'});
++  if (result.status !== 0) throw Error(cmd + ' readiness failure: ' + (result.stderr || result.error || result.stdout));
++  return result.stdout.trim();
++}
++async function poll(task) {
++  const end = Date.now() + 30000;
++  while (Date.now() < end) { if (await task()) return; await new Promise(resolve => setTimeout(resolve, 100)); }
++  throw Error('Native PostgreSQL startup readiness failure');
++}
++save();
++try {
++  if (process.versions.node !== '24.19.0' || process.getuid() === 0) throw Error('Expected non-root Node 24.19.0 GitHub runner');
++  receipt.conditions.node = {status: 'PASS', version: process.versions.node, projectEngines: require('./package.json').engines.node};
++  if (process.env.RG03_NPM_CI_COMPLETE !== '1') throw Error('npm ci success receipt missing');
++  receipt.conditions.npmCi = {status: 'PASS', command: 'npm ci', npmVersion: await command('npm', ['--version'])};
++  const integrity = spawnSync('python3', [join(root, 'ci/baseline.py'), 'verify'], {cwd: root, encoding: 'utf8'});
++  if (integrity.status !== 0) throw Error('Frozen source/harness readiness failure: ' + integrity.stderr);
++  receipt.conditions.integrity = JSON.parse(readFileSync(join(out, 'Source-Integrity.json')));
++  const url = new URL(process.env.DATABASE_URL);
++  if (url.hostname !== '127.0.0.1' || url.port !== '5432' || url.pathname !== '/rg03_verification' || url.username !== 'rg03_test') throw Error('Only the isolated CI service database is allowed');
++  const service = new Pool({connectionString: url.href, max: 2});
++  try {
++    const v = (await service.query('SELECT version() AS version, current_setting(\'server_version_num\')::int AS number, current_database() AS db')).rows[0];
++    if (Math.floor(v.number / 10000) !== 16 || v.db !== 'rg03_verification') throw Error('CI service is not isolated PostgreSQL 16');
++    const imageDigests = await command('docker', ['image', 'inspect', 'postgres:16', '--format', '{{json .RepoDigests}}']);
++    receipt.conditions.servicePostgres = {status: 'PASS', version: v.version, major: 16, mode: 'official postgres:16 service', imageDigests: JSON.parse(imageDigests), connection: 'localhost, isolated test database; credentials omitted'};
++    await command('npm', ['run', 'db:generate']);
++    await command('npm', ['run', 'db:migrate']);
++    const rows = await service.query('SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name');
++    if (rows.rowCount !== 24) throw Error('Existing migration chain incomplete');
++    receipt.conditions.prisma = {status: 'PASS', generated: true, appliedMigrationCount: rows.rowCount, existingMigrationNames: rows.rows.map(x => x.migration_name)};
++  } finally { await service.end(); }
++  const versions = {};
++  for (const exe of ['postgres', 'initdb', 'pg_ctl', 'psql', 'createdb', 'pg_dump', 'pg_restore']) {
++    versions[exe] = await command(join(bin, exe), ['--version']);
++    if (!/\b16\./.test(versions[exe])) throw Error('Native binary must be PostgreSQL 16: ' + exe);
++  }
++  dir = mkdtempSync(join(tmpdir(), 'rg03-native-readiness-'));
++  const data = join(dir, 'pg'), connection = 'postgresql://postgres@127.0.0.1:55440/rg03_native_smoke';
++  await command(join(bin, 'initdb'), ['-D', data, '-U', 'postgres', '--auth=trust', '--locale=C', '--encoding=UTF8']);
++  const start = async () => {
++    pg = spawn(join(bin, 'postgres'), ['-D', data, '-h', '127.0.0.1', '-p', '55440', '-k', '', '-c', 'timezone=UTC', '-c', 'jit=off'], {stdio: ['ignore', 'ignore', 'pipe']});
++    let errors = ''; pg.stderr.on('data', x => {errors += x;});
++    await poll(async () => {
++      if (pg.exitCode !== null) throw Error('Native postgres exited: ' + errors);
++      const p = new Pool({connectionString: connection.replace('rg03_native_smoke', 'postgres'), connectionTimeoutMillis: 100});
++      try { return (await p.query('SHOW data_directory')).rows[0].data_directory === data; } catch { return false; } finally { await p.end(); }
++    });
++  };
++  const stop = async mode => {
++    const child = pg; const exited = new Promise(resolve => child.once('exit', resolve));
++    await command(join(bin, 'pg_ctl'), ['-D', data, '-m', mode, '-w', 'stop']);
++    if (child.exitCode === null && child.signalCode === null) await exited;
++    pg = null;
++  };
++  await start();
++  await command(join(bin, 'createdb'), ['-h', '127.0.0.1', '-p', '55440', '-U', 'postgres', 'rg03_native_smoke']);
++  const marker = randomUUID();
++  const withDb = async action => {const p = new Pool({connectionString: connection, max: 2}); try {return await action(p);} finally {await p.end();}};
++  await withDb(async p => {
++    const v = (await p.query('SHOW server_version_num')).rows[0].server_version_num;
++    if (Math.floor(Number(v) / 10000) !== 16) throw Error('Native cluster version not 16');
++    await p.query('CREATE TABLE smoke (id text PRIMARY KEY)'); await p.query('INSERT INTO smoke VALUES ($1)', [marker]);
++    const a = await p.connect(), b = await p.connect();
++    try { await a.query('SELECT pg_advisory_lock(501203)'); if ((await b.query('SELECT pg_try_advisory_lock(501203) AS ok')).rows[0].ok) throw Error('Native cross-connection lock proof failed'); await a.query('SELECT pg_advisory_unlock(501203)'); } finally {a.release(); b.release();}
++  });
++  await command(join(bin, 'pg_dump'), ['-h', '127.0.0.1', '-p', '55440', '-U', 'postgres', '-Fc', '-f', join(dir, 'smoke.dump'), 'rg03_native_smoke']);
++  await stop('immediate'); await start();
++  await withDb(async p => {if ((await p.query('SELECT id FROM smoke')).rows[0].id !== marker) throw Error('Native restart did not preserve smoke data');});
++  await command(join(bin, 'createdb'), ['-h', '127.0.0.1', '-p', '55440', '-U', 'postgres', 'rg03_native_restore']);
++  await command(join(bin, 'pg_restore'), ['-h', '127.0.0.1', '-p', '55440', '-U', 'postgres', '--exit-on-error', '--no-owner', '--no-privileges', '-d', 'rg03_native_restore', join(dir, 'smoke.dump')]);
++  const restore = new Pool({connectionString: connection.replace('rg03_native_smoke', 'rg03_native_restore')});
++  try {if ((await restore.query('SELECT id FROM smoke')).rows[0].id !== marker) throw Error('Native backup restore proof failed');} finally {await restore.end();}
++  await stop('fast');
++  receipt.conditions.nativeM13Capabilities = {status: 'PASS', versions, mode: 'native runner-owned disposable clusters, not Docker lifecycle emulation', initialization: true, startup: true, independentLocking: true, immediateStopRestart: true, backupRestoreNewDatabase: true, cleanShutdown: true, m13IdentitiesExecuted: false};
++  const pw = require('@playwright/test/package.json').version, browsers = JSON.parse(readFileSync(join(dirname(require.resolve('playwright-core/package.json')), 'browsers.json')));
++  const expected = browsers.browsers.find(x => x.name === 'chromium');
++  if (pw !== '1.56.1' || expected.revision !== '1194' || expected.browserVersion !== '141.0.7390.37') throw Error('Locked Playwright/browser compatibility mismatch');
++  if (process.env.PLAYWRIGHT_DOWNLOAD_HOST || process.env.PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST || process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') throw Error('Official browser endpoints and normal TLS verification are required');
++  const browserPath = chromium.executablePath();
++  const browser = await chromium.launch({executablePath: browserPath, headless: true});
++  try {if (browser.version() !== expected.browserVersion) throw Error('Launched Chromium version does not match the locked Playwright revision'); const page = await browser.newPage(); await page.goto('data:text/html,<title>RG03 runtime smoke</title>'); if (await page.title() !== 'RG03 runtime smoke') throw Error('Chromium launch smoke failed'); receipt.conditions.chromium = {status: 'PASS', playwright: pw, revision: expected.revision, expectedVersion: expected.browserVersion, actualVersion: browser.version(), executablePath: browserPath, launch: true, officialProjectCli: true};} finally {await browser.close();}
++  receipt.status = 'PASS'; receipt.readyForMandatoryTests = true; save();
++  if (process.env.GITHUB_ENV) writeFileSync(process.env.GITHUB_ENV, `PG_BIN=${bin}\nCHROMIUM_PATH=${browserPath}\nPLAYWRIGHT_EXECUTABLE_PATH=${browserPath}\n`, {flag: 'a'});
++  console.log('Runtime readiness PASS. This does not count as any mandatory release identity.');
++} catch (error) {
++  receipt.status = 'FAILED'; receipt.readyForMandatoryTests = false; receipt.originalError = String(error.stack ?? error); save(); throw error;
++} finally {
++  if (pg && pg.exitCode === null) spawnSync(join(bin, 'pg_ctl'), ['-D', join(dir, 'pg'), '-m', 'fast', '-w', 'stop'], {stdio: 'ignore'});
++  if (dir) rmSync(dir, {recursive: true, force: true});
++}
+--- /dev/null
++++ b/ci/results.py
+@@ -0,0 +1,171 @@
++"""Independent, fail-closed accounting of fresh results only; no historical PASS inheritance."""
++import argparse
++from collections import Counter
++import copy
++import json
++import subprocess
++from pathlib import Path
++import zipfile
++from baseline import ROOT, verify, save
++
++
++def specs(report):
++    for suite in report.get("suites", []):
++        yield from suite.get("specs", [])
++        yield from specs(suite)
++
++
++def collect():
++    with zipfile.ZipFile(ROOT / "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip") as z:
++        manifest = json.loads(z.read("Quddam-Phase-5.0J-2-Test-Manifest.json"))
++    all_cases = manifest["browserApi"]["cases"] + manifest["nativePostgres"]["cases"]
++    source = json.loads((ROOT / "Source-Manifest.json").read_text())
++    for case in all_cases:
++        for k in list(case):
++            if k.startswith("execution") or k.startswith("executed"):
++                case.pop(k)
++        case["execution"] = "NOT_EXECUTED"
++        path = case.get("file", case.get("source"))
++        assert case["sourceSha256"] == source["files"][path], f"Authoritative manifest source mismatch: {path}"
++    audit_errors = []
++    failures = []
++    seen = set()
++
++    def setcase(case, status, path, retries=0):
++        assert case["identity"] not in seen, "Duplicate accounting of identity"
++        seen.add(case["identity"])
++        case.update(execution=status, executionEvidence=path.relative_to(ROOT).as_posix(), executedRetries=retries)
++        if status in ["FAILED", "SKIPPED"]:
++            failures.append({"identity": case["identity"], "status": status, "evidence": case["executionEvidence"]})
++
++    def browser(path, canonical=False):
++        if not path.exists():
++            return
++        report = json.loads(path.read_text())
++        for spec in specs(report):
++            tests = spec.get("tests", [])
++            assert len(tests) == 1, "Browser project expansion not authorized"
++            results = tests[0].get("results", [])
++            if not results:  # --max-failures=1 remaining test never started
++                continue
++            assert len(results) == 1, "Automatic retry / repeated browser execution detected"
++            result = results[0]
++            if result.get("status") == "skipped" and not result.get("workerIndex", -1) >= 0:
++                continue
++            candidates = [c for c in manifest["browserApi"]["cases"] if c["title"] == spec["title"]]
++            assert len(candidates) == 1, "Ambiguous browser identity"
++            case = candidates[0]
++            assert canonical == case["file"].startswith("tests/e2e/"), "Wrong browser inventory"
++            status = "PASS" if result["status"] == "passed" and not result.get("retry", 0) and tests[0].get("status") == "expected" else "SKIPPED" if result["status"] == "skipped" else "FAILED"
++            setcase(case, status, path, result.get("retry", 0))
++        if report.get("errors"):
++            audit_errors.append({"report": path.relative_to(ROOT).as_posix(), "originalErrors": report["errors"]})
++        if report.get("stats", {}).get("flaky"):
++            audit_errors.append({"report": path.relative_to(ROOT).as_posix(), "error": "Unresolved flaky result"})
++
++    canonical = ROOT / "verification/canonical"
++    for path in sorted(canonical.glob("[0-9][0-9][0-9]-native.json")):
++        browser(path, canonical=True)
++    for sub in ["lifecycle", "content-browser", "launch-low-browser"]:
++        browser(ROOT / "verification" / sub / "browser-native.json")
++    security = ROOT / "verification/security-headers/Browser-Results.json"
++    if security.exists():
++        for row in json.loads(security.read_text())["tests"]:
++            if row["status"] == "skipped" and row.get("workerIndex", -1) < 0:
++                continue
++            case = next(c for c in manifest["browserApi"]["cases"] if c["file"] == "tests/security-headers/compatibility.browser.ts" and c["title"] == row["title"])
++            status = "PASS" if row["status"] == "passed" and not row.get("retry") else "SKIPPED" if row["status"] == "skipped" else "FAILED"
++            setcase(case, status, security, row.get("retry", 0))
++    reports = {
++        "billing-settlement": "B01.json", "billing-recovery": "M01-M02.json", "billing-refunds": "M03.json",
++        "auth-abuse": "M05.json", "realtime": "M06-M07.json", "command-boundary": "M08-M09.json",
++        "history-content": "M10-M11.json", "data-retention": "M12.json", "content": "content/content-native.json",
++        "launch-low": "launch-low/launch-low-native.json",
++    }
++    for name, filename in reports.items():
++        path = ROOT / "verification/native" / filename
++        if not path.exists():
++            continue
++        report = json.loads(path.read_text())
++        for row in report.get("cases", report.get("results", [])):
++            case = next(c for c in manifest["nativePostgres"]["cases"] if c["source"] == "scripts/" + name + "-postgres.ts" and c["title"] == row["name"])
++            status = "PASS" if row.get("passed", True) and row.get("status", "passed") == "passed" else "FAILED"
++            setcase(case, status, path)
++    for path in sorted((ROOT / "verification/lifecycle").glob("native-*.json")):
++        stage = path.stem.removeprefix("native-")
++        if stage not in ["fixture", "verify-upgrade", "continue-active", "prepare-offline", "verify-offline", "resume-jobs", "failure-mvcc", "restore-check"]:
++            continue
++        for row in json.loads(path.read_text()).get("cases", []):
++            case = next(c for c in manifest["nativePostgres"]["cases"] if c["source"] == "scripts/database-lifecycle-postgres.ts" and c["stage"] == stage and c["title"] == row["name"])
++            setcase(case, "PASS" if row.get("passed", False) else "FAILED", path)
++
++    # Native scripts can abort before writing their JSON. Attribute from the
++    # original callback stack/literal loop and actual PASS output without editing
++    # or instrumenting any canonical test source or assertion.
++    def native_failure(sourcefile, logpath):
++        if not logpath.exists():
++            return
++        process = subprocess.run(["node", str(ROOT / "ci/native-location.mjs"), sourcefile, str(logpath)], capture_output=True, text=True)
++        if process.returncode != 0:
++            audit_errors.append({"source": sourcefile, "error": "Native failure attribution unresolved", "detail": process.stderr})
++            return
++        observed = json.loads(process.stdout)
++        save(ROOT / "results" / ("First-Failure-" + Path(sourcefile).stem + ".json"), observed)
++        for identity in observed["observedCompletedIdentities"]:
++            case = next(c for c in manifest["nativePostgres"]["cases"] if c["identity"] == identity)
++            if identity not in seen:
++                setcase(case, "PASS", logpath)
++        failure = observed.get("firstFailure")
++        if failure:
++            case = next(c for c in manifest["nativePostgres"]["cases"] if c["identity"] == failure["identity"])
++            if case["identity"] not in seen:
++                setcase(case, "FAILED", logpath)
++        failures.append({"source": sourcefile, "status": "FAILED", "identity": failure["identity"] if failure else None,
++                         "sourceLocation": failure, "originalErrorEvidence": logpath.relative_to(ROOT).as_posix(), "classification": "D — UNRESOLVED; no cause inferred"})
++
++    native_completion = ROOT / "verification/native/Execution-Results.json"
++    if native_completion.exists():
++        for run in json.loads(native_completion.read_text())["runs"]:
++            if run["status"] == "failed":
++                name = Path(run["source"]).stem.removesuffix("-postgres")
++                native_failure(run["source"], ROOT / "verification/native" / (name + ".log"))
++    lifecycle_completion = ROOT / "verification/lifecycle/Run-Completion.json"
++    if lifecycle_completion.exists() and json.loads(lifecycle_completion.read_text()).get("exitCode") != 0:
++        for log in sorted((ROOT / "verification/lifecycle").glob("native-*.log"), key=lambda p: p.stat().st_mtime):
++            if "scripts/database-lifecycle-postgres.ts:" in log.read_text(errors="replace"):
++                native_failure("scripts/database-lifecycle-postgres.ts", log)
++    counts = {
++        "canonical": dict(Counter(c["execution"] for c in manifest["browserApi"]["cases"] if c["file"].startswith("tests/e2e/"))),
++        "supplemental": dict(Counter(c["execution"] for c in manifest["browserApi"]["cases"] if not c["file"].startswith("tests/e2e/"))),
++        "nativePostgres": dict(Counter(c["execution"] for c in manifest["nativePostgres"]["cases"])),
++    }
++    quality = {label: "NOT_EXECUTED" for label in ["lint", "typecheck", "test", "build", "content-validation", "ops-validation"]}
++    q = ROOT / "Quality-Gates.json"
++    if q.exists():
++        for step in json.loads(q.read_text()).get("steps", []):
++            if step["label"] in quality:
++                quality[step["label"]] = "PASS" if step["status"] == "PASSED" else "FAILED" if step["status"] == "FAILED" else "NOT_EXECUTED"
++    unit = {"status": "NOT_EXECUTED", "required": 1185}
++    p = ROOT / "verification/quality-gates/unit-native.json"
++    if p.exists():
++        data = json.loads(p.read_text())
++        unit = {"status": "PASS" if data.get("numTotalTests") == data.get("numPassedTests") == 1185 and not data.get("numFailedTests") and not data.get("numPendingTests") and data.get("success") else "FAILED",
++                "required": 1185, "total": data.get("numTotalTests"), "passed": data.get("numPassedTests"), "failed": data.get("numFailedTests"), "pending": data.get("numPendingTests")}
++    retries = sum(c.get("executedRetries", 0) for c in all_cases)
++    manifest.update(finalCounts=counts, automaticRetries=retries, previousOutcomesInherited=False, diagnosticsAndTargetedRunsExcludedFromFinalIdentityCounts=True)
++    summary = {"counts": counts, "quality": quality, "unitIntegration": unit, "automaticRetries": retries, "firstFailures": failures, "auditErrors": audit_errors,
++               "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors else "INCOMPLETE_OR_FAILED"}
++    save(ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json", manifest)
++    save(ROOT / "results/Final-Execution-Summary.json", summary)
++    return manifest, summary
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--require-complete", action="store_true")
++    args = parser.parse_args()
++    verify()
++    _, summary = collect()
++    print(json.dumps({"status": summary["status"], "counts": summary["counts"]}))
++    if args.require_complete:
++        assert summary["status"] == "PASS", "Release criteria incomplete; Release Candidate forbidden"
+--- /dev/null
++++ b/ci/run.mjs
+@@ -0,0 +1,99 @@
++/** Serial first-failure orchestration; no inherited counts or automatic mandatory retries. */
++import {spawn, spawnSync} from 'node:child_process';
++import {readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync} from 'node:fs';
++import {join} from 'node:path';
++import {adapt, root} from './adapter.mjs';
++
++const app = join(root, 'qalba-platform'), phase = process.argv[2];
++const manifest = JSON.parse(readFileSync(join(root, 'Quddam-Phase-5.0J-2-Test-Manifest.json')));
++const source = JSON.parse(readFileSync(join(root, 'Source-Manifest.json')));
++const readiness = JSON.parse(readFileSync(join(root, 'receipts/Runtime-Readiness.json')));
++if (readiness.status !== 'PASS' || !readiness.readyForMandatoryTests) throw Error('Mandatory execution prohibited before runtime readiness');
++if (!process.env.PG_BIN || !process.env.CHROMIUM_PATH) throw Error('Readiness-proven executable paths required');
++if (process.env.J1_CONTINUE || process.env.I1_BROWSER_FILTER) throw Error('Resume / inherited partial filters forbidden');
++if (process.env.GITHUB_RUN_ATTEMPT !== '1') throw Error('A rerun cannot replace first-failure evidence; start only a newly authorized fresh workflow');
++const receipt = {phase, status: 'RUNNING', sourceFingerprint: source.sourceFingerprint, previousOutcomesInherited: false, automaticRetries: 0, tasks: [], startedAt: new Date().toISOString()};
++const out = join(root, 'receipts'); mkdirSync(join(out, 'private'), {recursive: true});
++const save = () => writeFileSync(join(out, 'Phase-' + phase + '.json'), JSON.stringify(receipt, null, 2));
++const environment = {...process.env, PG_IDENTITY_PRELOAD: '', PG_LIBRARY_PATH: '', CHECKPOINT_DISABLE: '1', NEXT_TELEMETRY_DISABLED: '1', DISABLE_PRISMA_TELEMETRY: 'true'};
++delete environment.LD_PRELOAD; delete environment.LD_LIBRARY_PATH;
++delete environment.MOYASAR_SECRET_KEY; delete environment.SMTP_USER; delete environment.SMTP_PASSWORD;
++delete environment.SMTP_PASS; delete environment.SMTP_URL;
++delete environment.RG03_CASE_IDENTITIES; delete environment.RG03_RUN_LABEL;
++function guard() {
++  const check = spawnSync('python3', [join(root, 'ci/baseline.py'), 'verify'], {cwd: root, encoding: 'utf8'});
++  if (check.status !== 0) throw Error('Frozen source/harness guard: ' + check.stderr);
++}
++async function run(label, command, args, extra = {}, cwd = root) {
++  guard();
++  const row = {label, status: 'RUNNING', startedAt: new Date().toISOString()}; receipt.tasks.push(row); save();
++  console.log('RG03 ' + phase + ': ' + label);
++  const log = join(out, 'private', phase + '-' + label + '.log');
++  writeFileSync(log, '', {mode: 0o600});
++  const code = await new Promise((resolve, reject) => {
++    const p = spawn(command, args, {cwd, env: {...environment, ...extra}, stdio: ['ignore', 'pipe', 'pipe']});
++    let chunks = [];
++    for (const stream of [p.stdout, p.stderr]) stream.on('data', bytes => chunks.push(bytes));
++    p.on('error', reject); p.once('exit', (code, signal) => {writeFileSync(log, Buffer.concat(chunks), {mode: 0o600}); row.signal = signal; resolve(code);});
++  });
++  row.exitCode = code; row.status = code === 0 ? 'PASS' : 'FAILED'; row.finishedAt = new Date().toISOString(); row.privateLog = log.slice(root.length + 1); save();
++  if (code !== 0) throw Error('STOP at first failed task: ' + label + ' (exit ' + code + ')');
++  guard(); console.log('PASS ' + label);
++}
++async function types() {
++  // Generated route typings only. Restore the frozen next-env bytes immediately.
++  const file = join(app, 'next-env.d.ts'), original = readFileSync(file);
++  try {
++    const value = spawnSync(process.execPath, ['node_modules/next/dist/bin/next', 'typegen'], {cwd: app, env: environment, encoding: 'utf8'});
++    writeFileSync(join(out, 'private', phase + '-typegen.log'), value.stdout + value.stderr, {mode: 0o600});
++    if (value.status !== 0) throw Error('Generated route type readiness failed');
++    const generated = join(app, '.next/types'), dev = join(app, '.next/dev/types');
++    if (existsSync(generated)) {mkdirSync(dev, {recursive: true}); cpSync(generated, dev, {recursive: true});}
++    for (const name of ['routes.d.ts', 'root-params.d.ts']) if (!existsSync(join(dev, name))) throw Error('Next generated route types missing: ' + name);
++  } finally {writeFileSync(file, original);}
++  guard();
++}
++const tools = adapt();
++const resetTitle = 'M05 real reset mail flow is bounded, recovers and preserves one-use session invalidation';
++const reset = manifest.browserApi.cases.find(x => x.file === 'tests/e2e/public-ingress.spec.ts' && x.title === resetTitle);
++if (!reset) throw Error('Canonical M05 identity missing');
++const related = manifest.browserApi.cases.filter(x => (x.file === 'tests/e2e/public-ingress.spec.ts' && x.title.startsWith('M05 ') && x.identity !== reset.identity) || x.file === 'tests/e2e/host-auth-revocation.spec.ts');
++if (related.length !== 10) throw Error('Related auth/reset identity inventory must contain exactly 10 unchanged canonical tests');
++save();
++try {
++  if (phase === 'prepare') {
++    await types(); await run('production-build-preparation', process.execPath, [tools.quality, '--prepare-target']);
++  } else if (phase === 'm05' || phase === 'related') {
++    if (!existsSync(join(app, '.next/BUILD_ID'))) throw Error('Production build required');
++    const wanted = phase === 'm05' ? [reset] : related;
++    const path = join(root, 'verification', phase);
++    if (existsSync(path)) throw Error('Refuse to reuse any prior targeted execution');
++    if (phase === 'related' && JSON.parse(readFileSync(join(out, 'Phase-m05.json'))).status !== 'PASS') throw Error('M05 must pass before related verification');
++    receipt.requiredIdentities = wanted.map(x => x.identity); save();
++    await run('unchanged-canonical-' + phase, process.execPath, [tools.consolidated, 'canonical'], {RG03_RUN_LABEL: phase, RG03_CASE_IDENTITIES: JSON.stringify(receipt.requiredIdentities)});
++    const results = JSON.parse(readFileSync(join(path, 'Execution-Results.json')));
++    if (results.failed || results.retries || results.runs.length !== wanted.length || results.runs.some(x => x.status !== 'passed') || wanted.some(x => !results.runs.some(y => y.identity === x.identity))) throw Error('Targeted complete assertion execution not proven');
++    receipt.passed = wanted.length; receipt.failed = 0; receipt.skipped = 0;
++  } else if (phase === 'full') {
++    // Freeze verification checks current run ID/SHA and every executable-source byte.
++    await run('verify-new-rg03-freeze', 'python3', [join(root, 'ci/package.py'), 'verify-freeze']);
++    for (const label of ['native', 'canonical', 'lifecycle', 'content-browser', 'launch-low-browser', 'security-headers', 'quality-gates']) {
++      if (existsSync(join(root, 'verification', label))) throw Error('Refuse to inherit earlier final execution: ' + label);
++    }
++    receipt.identityStart = {native: manifest.nativePostgres.cases[0].identity, canonical: 'tests/e2e/foundation.spec.ts::Arabic landing and account entry points render on desktop and mobile'}; save();
++    await types();
++    await run('fresh-complete-quality-content-operations', process.execPath, [tools.quality]);
++    await run('native-postgresql-from-001', process.execPath, [tools.consolidated, 'native']);
++    await run('canonical-browser-api-from-001', process.execPath, [tools.consolidated, 'canonical']);
++    await run('m13-native-lifecycle-and-browser', process.execPath, [tools.lifecycle], {LIFECYCLE_WORKSPACE: root, F1_OUTPUT: 'verification/lifecycle', F1_SKIP_EXISTING_NATIVE: '1'});
++    await run('supplemental-content-browser', process.execPath, [tools.content, '--final'], {CONTENT_WORKSPACE: root, G1_OUTPUT: 'verification/content-browser', PLAYWRIGHT_EXECUTABLE_PATH: environment.CHROMIUM_PATH});
++    await run('supplemental-launch-low-browser', process.execPath, [tools.launch, 'final'], {H1_WORKSPACE: root, H1_OUTPUT: 'verification/launch-low-browser', J1_SKIP_EXISTING_NATIVE: '1'});
++    await run('supplemental-security-csp-report-only', process.execPath, [tools.security, 'final'], {I1_OUTPUT: join(root, 'verification/security-headers'), I1_SOURCE_MANIFEST: join(root, 'Source-Manifest.json')}, app);
++    await run('independent-complete-result-audit', 'python3', [join(root, 'ci/results.py'), '--require-complete']);
++  } else throw Error('Unknown phase');
++  receipt.status = 'PASS'; receipt.completedAt = new Date().toISOString(); save();
++} catch (error) {
++  receipt.status = 'FAILED'; receipt.originalOrchestrationError = String(error.stack ?? error); receipt.stoppedAt = receipt.tasks.at(-1)?.label ?? phase;
++  receipt.classification = 'D — UNRESOLVED; original child errors preserved for evidence-based diagnosis'; receipt.firstFailurePreserved = true;
++  save(); throw error;
++}
+--- /dev/null
++++ b/ci/static-checks.py
+@@ -0,0 +1,139 @@
++"""Preparation checks only. Never execute or synthesize Quddam release PASS results."""
++import ast
++import json
++from pathlib import Path
++import subprocess
++import tempfile
++import unittest
++import yaml
++from baseline import ROOT, APP_SHA, verify, fingerprint, save
++from evidence import redact_json, redact_text
++from package import freeze, release, executable_files
++from results import collect
++
++
++class InfrastructureChecks(unittest.TestCase):
++    def test_01_exact_frozen_source_and_harness(self):
++        result = verify()
++        self.assertEqual(result["authoredApplicationFiles"], 670)
++        self.assertEqual(result["applicationFingerprint"], APP_SHA)
++        self.assertEqual(result["harnessFingerprint"], "47704bed3bc1d25e1ce50f14d2a5b1eaad74c67d0598119d8d9ad73009a7ff52")
++
++    def test_02_workflow_dependencies_and_manual_boundary(self):
++        data = yaml.load((ROOT / ".github/workflows/quddam-rg03-release-verification.yml").read_text(), Loader=yaml.BaseLoader)
++        self.assertEqual(data["on"], {"workflow_dispatch": ""})
++        self.assertEqual(data["permissions"], {"contents": "read"})
++        self.assertEqual(data["jobs"]["targeted-m05"]["needs"], "runtime-readiness")
++        self.assertEqual(data["jobs"]["complete-final-gate"]["needs"], "targeted-m05")
++        for job in data["jobs"].values():
++            self.assertEqual(job["runs-on"], "ubuntu-24.04")
++            self.assertEqual(job["services"]["postgres"]["image"], "postgres:16")
++            self.assertIn("--health-cmd", job["services"]["postgres"]["options"])
++            uploads = [x for x in job["steps"] if "actions/upload-artifact@" in x.get("uses", "")]
++            self.assertEqual(len(uploads), 1)
++            self.assertEqual(uploads[0]["if"], "${{ always() }}")
++            self.assertEqual(uploads[0]["with"]["retention-days"], "14")
++            self.assertEqual(uploads[0]["with"]["path"].strip().splitlines(), ["safe-artifacts/", "deliverables/"])
++        forbidden = ["continue-on-error", "strategy:", "pull_request_target:", "contents: write", "deploy", "git push", "git commit"]
++        for phrase in forbidden:
++            self.assertNotIn(phrase, (ROOT / ".github/workflows/quddam-rg03-release-verification.yml").read_text().replace("# Manual verification only. No push/PR/deployment trigger, no repository write permission.", ""))
++
++    def test_03_runtime_install_uses_exact_project_cli(self):
++        action = yaml.load((ROOT / ".github/actions/rg03-runtime/action.yml").read_text(), Loader=yaml.BaseLoader)
++        self.assertEqual(action["runs"]["using"], "composite")
++        text = (ROOT / ".github/actions/rg03-runtime/action.yml").read_text()
++        self.assertIn("node-version: '24.19.0'", text)
++        self.assertIn("-- npm ci", text)
++        self.assertNotIn("npm install", text)
++        self.assertIn("node node_modules/playwright/cli.js install --with-deps chromium", text)
++        self.assertNotIn("NODE_TLS_REJECT_UNAUTHORIZED", text)
++
++    def test_04_syntax_only_python_node_bash(self):
++        for p in (ROOT / "ci").glob("*.py"):
++            ast.parse(p.read_text(), filename=str(p))
++        for p in list((ROOT / "ci").glob("*.mjs")) + list((ROOT / "verification-tools").glob(".ci-*.mjs")):
++            subprocess.run(["node", "--check", str(p)], check=True, capture_output=True)
++        subprocess.run(["bash", "-n", str(ROOT / "ci/install-postgres.sh")], check=True)
++        for p in (ROOT / ".github").rglob("*.yml"):
++            obj = yaml.load(p.read_text(), Loader=yaml.BaseLoader)
++            steps = obj.get("runs", {}).get("steps", []) + [s for j in obj.get("jobs", {}).values() for s in j["steps"]]
++            for step in steps:
++                if "run" in step:
++                    subprocess.run(["bash", "-n"], input=step["run"], text=True, check=True, capture_output=True)
++
++    def test_05_adapters_only_runtime_selection_stop_policy(self):
++        audit = json.loads((ROOT / "receipts/CI-Adapter-Audit.json").read_text())
++        self.assertEqual(len(audit["files"]), 6)
++        self.assertFalse(audit["assertionsChanged"])
++        self.assertFalse(audit["assertionTimeoutsChanged"])
++        self.assertFalse(audit["mimeFunctionChanged"])
++        self.assertEqual(sum("--max-failures=1" in x["diff"] for x in audit["files"]), 5)
++        for x in audit["files"]:
++            subprocess.run(["node", "--check", str(ROOT / x["output"])], check=True, capture_output=True)
++        text = (ROOT / "verification-tools/.ci-consolidated.mjs").read_text()
++        self.assertIn("timeout:60000,workers:1,retries:0,maxFailures:1", text)
++        self.assertIn("launchOptions:{slowMo:100", text)
++        self.assertIn("--bail=1", (ROOT / "verification-tools/.ci-quality.mjs").read_text())
++        self.assertIn("--retry=0", (ROOT / "verification-tools/.ci-quality.mjs").read_text())
++
++    def test_06_authoritative_inventory_not_historical_results(self):
++        manifest, summary = collect()
++        self.assertEqual(summary["counts"], {"canonical": {"NOT_EXECUTED": 223}, "supplemental": {"NOT_EXECUTED": 38}, "nativePostgres": {"NOT_EXECUTED": 186}})
++        self.assertEqual(set(summary["quality"].values()), {"NOT_EXECUTED"})
++        self.assertEqual(summary["unitIntegration"]["status"], "NOT_EXECUTED")
++        self.assertNotEqual(summary["status"], "PASS")
++        self.assertFalse(manifest["previousOutcomesInherited"])
++        self.assertEqual(manifest["nativePostgres"]["cases"][0]["identity"], "scripts/billing-settlement-postgres.ts::A/B concurrent paid")
++
++    def test_07_m05_and_ten_related_identities(self):
++        manifest = json.loads((ROOT / "Quddam-Phase-5.0J-2-Test-Manifest.json").read_text())
++        wanted = "tests/e2e/public-ingress.spec.ts::M05 real reset mail flow is bounded, recovers and preserves one-use session invalidation"
++        self.assertEqual(sum(x["identity"] == wanted for x in manifest["browserApi"]["cases"]), 1)
++        related = [x for x in manifest["browserApi"]["cases"] if (x["file"] == "tests/e2e/public-ingress.spec.ts" and x["title"].startswith("M05 ") and x["identity"] != wanted) or x["file"] == "tests/e2e/host-auth-revocation.spec.ts"]
++        self.assertEqual(len(related), 10)
++
++    def test_08_freeze_refuses_absent_runtime_and_targeted_proof(self):
++        self.assertFalse((ROOT / "receipts/Runtime-Readiness.json").exists())
++        with self.assertRaises(FileNotFoundError):
++            freeze()
++        self.assertFalse((ROOT / "deliverables/Quddam-Phase-5.0J-2-RG03-frozen-checkpoint.zip").exists())
++
++    def test_09_release_candidate_refuses_unexecuted_gate(self):
++        with self.assertRaisesRegex(AssertionError, "Release Candidate forbidden"):
++            release()
++        self.assertFalse((ROOT / "deliverables/Quddam-Phase-5.0J-2-Release-Candidate.zip").exists())
++
++    def test_10_redaction_preserves_required_integrity(self):
++        data = {"applicationFingerprint": APP_SHA, "migrationFingerprints": {"prisma/migrations/test.sql": APP_SHA}, "run": {"sha": "a" * 40}, "password": "DO_NOT_EXPORT", "token": "DO_NOT_EXPORT", "cookies": [{"name": "qalba_session", "value": "DO_NOT_EXPORT"}]}
++        safe = redact_json(data)
++        self.assertEqual(safe["applicationFingerprint"], APP_SHA)
++        self.assertEqual(safe["migrationFingerprints"]["prisma/migrations/test.sql"], APP_SHA)
++        self.assertEqual(safe["run"]["sha"], "a" * 40)
++        self.assertNotIn("DO_NOT_EXPORT", json.dumps(safe))
++        for marker in ["Z" * 43, "b" * 64, "reset-new-password-123", "e2e-ingress-password-123"]:
++            self.assertNotIn(marker, redact_text("Unexpected sensitive value: " + marker))
++        self.assertNotIn("local-pass", redact_text("postgresql://test:local-pass@127.0.0.1/db"))
++
++    def test_11_original_m13_capabilities_not_substituted(self):
++        lifecycle = (ROOT / "verification-tools/lifecycle-runner.mjs").read_text()
++        for needle in ["'pg_dump'", "'pg_restore'", "'initdb'", "'pg_ctl'", "'postgres'", "'verify-upgrade'", "'restore-check'"]:
++            self.assertIn(needle, lifecycle)
++        self.assertEqual(len([x for x in json.loads((ROOT / "Quddam-Phase-5.0J-2-Test-Manifest.json").read_text())["nativePostgres"]["cases"] if x["source"] == "scripts/database-lifecycle-postgres.ts"]), 23)
++
++    def test_12_native_error_location_is_read_only(self):
++        # This synthetic stack is ONLY a locator unit check, never release evidence.
++        source = ROOT / "qalba-platform/scripts/billing-settlement-postgres.ts"
++        line = next(i + 1 for i, x in enumerate(source.read_text().splitlines()) if "const f = await fixture(); const r = await race" in x)
++        with tempfile.TemporaryDirectory(prefix="rg03-ci-locator-test-") as directory:
++            log = Path(directory) / "synthetic-locator-only.log"
++            log.write_text(f"Synthetic parser check; NOT_EXECUTED release identity\n    at async fixture ({source}:{line}:5)\n")
++            result = subprocess.run(["node", str(ROOT / "ci/native-location.mjs"), "scripts/billing-settlement-postgres.ts", str(log)], capture_output=True, text=True, check=True)
++            self.assertIn("originalStackLocations", json.loads(result.stdout))
++        verify()
++
++
++if __name__ == "__main__":
++    suite = unittest.defaultTestLoader.loadTestsFromTestCase(InfrastructureChecks)
++    result = unittest.TextTestRunner(verbosity=2).run(suite)
++    save(ROOT / "receipts/CI-Static-Validation.json", {"kind": "CI_INFRASTRUCTURE_PREPARATION_ONLY", "checksRun": result.testsRun, "failures": len(result.failures), "errors": len(result.errors), "skipped": len(result.skipped), "status": "PASS" if result.wasSuccessful() else "FAILED", "githubActionsExecuted": False, "mandatoryReleaseTestsExecuted": 0, "simulatedReleaseResults": False})
++    raise SystemExit(0 if result.wasSuccessful() else 1)
+--- /dev/null
++++ b/ci/task.py
+@@ -0,0 +1,38 @@
++"""Readiness command receipt without leaking raw installation/configuration logs to CI."""
++import argparse
++import datetime
++import json
++import os
++import subprocess
++from pathlib import Path
++import sys
++
++ROOT = Path(__file__).resolve().parent.parent
++parser = argparse.ArgumentParser()
++parser.add_argument("label")
++parser.add_argument("--cwd", default=".")
++split = sys.argv.index("--") if "--" in sys.argv else len(sys.argv)
++args = parser.parse_args(sys.argv[1:split])
++command = sys.argv[split + 1:]
++assert command, "Readiness command missing"
++path = ROOT / "receipts" / "private" / (args.label + ".log")
++path.parent.mkdir(parents=True, exist_ok=True)
++receipt = {"label": args.label, "status": "RUNNING", "command": command, "mandatoryIdentity": False, "startedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()}
++target = ROOT / "receipts" / ("Setup-" + args.label + ".json")
++target.write_text(json.dumps(receipt, indent=2))
++with path.open("wb") as log:
++    path.chmod(0o600)
++    try:
++        if os.environ.get("NODE_TLS_REJECT_UNAUTHORIZED") == "0":
++            raise OSError("Normal TLS certificate verification is required for CI provisioning")
++        if args.label == "official-chromium-install" and (os.environ.get("PLAYWRIGHT_DOWNLOAD_HOST") or os.environ.get("PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST")):
++            raise OSError("Browser mirror overrides are forbidden; use the locked project CLI's official endpoints")
++        result = subprocess.run(command, cwd=ROOT / args.cwd, stdout=log, stderr=subprocess.STDOUT, check=False)
++        code = result.returncode
++    except OSError as error:
++        log.write(str(error).encode())
++        code = 1
++receipt.update(status="PASS" if code == 0 else "FAILED", exitCode=code, privateLog=path.relative_to(ROOT).as_posix())
++target.write_text(json.dumps(receipt, indent=2))
++print(f"Readiness {args.label}: {receipt['status']}; safe evidence collected separately.")
++sys.exit(code)

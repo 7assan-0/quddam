@@ -1,0 +1,8 @@
+import { hasInvalidAuthoredText } from "@/lib/content/authored";
+import {z} from "zod";
+import {bounded,validateList} from "./module";
+const text=(max:number)=>z.string().max(max).transform((v,c)=>{try{return bounded(v,max);}catch(e){c.addIssue({code:"custom",message:e instanceof Error?e.message:"نص غير صالح"});return z.NEVER;}});
+const nullable=(max:number)=>z.union([text(max),z.literal(""),z.null()]).transform(v=>v||null);
+export const listSchema=z.object({title:text(250),description:nullable(1000),categoryId:z.string().min(1).max(100),difficulty:z.enum(["EASY","MEDIUM","HARD"]),locale:z.literal("ar-SA"),status:z.enum(["DRAFT","PUBLISHED","ARCHIVED"]),kind:z.enum(["CURATED","FACTUAL"]),sourceLabel:nullable(200),sourceUrl:nullable(2048),sourceDate:nullable(10),notes:nullable(1000),entries:z.array(z.object({rank:z.number().int().min(1).max(200),answer:text(160),alternativeAnswers:z.array(text(160)).max(12),points:z.number().int().min(1).max(1000),displayValue:nullable(100)}).strict()).min(5).max(200)}).strict().refine(v => !hasInvalidAuthoredText(v), "راجع محتوى النص قبل النشر").superRefine((v,c)=>{try{validateList(v);}catch(e){c.addIssue({code:"custom",message:e instanceof Error?e.message:"قائمة غير صالحة"});}});
+export const createSchema=z.object({teams:z.tuple([text(60),text(60)])}).strict().refine(v=>v.teams.every(n=>n.length>=2)&&v.teams[0]!==v.teams[1],"اختر اسمين مختلفين للفريقين");
+export const commandSchema=z.object({key:z.uuid(),expectedVersion:z.number().int().nonnegative(),action:z.union([z.object({type:z.enum(["START","START_ROUND","PAUSE","RESUME","UNDO","END_ROUND","NEXT_ROUND","COMPLETE","REMATCH","ABANDON"])}).strict(),z.object({type:z.literal("SUBMIT_GUESS"),guess:text(160)}).strict()])}).strict();

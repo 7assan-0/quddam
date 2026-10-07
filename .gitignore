@@ -1,0 +1,15 @@
+# Verification outputs are ephemeral; do not commit private synthetic runtime state.
+qalba-platform/node_modules/
+qalba-platform/.next/
+qalba-platform/src/generated/
+qalba-platform/tsconfig.tsbuildinfo
+qalba-platform/test-results/
+qalba-platform/playwright-report/
+ci/__pycache__/
+receipts/
+results/
+safe-artifacts/
+deliverables/
+incoming/
+verification/
+verification-tools/.ci-*.mjs

@@ -1,0 +1,17 @@
+"use client";
+import { CreateCopy } from "./cta-copy";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export function LetterSetup(){
+  const router=useRouter();const [names,setNames]=useState<[string,string]>(["الفريق الأول","الفريق الثاني"]),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  async function create(event:React.FormEvent){event.preventDefault();setBusy(true);setError("");
+    try{const response=await fetch("/api/letter-network",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({names})});
+      const data=await response.json();if(!response.ok)throw new Error(data.error??"تعذّر إنشاء المباراة");router.push("/letter-network/host/"+data.id);
+    }catch(cause){setError(cause instanceof Error?cause.message:"تعذّر إنشاء المباراة");setBusy(false);}}
+  return <form className="panel social-form" onSubmit={create}><h2>جهّز الفريقين</h2><p>أ يربط اليسار باليمين، وب يربط الأعلى بالأسفل. ٣٠ ثانية للإجابة و١٥ ثانية لفرصة الاقتناص.</p>
+    {[0,1].map(i=><label key={i}>اسم الفريق {i===0?"أ · المرجاني":"ب · التركوازي"}<input required minLength={2} maxLength={60} value={names[i]} onChange={e=>setNames(current=>i===0?[e.target.value,current[1]]:[current[0],e.target.value])}/></label>)}
+    <p>تُخصم لعبة واحدة عند البدء. الإعادة داخل هذه الجلسة مجانية.</p>{error&&<p role="alert" className="form-error">{error}</p>}
+    <button className="btn btn-primary" disabled={busy}>{busy?"جارٍ التجهيز…":<CreateCopy previous="أنشئ المباراة"/>}</button>
+  </form>;
+}
+
