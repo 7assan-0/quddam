@@ -48,7 +48,11 @@ async function types() {
     writeFileSync(join(out, 'private', phase + '-typegen.log'), value.stdout + value.stderr, {mode: 0o600});
     if (value.status !== 0) throw Error('Generated route type readiness failed');
     const generated = join(app, '.next/types'), dev = join(app, '.next/dev/types');
-    if (existsSync(generated)) {mkdirSync(dev, {recursive: true}); cpSync(generated, dev, {recursive: true});}
+    if (existsSync(generated)) {
+      mkdirSync(dev, {recursive: true});
+      // validator.ts must stay in .next/types because its source imports are relative.
+      for (const name of ['routes.d.ts', 'root-params.d.ts']) cpSync(join(generated, name), join(dev, name));
+    }
     for (const name of ['routes.d.ts', 'root-params.d.ts']) if (!existsSync(join(dev, name))) throw Error('Next generated route types missing: ' + name);
   } finally {writeFileSync(file, original);}
   guard();
