@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 import yaml
-from baseline import ROOT, APP_SHA, verify, fingerprint, save
+from baseline import ROOT, APP_SHA, verify, fingerprint, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY
 from evidence import redact_json, redact_text
 from package import freeze, release, executable_files
 from results import collect
@@ -64,13 +64,37 @@ class InfrastructureChecks(unittest.TestCase):
     def test_05_adapters_only_runtime_selection_stop_policy(self):
         audit = json.loads((ROOT / "receipts/CI-Adapter-Audit.json").read_text())
         self.assertEqual(len(audit["files"]), 6)
-        self.assertFalse(audit["assertionsChanged"])
+        self.assertTrue(audit["assertionsChanged"])
+        self.assertFalse(audit["authoredAssertionsChanged"])
         self.assertFalse(audit["assertionTimeoutsChanged"])
         self.assertFalse(audit["mimeFunctionChanged"])
+        override = canonical_override()
+        self.assertEqual(override["identity"], CANONICAL_OVERRIDE_IDENTITY)
+        self.assertEqual(override["canonicalNumber"], 66)
+        old, replacement = override["edits"][0]
+        source = (ROOT / override["input"]).read_text()
+        self.assertEqual(old, source.splitlines()[42])
+        self.assertIn('expect(r.map(r=>r.status()).sort()).toEqual([200,409]);', old)
+        self.assertIn('expect(r[1].status()).toBe(409);', replacement)
+        self.assertIn('expect(post.stateVersion).toBe(v.version+1);', replacement)
+        self.assertIn('expect(post.state.outcomes).toEqual(pre.state.outcomes);', replacement)
+        self.assertIn('expect(post.events).toBe(pre.events);', replacement)
+        self.assertIn('expect(post.commands).toBe(pre.commands+1);', replacement)
+        self.assertIn('expect(timeouts.rows[0].n).toBe(1);', replacement)
+        self.assertTrue(replacement.endswith('expect((await read(page,id)).teams.map(t=>t.score)).toEqual(v.teams.map(t=>t.score));'))
+        generated_config = (ROOT / override["config"]).read_text()
+        self.assertIn("testDir:'.',testMatch:'rg03-forbidden-word.spec.ts'", generated_config)
+        self.assertIn("timeout:60000,workers:1,retries:0,maxFailures:1", generated_config)
+        self.assertIn("launchOptions:{slowMo:100", generated_config)
+        frozen_files, _, _ = executable_files()
+        self.assertEqual(frozen_files[override["output"]], override["outputSha256"])
+        self.assertEqual(frozen_files[override["config"]], override["configSha256"])
         self.assertEqual(sum("--max-failures=1" in x["diff"] for x in audit["files"]), 5)
         for x in audit["files"]:
             subprocess.run(["node", "--check", str(ROOT / x["output"])], check=True, capture_output=True)
         text = (ROOT / "verification-tools/.ci-consolidated.mjs").read_text()
+        self.assertIn('const override066=c.identity===', text)
+        self.assertIn('executionFile=override066?join(root,approved066.output):c.file', text)
         self.assertIn("timeout:60000,workers:1,retries:0,maxFailures:1", text)
         self.assertIn("launchOptions:{slowMo:100", text)
         self.assertIn("--bail=1", (ROOT / "verification-tools/.ci-quality.mjs").read_text())

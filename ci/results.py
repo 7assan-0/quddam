@@ -6,7 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 import zipfile
-from baseline import ROOT, verify, save
+from baseline import ROOT, verify, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY
 
 
 def specs(report):
@@ -20,6 +20,7 @@ def collect():
         manifest = json.loads(z.read("Quddam-Phase-5.0J-2-Test-Manifest.json"))
     all_cases = manifest["browserApi"]["cases"] + manifest["nativePostgres"]["cases"]
     source = json.loads((ROOT / "Source-Manifest.json").read_text())
+    override = canonical_override()
     for case in all_cases:
         for k in list(case):
             if k.startswith("execution") or k.startswith("executed"):
@@ -56,6 +57,29 @@ def collect():
             assert len(candidates) == 1, "Ambiguous browser identity"
             case = candidates[0]
             assert canonical == case["file"].startswith("tests/e2e/"), "Wrong browser inventory"
+            reported_file = spec.get("file")
+            assert isinstance(reported_file, str) and reported_file, "Browser result must disclose its executed source file"
+            reported_path = Path(reported_file)
+            if reported_path.is_absolute():
+                executed_path = reported_path.resolve()
+            elif reported_file.startswith("qalba-platform/"):
+                executed_path = (ROOT / reported_path).resolve()
+            elif reported_file.startswith(("src/", "tests/")):
+                executed_path = (ROOT / "qalba-platform" / reported_path).resolve()
+            else:
+                report_root = report.get("config", {}).get("rootDir")
+                assert isinstance(report_root, str) and Path(report_root).is_absolute(), "Relative browser source requires its absolute report root"
+                executed_path = (Path(report_root) / reported_path).resolve()
+            if case["identity"] == CANONICAL_OVERRIDE_IDENTITY:
+                assert override is not None, "Canonical 066 cannot be counted without approved runtime oracle provenance"
+                assert executed_path == (ROOT / override["output"]).resolve(), "Canonical 066 executed an unapproved source file"
+                config_file = report.get("config", {}).get("configFile")
+                assert isinstance(config_file, str) and Path(config_file).is_absolute() and Path(config_file).resolve() == (ROOT / override["config"]).resolve(), "Canonical 066 executed an unapproved configuration"
+                case.update(runtimeSource=override["output"], runtimeSourceSha256=override["outputSha256"],
+                            executedReportedFile=reported_file, approvedOverride={"identity": override["identity"], "authorization": override["authorization"], "config": override["config"], "configSha256": override["configSha256"]})
+            else:
+                assert executed_path.is_relative_to(ROOT / "qalba-platform"), "Browser source is outside the frozen application"
+                assert not executed_path.is_relative_to(ROOT / "qalba-platform/src/generated"), "Generated canonical oracle cannot execute another identity"
             status = "PASS" if result["status"] == "passed" and not result.get("retry", 0) and tests[0].get("status") == "expected" else "SKIPPED" if result["status"] == "skipped" else "FAILED"
             setcase(case, status, path, result.get("retry", 0))
         if report.get("errors"):
@@ -152,9 +176,11 @@ def collect():
         unit = {"status": "PASS" if data.get("numTotalTests") == data.get("numPassedTests") == 1185 and not data.get("numFailedTests") and not data.get("numPendingTests") and data.get("success") else "FAILED",
                 "required": 1185, "total": data.get("numTotalTests"), "passed": data.get("numPassedTests"), "failed": data.get("numFailedTests"), "pending": data.get("numPendingTests")}
     retries = sum(c.get("executedRetries", 0) for c in all_cases)
-    manifest.update(finalCounts=counts, automaticRetries=retries, previousOutcomesInherited=False, diagnosticsAndTargetedRunsExcludedFromFinalIdentityCounts=True)
+    manifest.update(finalCounts=counts, automaticRetries=retries, previousOutcomesInherited=False, diagnosticsAndTargetedRunsExcludedFromFinalIdentityCounts=True,
+                    canonicalOverrides=[override] if override else [])
     summary = {"counts": counts, "quality": quality, "unitIntegration": unit, "automaticRetries": retries, "firstFailures": failures, "auditErrors": audit_errors,
-               "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors else "INCOMPLETE_OR_FAILED"}
+               "canonicalOverrides": [override] if override else [],
+               "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors and override is not None else "INCOMPLETE_OR_FAILED"}
     save(ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json", manifest)
     save(ROOT / "results/Final-Execution-Summary.json", summary)
     return manifest, summary

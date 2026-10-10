@@ -12,6 +12,9 @@ ARCHIVES = {
     "Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip": "55f544c7b8a3b2276adeaab00f7f64d79f8aec34ca29be68287542778333af34",
     "Quddam-Phase-5.0J-2-RG03-Evidence.zip": "9d5e6aca903f092ab1d9e4eec3e9f6c38be015fb00a7800e9c8cd9cb0fa42017",
 }
+CANONICAL_OVERRIDE_IDENTITY = "tests/e2e/forbidden-word.spec.ts::Forbidden Word: real Correct Skip Foul and duplicate races consume and score exactly once"
+CANONICAL_OVERRIDE_AUTHORIZATION = "Owner approved only identity 066 race oracle: both valid lock orders, exactly-once timeout and unchanged scores; frozen authored files unchanged."
+LEGACY_BOOTSTRAP_AUDIT_SHA256 = "56f13f4fd01a9572edea673eaea4c42e5f52d30e01ac147623a06a28b6c1e0fb"
 
 
 def sha(data):
@@ -25,6 +28,48 @@ def fingerprint(files):
 def save(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
+def canonical_override():
+    """Validate the disclosed runtime oracle exception; authored source stays frozen."""
+    path = ROOT / "receipts/CI-Adapter-Audit.json"
+    if not path.exists():
+        return None
+    audit_bytes = path.read_bytes()
+    # A clean checkout carries this exact prepared bootstrap receipt. Runtime
+    # provisioning verifies frozen authored bytes before adapt() replaces it.
+    # This grants no oracle provenance: freeze/results still require an override.
+    if sha(audit_bytes) == LEGACY_BOOTSTRAP_AUDIT_SHA256:
+        return None
+    audit = json.loads(audit_bytes)
+    assert set(audit) == {"assertionsChanged", "assertionTimeoutsChanged", "mimeFunctionChanged", "authoredAssertionsChanged", "files", "canonicalOverrides"}, "Unexpected CI adapter audit schema"
+    assert audit["assertionTimeoutsChanged"] is False and audit["mimeFunctionChanged"] is False and audit["authoredAssertionsChanged"] is False, "Unapproved authored assertion, timeout or MIME change"
+    assert isinstance(audit["files"], list) and len(audit["files"]) == 6, "Six orchestration adapter audits required"
+    overrides = audit["canonicalOverrides"]
+    assert isinstance(overrides, list), "Canonical overrides must be an explicit list"
+    if not overrides:
+        assert audit["assertionsChanged"] is False, "Undisclosed runtime assertion change"
+        return None
+    assert len(overrides) == 1 and audit["assertionsChanged"] is True, "Exactly one authorized canonical oracle exception required"
+    value = overrides[0]
+    assert isinstance(value, dict) and set(value) == {"identity", "canonicalNumber", "input", "inputSha256", "output", "outputSha256", "config", "configSha256", "edits", "diff", "authorization", "assertionTimeoutsChanged"}, "Unexpected canonical override schema"
+    assert value["identity"] == CANONICAL_OVERRIDE_IDENTITY and type(value["canonicalNumber"]) is int and value["canonicalNumber"] == 66, "Only canonical identity 066 is authorized"
+    assert value["input"] == "qalba-platform/tests/e2e/forbidden-word.spec.ts", "Unexpected canonical override input"
+    assert value["output"] == "qalba-platform/src/generated/rg03-forbidden-word.spec.ts" and value["config"] == "qalba-platform/src/generated/rg03-forbidden-word.config.ts", "Unexpected canonical override output/config"
+    assert value["authorization"] == CANONICAL_OVERRIDE_AUTHORIZATION and value["assertionTimeoutsChanged"] is False, "Canonical override authorization/timeout mismatch"
+    source = json.loads((ROOT / "Source-Manifest.json").read_text())
+    original = (ROOT / value["input"]).read_bytes()
+    assert source["sourceFingerprint"] == APP_SHA and value["inputSha256"] == source["files"]["tests/e2e/forbidden-word.spec.ts"] == sha(original), "Canonical override input must remain frozen"
+    assert sha((ROOT / value["output"]).read_bytes()) == value["outputSha256"], "Canonical override output hash mismatch"
+    assert sha((ROOT / value["config"]).read_bytes()) == value["configSha256"], "Canonical override configuration hash mismatch"
+    edits = value["edits"]
+    assert isinstance(edits, list) and len(edits) == 1 and isinstance(edits[0], list) and len(edits[0]) == 2 and all(isinstance(x, str) and x for x in edits[0]), "Exactly one oracle edit required"
+    old, replacement = edits[0]
+    text = original.decode("utf8")
+    assert old != replacement and text.count(old) == 1, "Oracle edit must replace exactly one frozen match"
+    assert text.replace(old, replacement).encode("utf8") == (ROOT / value["output"]).read_bytes(), "Canonical override contains undisclosed edits"
+    assert isinstance(value["diff"], str) and value["diff"], "Exact canonical override diff required"
+    return value
 
 
 def load_inputs():
@@ -122,10 +167,12 @@ def verify():
         "packageLockFingerprint": migration["packageLockSha256"],
         "prismaSchemaFingerprint": migration["schemaSha256"],
         "migrationFingerprints": migration["migrationFiles"], "archiveFingerprints": ARCHIVES,
-        "productDiff": [], "canonicalAssertionDiff": [], "schemaDiff": [], "migrationDiff": [],
+        "productDiff": [], "canonicalAssertionDiff": [], "canonicalAssertionDiffScope": "authoredSource", "schemaDiff": [], "migrationDiff": [],
         "dependencyDiff": [], "rg03MimePatchByteIdenticalToEvidence": True,
         "historicalResultsCounted": False,
     }
+    override = canonical_override()
+    result["runtimeCanonicalOverrides"] = [override] if override else []
     ci_manifest = ROOT / "CI-Source-Manifest.json"
     if ci_manifest.exists():
         ci = json.loads(ci_manifest.read_text())
