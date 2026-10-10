@@ -6,7 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 import zipfile
-from baseline import ROOT, verify, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY
+from baseline import ROOT, verify, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY, canonical_fixture, CANONICAL_FIXTURE_IDENTITY
 
 
 def specs(report):
@@ -21,6 +21,7 @@ def collect():
     all_cases = manifest["browserApi"]["cases"] + manifest["nativePostgres"]["cases"]
     source = json.loads((ROOT / "Source-Manifest.json").read_text())
     override = canonical_override()
+    fixture = canonical_fixture()
     for case in all_cases:
         for k in list(case):
             if k.startswith("execution") or k.startswith("executed"):
@@ -77,6 +78,13 @@ def collect():
                 assert isinstance(config_file, str) and Path(config_file).is_absolute() and Path(config_file).resolve() == (ROOT / override["config"]).resolve(), "Canonical 066 executed an unapproved configuration"
                 case.update(runtimeSource=override["output"], runtimeSourceSha256=override["outputSha256"],
                             executedReportedFile=reported_file, approvedOverride={"identity": override["identity"], "authorization": override["authorization"], "config": override["config"], "configSha256": override["configSha256"]})
+            elif case["identity"] == CANONICAL_FIXTURE_IDENTITY:
+                assert fixture is not None, "Canonical 184 requires audited HTTPS fixture provenance"
+                assert executed_path == (ROOT / fixture["output"]).resolve(), "Canonical 184 executed an unapproved fixture"
+                config_file = report.get("config", {}).get("configFile")
+                assert isinstance(config_file, str) and Path(config_file).is_absolute() and Path(config_file).resolve() == (ROOT / fixture["config"]).resolve(), "Canonical 184 executed an unapproved configuration"
+                case.update(runtimeSource=fixture["output"], runtimeSourceSha256=fixture["outputSha256"],
+                            executedReportedFile=reported_file, approvedFixture=fixture)
             else:
                 assert executed_path.is_relative_to(ROOT / "qalba-platform"), "Browser source is outside the frozen application"
                 assert not executed_path.is_relative_to(ROOT / "qalba-platform/src/generated"), "Generated canonical oracle cannot execute another identity"
@@ -177,10 +185,11 @@ def collect():
                 "required": 1185, "total": data.get("numTotalTests"), "passed": data.get("numPassedTests"), "failed": data.get("numFailedTests"), "pending": data.get("numPendingTests")}
     retries = sum(c.get("executedRetries", 0) for c in all_cases)
     manifest.update(finalCounts=counts, automaticRetries=retries, previousOutcomesInherited=False, diagnosticsAndTargetedRunsExcludedFromFinalIdentityCounts=True,
-                    canonicalOverrides=[override] if override else [])
+                    canonicalOverrides=[override] if override else [], canonicalFixtures=[fixture] if fixture else [])
     summary = {"counts": counts, "quality": quality, "unitIntegration": unit, "automaticRetries": retries, "firstFailures": failures, "auditErrors": audit_errors,
                "canonicalOverrides": [override] if override else [],
-               "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors and override is not None else "INCOMPLETE_OR_FAILED"}
+               "canonicalFixtures": [fixture] if fixture else [],
+               "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors and override is not None and fixture is not None else "INCOMPLETE_OR_FAILED"}
     save(ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json", manifest)
     save(ROOT / "results/Final-Execution-Summary.json", summary)
     return manifest, summary

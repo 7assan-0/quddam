@@ -5,7 +5,7 @@ import os
 import shutil
 from pathlib import Path
 import zipfile
-from baseline import ROOT, fingerprint, save, sha, verify, canonical_override
+from baseline import ROOT, fingerprint, save, sha, verify, canonical_override, canonical_fixture
 from evidence import export, archive, redact_text
 from results import collect
 
@@ -30,6 +30,9 @@ def executable_files():
     assert override is not None, "Approved identity 066 runtime oracle provenance required before freezing executable source"
     files.update({override["output"]: override["outputSha256"], override["config"]: override["configSha256"],
                   "receipts/CI-Adapter-Audit.json": sha((ROOT / "receipts/CI-Adapter-Audit.json").read_bytes())})
+    fixture = canonical_fixture()
+    assert fixture is not None, "Audited canonical 184 HTTPS fixture required before freezing executable source"
+    files.update({fixture["output"]: fixture["outputSha256"], fixture["config"]: fixture["configSha256"]})
     return files | ci | adapters, ci, adapters
 
 
@@ -55,7 +58,7 @@ def freeze():
     files, ci, adapters = executable_files()
     receipt = {**integrity, "status": "FROZEN", "run": ready["run"], "ciFingerprint": fingerprint(ci), "ciAdapterFingerprint": fingerprint(adapters),
                "combinedVerificationSourceFingerprint": fingerprint(files), "combinedFileCount": len(files), "files": files, "canonicalM05AssertionsAndTimeoutUnchanged": True,
-               "canonicalOverrides": [canonical_override()], "finalGateResults": "NOT_EXECUTED; targeted results cannot substitute for fresh final gate"}
+               "canonicalOverrides": [canonical_override()], "canonicalFixtures": [canonical_fixture()], "finalGateResults": "NOT_EXECUTED; targeted results cannot substitute for fresh final gate"}
     save(ROOT / "receipts/RG03-Freeze.json", receipt)
     path = ROOT / "deliverables" / FROZEN
     path.parent.mkdir(exist_ok=True)
@@ -76,6 +79,7 @@ def verify_freeze():
         assert receipt["run"]["repository"] == os.environ.get("GITHUB_REPOSITORY")
         files, ci, adapters = executable_files()
         assert receipt["canonicalOverrides"] == [canonical_override()], "Frozen canonical oracle provenance differs from current approved override"
+        assert receipt["canonicalFixtures"] == [canonical_fixture()], "Frozen canonical fixture provenance differs from current audited fixture"
         assert files == json.loads(z.read("Frozen-File-Manifest.json")) == receipt["files"], "Current executable source differs from freshly frozen RG03"
         assert fingerprint(files) == receipt["combinedVerificationSourceFingerprint"]
         for name, expected in files.items():
@@ -98,6 +102,8 @@ def release():
     assert files == frozen["files"] and ready["status"] == "PASS"
     override = canonical_override()
     assert frozen["canonicalOverrides"] == summary["canonicalOverrides"] == [override], "Release oracle provenance differs from frozen/fresh audited execution"
+    fixture = canonical_fixture()
+    assert frozen["canonicalFixtures"] == summary["canonicalFixtures"] == [fixture], "Release fixture provenance differs from frozen/fresh audited execution"
     output = ROOT / "deliverables"; output.mkdir(exist_ok=True)
     safe = export()
     archive(output / "Quddam-Phase-5.0J-2-Final-Evidence.zip", safe)
@@ -118,6 +124,7 @@ Authored application / authored canonical test / schema / migration / dependency
 Executed canonical oracle exception: identity 066 only, owner-approved concurrent-expiry oracle correction; authored test bytes and timeouts remain unchanged.
 Override input: `{override['input']}` (`{override['inputSha256']}`). Executed source: `{override['output']}` (`{override['outputSha256']}`); configuration: `{override['config']}` (`{override['configSha256']}`).
 Exact oracle authorization, edit and diff: receipts/CI-Adapter-Audit.json; generated source/configuration are included in the frozen executable manifest.
+Canonical 184 transport fixture: `{fixture['output']}` (`{fixture['outputSha256']}`), configuration `{fixture['config']}` (`{fixture['configSha256']}`). Only the loopback HTTPS origin differs; all assertions and timeouts remain unchanged.
 Exact authorized MIME diff: Authorized-RG03-Mail-Harness-Patch.diff.
 Exact CI orchestration diff: receipts/Exact-CI-Adapter.diff; complete CI source hashes: RG03-Freeze.json.
 

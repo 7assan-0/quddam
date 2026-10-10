@@ -14,6 +14,8 @@ ARCHIVES = {
 }
 CANONICAL_OVERRIDE_IDENTITY = "tests/e2e/forbidden-word.spec.ts::Forbidden Word: real Correct Skip Foul and duplicate races consume and score exactly once"
 CANONICAL_OVERRIDE_AUTHORIZATION = "Owner approved only identity 066 race oracle: both valid lock orders, exactly-once timeout and unchanged scores; frozen authored files unchanged."
+CANONICAL_FIXTURE_IDENTITY = "tests/e2e/refund-support.spec.ts::M03 01 normal checkout callback and poll preserve one grant and classified audit"
+CANONICAL_FIXTURE_AUTHORIZATION = "CI-only HTTPS/same-origin fixture for canonical 184; original assertions and timeouts unchanged."
 LEGACY_BOOTSTRAP_AUDIT_SHA256 = "56f13f4fd01a9572edea673eaea4c42e5f52d30e01ac147623a06a28b6c1e0fb"
 
 
@@ -42,7 +44,7 @@ def canonical_override():
     if sha(audit_bytes) == LEGACY_BOOTSTRAP_AUDIT_SHA256:
         return None
     audit = json.loads(audit_bytes)
-    assert set(audit) == {"assertionsChanged", "assertionTimeoutsChanged", "mimeFunctionChanged", "authoredAssertionsChanged", "files", "canonicalOverrides"}, "Unexpected CI adapter audit schema"
+    assert set(audit) == {"assertionsChanged", "assertionTimeoutsChanged", "mimeFunctionChanged", "authoredAssertionsChanged", "files", "canonicalOverrides", "canonicalFixtures"}, "Unexpected CI adapter audit schema"
     assert audit["assertionTimeoutsChanged"] is False and audit["mimeFunctionChanged"] is False and audit["authoredAssertionsChanged"] is False, "Unapproved authored assertion, timeout or MIME change"
     assert isinstance(audit["files"], list) and len(audit["files"]) == 6, "Six orchestration adapter audits required"
     overrides = audit["canonicalOverrides"]
@@ -69,6 +71,35 @@ def canonical_override():
     assert old != replacement and text.count(old) == 1, "Oracle edit must replace exactly one frozen match"
     assert text.replace(old, replacement).encode("utf8") == (ROOT / value["output"]).read_bytes(), "Canonical override contains undisclosed edits"
     assert isinstance(value["diff"], str) and value["diff"], "Exact canonical override diff required"
+    return value
+
+
+def canonical_fixture():
+    """Only the disclosed HTTPS transport fixture may run canonical 184."""
+    path = ROOT / "receipts/CI-Adapter-Audit.json"
+    if not path.exists() or sha(path.read_bytes()) == LEGACY_BOOTSTRAP_AUDIT_SHA256:
+        return None
+    values = json.loads(path.read_text())["canonicalFixtures"]
+    assert isinstance(values, list) and len(values) == 1, "Exactly one canonical transport fixture required"
+    value = values[0]
+    assert set(value) == {"identity", "canonicalNumber", "input", "inputSha256", "output", "outputSha256", "config", "configSha256", "edits", "diff", "authorization", "assertionsChanged", "assertionTimeoutsChanged"}, "Unexpected canonical fixture schema"
+    assert value["identity"] == CANONICAL_FIXTURE_IDENTITY and type(value["canonicalNumber"]) is int and value["canonicalNumber"] == 184, "Only canonical 184 transport fixture is authorized"
+    assert value["input"] == "qalba-platform/tests/e2e/refund-support.spec.ts", "Unexpected canonical fixture input"
+    assert value["output"] == "qalba-platform/src/generated/rg03-refund-support.browser.ts" and value["config"] == "qalba-platform/src/generated/rg03-refund-support.config.ts", "Unexpected canonical fixture output/config"
+    assert value["authorization"] == CANONICAL_FIXTURE_AUTHORIZATION and value["assertionsChanged"] is False and value["assertionTimeoutsChanged"] is False, "Transport fixture cannot change assertions or timeouts"
+    source = json.loads((ROOT / "Source-Manifest.json").read_text())
+    original = (ROOT / value["input"]).read_bytes()
+    assert value["inputSha256"] == source["files"]["tests/e2e/refund-support.spec.ts"] == sha(original), "Canonical fixture input must remain frozen"
+    old, replacement = 'origin = "http://127.0.0.1:3000"', 'origin = "https://127.0.0.1:3445"'
+    assert value["edits"] == [[old, replacement]] and original.decode().count(old) == 1, "Only the exact fixture origin may change"
+    output = (ROOT / value["output"]).read_bytes()
+    assert original.decode().replace(old, replacement).encode() == output and sha(output) == value["outputSha256"], "Canonical fixture contains undisclosed edits"
+    config = (ROOT / value["config"]).read_bytes()
+    oracle = canonical_override()
+    assert oracle is not None, "Approved 066 oracle provenance required"
+    expected_config = (ROOT / oracle["config"]).read_text().replace("rg03-forbidden-word.browser.ts", "rg03-refund-support.browser.ts").replace("baseURL:'http://127.0.0.1:3000'", "baseURL:'https://127.0.0.1:3445',ignoreHTTPSErrors:true")
+    assert config == expected_config.encode() and sha(config) == value["configSha256"], "Canonical fixture configuration differs beyond local HTTPS transport"
+    assert isinstance(value["diff"], str) and value["diff"], "Exact canonical fixture diff required"
     return value
 
 
@@ -173,6 +204,8 @@ def verify():
     }
     override = canonical_override()
     result["runtimeCanonicalOverrides"] = [override] if override else []
+    fixture = canonical_fixture()
+    result["runtimeCanonicalFixtures"] = [fixture] if fixture else []
     ci_manifest = ROOT / "CI-Source-Manifest.json"
     if ci_manifest.exists():
         ci = json.loads(ci_manifest.read_text())

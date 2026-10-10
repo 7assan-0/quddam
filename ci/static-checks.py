@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 import yaml
-from baseline import ROOT, APP_SHA, verify, fingerprint, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY
+from baseline import ROOT, APP_SHA, verify, fingerprint, save, canonical_override, CANONICAL_OVERRIDE_IDENTITY, canonical_fixture, CANONICAL_FIXTURE_IDENTITY
 from evidence import redact_json, redact_text
 from package import freeze, release, executable_files
 from results import collect
@@ -94,11 +94,22 @@ class InfrastructureChecks(unittest.TestCase):
             subprocess.run(["node", "--check", str(ROOT / x["output"])], check=True, capture_output=True)
         text = (ROOT / "verification-tools/.ci-consolidated.mjs").read_text()
         self.assertIn('const override066=c.identity===', text)
-        self.assertIn('executionFile=override066?join(root,approved066.output):c.file', text)
+        self.assertIn('executionFile=override066?join(root,approved066.output):fixture184?join(root,approved184.output):c.file', text)
         self.assertIn("timeout:60000,workers:1,retries:0,maxFailures:1", text)
         self.assertIn("launchOptions:{slowMo:100", text)
         self.assertIn("--bail=1", (ROOT / "verification-tools/.ci-quality.mjs").read_text())
         self.assertIn("--retry=0", (ROOT / "verification-tools/.ci-quality.mjs").read_text())
+        fixture = canonical_fixture()
+        self.assertEqual(fixture["identity"], CANONICAL_FIXTURE_IDENTITY)
+        self.assertFalse(fixture["assertionsChanged"])
+        self.assertFalse(fixture["assertionTimeoutsChanged"])
+        self.assertEqual(frozen_files[fixture["output"]], fixture["outputSha256"])
+        self.assertEqual(frozen_files[fixture["config"]], fixture["configSha256"])
+        self.assertIn("testMatch:'rg03-refund-support.browser.ts'", (ROOT / fixture["config"]).read_text())
+        self.assertIn("baseURL:'https://127.0.0.1:3445',ignoreHTTPSErrors:true", (ROOT / fixture["config"]).read_text())
+        self.assertIn("if (fixture184) ce.APP_URL = 'https://127.0.0.1:3445';", text)
+        self.assertIn("ce.PUBLIC_WELCOME_CREDITS_ENABLED = 'false';", text)
+        self.assertIn("Billing profile requires the runner-owned cluster", text)
 
     def test_06_authoritative_inventory_not_historical_results(self):
         manifest, summary = collect()

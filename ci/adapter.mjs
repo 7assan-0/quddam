@@ -70,7 +70,41 @@ export function adapt() {
   if (diff.status !== 1) throw Error('Unable to record exact approved canonical 066 diff');
   const override = {identity, canonicalNumber: 66, input, inputSha256: sha(before), output, outputSha256: sha(adaptedTest), config, configSha256: sha(adaptedConfig), edits: [[oldRace, newRace]], diff: diff.stdout,
     authorization: 'Owner approved only identity 066 race oracle: both valid lock orders, exactly-once timeout and unchanged scores; frozen authored files unchanged.', assertionTimeoutsChanged: false};
-  const canonicalSelection = `const approved066=JSON.parse(readFileSync(join(root,'receipts/CI-Adapter-Audit.json'))).canonicalOverrides[0];const override066=c.identity===${JSON.stringify(identity)};if(override066){for(const[path,hash]of[[approved066.output,approved066.outputSha256],[approved066.config,approved066.configSha256]])if(createHash('sha256').update(readFileSync(join(root,path))).digest('hex')!==hash)throw Error('Approved canonical 066 source changed');}const executionConfig=override066?join(root,approved066.config):config,executionFile=override066?join(root,approved066.output):c.file;`;
+  // Canonical 184 needs a legitimate HTTPS origin in the production checkout fixture.
+  // Change only its transport constant, keeping every assertion and timeout frozen.
+  const billingIdentity = 'tests/e2e/refund-support.spec.ts::M03 01 normal checkout callback and poll preserve one grant and classified audit';
+  const billingInput = 'qalba-platform/tests/e2e/refund-support.spec.ts';
+  const billingOutput = 'qalba-platform/src/generated/rg03-refund-support.browser.ts';
+  const billingConfig = 'qalba-platform/src/generated/rg03-refund-support.config.ts';
+  const billingBefore = readFileSync(join(root, billingInput), 'utf8');
+  if (sha(billingBefore) !== source.files['tests/e2e/refund-support.spec.ts']) throw Error('Canonical 184 source is not frozen');
+  const oldOrigin = 'origin = "http://127.0.0.1:3000"', newOrigin = 'origin = "https://127.0.0.1:3445"';
+  if (billingBefore.split(oldOrigin).length !== 2) throw Error('Canonical 184 requires exactly one frozen origin fixture');
+  const billingTest = billingBefore.replace(oldOrigin, newOrigin);
+  const billingConfigText = adaptedConfig.replace('rg03-forbidden-word.browser.ts', 'rg03-refund-support.browser.ts').replace("baseURL:'http://127.0.0.1:3000'", "baseURL:'https://127.0.0.1:3445',ignoreHTTPSErrors:true");
+  writeFileSync(join(root, billingOutput), billingTest);
+  writeFileSync(join(root, billingConfig), billingConfigText);
+  const billingDiff = spawnSync('diff', ['-u', '--label', billingInput, '--label', billingOutput, join(root, billingInput), join(root, billingOutput)], {encoding: 'utf8'});
+  if (billingDiff.status !== 1) throw Error('Unable to record exact canonical 184 transport fixture diff');
+  const billingFixture = {identity: billingIdentity, canonicalNumber: 184, input: billingInput, inputSha256: sha(billingBefore), output: billingOutput, outputSha256: sha(billingTest), config: billingConfig, configSha256: sha(billingConfigText), edits: [[oldOrigin, newOrigin]], diff: billingDiff.stdout,
+    authorization: 'CI-only HTTPS/same-origin fixture for canonical 184; original assertions and timeouts unchanged.', assertionsChanged: false, assertionTimeoutsChanged: false};
+  const canonicalSelection = `const adapterAudit=JSON.parse(readFileSync(join(root,'receipts/CI-Adapter-Audit.json'))),approved066=adapterAudit.canonicalOverrides[0],approved184=adapterAudit.canonicalFixtures[0];const override066=c.identity===${JSON.stringify(identity)},fixture184=c.identity===${JSON.stringify(billingIdentity)};for(const selected of[override066?approved066:null,fixture184?approved184:null].filter(Boolean)){for(const[path,hash]of[[selected.output,selected.outputSha256],[selected.config,selected.configSha256]])if(createHash('sha256').update(readFileSync(join(root,path))).digest('hex')!==hash)throw Error('Approved canonical execution source changed');}const executionConfig=override066?join(root,approved066.config):fixture184?join(root,approved184.config):config,executionFile=override066?join(root,approved066.output):fixture184?join(root,approved184.output):c.file;`;
+  const billingProfile = `
+if (billing) {
+  if (c.file !== 'tests/e2e/refund-support.spec.ts' || !testManifest.browserApi.cases.some(value => value.identity === c.identity && value.file === c.file)) throw Error('Billing profile requires an exact frozen refund identity');
+  const address = new URL(ce.DATABASE_URL);
+  if (ce.DATABASE_URL !== ce.E2E_DATABASE_URL || address.hostname !== '127.0.0.1' || address.port !== '55454' || !/^\\/j2_suite_\\d{3}$/.test(address.pathname)) throw Error('Billing profile requires the disposable canonical database');
+  if (ce.BILLING_TEST_DATABASE !== '1' || ce.MOYASAR_SECRET_KEY !== 'synthetic-local-only' || ce.REFUND_PROVIDER_FIXTURE_FILE !== fixture) throw Error('Billing profile requires the runner-owned synthetic provider');
+  const fixturePool = new Pool({connectionString: ce.DATABASE_URL, max: 1});
+  try {
+    if ((await fixturePool.query('SHOW data_directory')).rows[0].data_directory !== data) throw Error('Billing profile requires the runner-owned cluster');
+  } finally {await fixturePool.end();}
+  // Refund contracts measure purchased credits, with no public welcome grant.
+  ce.PUBLIC_WELCOME_CREDITS_ENABLED = 'false';
+  if (fixture184) ce.APP_URL = 'https://127.0.0.1:3445';
+  writeFileSync(join(root, 'receipts/Billing-Fixture-' + number + '.json'), JSON.stringify({identity: c.identity, appOrigin: ce.APP_URL, publicWelcomeCreditsEnabled: false, syntheticProvider: true, runnerOwnedDatabase: true, assertionsAndTimeoutUnchanged: true}, null, 2));
+}
+`;
   // This unchanged identity asserts legacy-label branding, so supply that test fixture.
   const rankedUiFixture = `
 if (c.identity === 'tests/e2e/quddam-ui.spec.ts::Quddam ranked Host and TV presentation fits mobile and 1080p') {
@@ -99,7 +133,7 @@ if (c.identity === 'tests/e2e/quddam-ui.spec.ts::Quddam ranked Host and TV prese
     ["out=join(root,'verification',mode)", "out=join(root,'verification',process.env.RG03_RUN_LABEL??mode)"],
     ["c.file.startsWith('tests/e2e/')&&mode!=='neighbor'", "c.file.startsWith('tests/e2e/')&&(!process.env.RG03_CASE_IDENTITIES||JSON.parse(process.env.RG03_CASE_IDENTITIES).includes(c.identity))&&mode!=='neighbor'"],
     ["config,c.file,'--grep'", "executionConfig,executionFile,'--max-failures=1','--retries=0','--grep'"],
-    ["await appStart(ce,number+'-server');const start=Date.now();", rankedUiFixture + canonicalSelection + "await appStart(ce,number+'-server');const start=Date.now();"],
+    ["await appStart(ce,number+'-server');const start=Date.now();", rankedUiFixture + canonicalSelection + billingProfile + "await appStart(ce,number+'-server');const start=Date.now();"],
   ], '.ci-consolidated.mjs');
   const quality = copy('verification-tools/quality-runner.mjs', [
     ["const runtime=resolve(root,'../phase5e1/pg-runtime'),bin=join(runtime,'ubuntu/usr/lib/postgresql/16/bin'),pgEnv={...process.env,LD_PRELOAD:join(runtime,'identity.so'),LD_LIBRARY_PATH:join(runtime,'ubuntu/usr/lib/x86_64-linux-gnu')};", pgReplacement],
@@ -121,8 +155,8 @@ if (c.identity === 'tests/e2e/quddam-ui.spec.ts::Quddam ranked Host and TV prese
     ["expected:t.expectedStatus,durationMs:r.duration,retry:r.retry", "expected:t.expectedStatus,durationMs:r.duration,retry:r.retry,workerIndex:r.workerIndex"],
   ], '.ci-security.mjs');
   mkdirSync(join(root, 'receipts'), {recursive: true});
-  writeFileSync(join(root, 'receipts/CI-Adapter-Audit.json'), JSON.stringify({assertionsChanged: true, authoredAssertionsChanged: false, assertionTimeoutsChanged: false, mimeFunctionChanged: false, files: audits, canonicalOverrides: [override]}, null, 2));
-  writeFileSync(join(root, 'receipts/Exact-CI-Adapter.diff'), [...audits.map(x => x.diff), override.diff].join('\n'));
+  writeFileSync(join(root, 'receipts/CI-Adapter-Audit.json'), JSON.stringify({assertionsChanged: true, authoredAssertionsChanged: false, assertionTimeoutsChanged: false, mimeFunctionChanged: false, files: audits, canonicalOverrides: [override], canonicalFixtures: [billingFixture]}, null, 2));
+  writeFileSync(join(root, 'receipts/Exact-CI-Adapter.diff'), [...audits.map(x => x.diff), override.diff, billingFixture.diff].join('\n'));
   return {consolidated, quality, lifecycle, content, launch, security};
 }
 
