@@ -83,7 +83,7 @@ class InfrastructureChecks(unittest.TestCase):
         self.assertIn('expect(timeouts.rows[0].n).toBe(1);', replacement)
         self.assertTrue(replacement.endswith('expect((await read(page,id)).teams.map(t=>t.score)).toEqual(v.teams.map(t=>t.score));'))
         generated_config = (ROOT / override["config"]).read_text()
-        self.assertIn("testDir:'.',testMatch:'rg03-forbidden-word.spec.ts'", generated_config)
+        self.assertIn("testDir:'.',testMatch:'rg03-forbidden-word.browser.ts'", generated_config)
         self.assertIn("timeout:60000,workers:1,retries:0,maxFailures:1", generated_config)
         self.assertIn("launchOptions:{slowMo:100", generated_config)
         frozen_files, _, _ = executable_files()

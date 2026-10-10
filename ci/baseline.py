@@ -55,7 +55,7 @@ def canonical_override():
     assert isinstance(value, dict) and set(value) == {"identity", "canonicalNumber", "input", "inputSha256", "output", "outputSha256", "config", "configSha256", "edits", "diff", "authorization", "assertionTimeoutsChanged"}, "Unexpected canonical override schema"
     assert value["identity"] == CANONICAL_OVERRIDE_IDENTITY and type(value["canonicalNumber"]) is int and value["canonicalNumber"] == 66, "Only canonical identity 066 is authorized"
     assert value["input"] == "qalba-platform/tests/e2e/forbidden-word.spec.ts", "Unexpected canonical override input"
-    assert value["output"] == "qalba-platform/src/generated/rg03-forbidden-word.spec.ts" and value["config"] == "qalba-platform/src/generated/rg03-forbidden-word.config.ts", "Unexpected canonical override output/config"
+    assert value["output"] == "qalba-platform/src/generated/rg03-forbidden-word.browser.ts" and value["config"] == "qalba-platform/src/generated/rg03-forbidden-word.config.ts", "Unexpected canonical override output/config"
     assert value["authorization"] == CANONICAL_OVERRIDE_AUTHORIZATION and value["assertionTimeoutsChanged"] is False, "Canonical override authorization/timeout mismatch"
     source = json.loads((ROOT / "Source-Manifest.json").read_text())
     original = (ROOT / value["input"]).read_bytes()

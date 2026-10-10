@@ -37,7 +37,8 @@ export function adapt() {
   // Owner-approved exception for identity 066 only. The authored test stays frozen.
   const identity = 'tests/e2e/forbidden-word.spec.ts::Forbidden Word: real Correct Skip Foul and duplicate races consume and score exactly once';
   const input = 'qalba-platform/tests/e2e/forbidden-word.spec.ts';
-  const output = 'qalba-platform/src/generated/rg03-forbidden-word.spec.ts';
+  // Keep the Playwright oracle outside Vitest's *.test.ts / *.spec.ts discovery.
+  const output = 'qalba-platform/src/generated/rg03-forbidden-word.browser.ts';
   const config = 'qalba-platform/src/generated/rg03-forbidden-word.config.ts';
   const before = readFileSync(join(root, input), 'utf8');
   if (sha(before) !== source.files['tests/e2e/forbidden-word.spec.ts']) throw Error('Canonical 066 source is not frozen');
@@ -63,7 +64,7 @@ export function adapt() {
   const adaptedTest = before.replace(oldRace, newRace);
   mkdirSync(join(app, 'src/generated'), {recursive: true});
   writeFileSync(join(root, output), adaptedTest);
-  const adaptedConfig = `import{defineConfig,devices}from'@playwright/test';export default defineConfig({testDir:'.',testMatch:'rg03-forbidden-word.spec.ts',timeout:60000,workers:1,retries:0,maxFailures:1,reporter:[['json',{outputFile:process.env.J1_REPORT}]],outputDir:process.env.J1_ARTIFACTS,use:{baseURL:'http://127.0.0.1:3000',...devices['Desktop Chrome'],trace:'retain-on-failure',screenshot:'only-on-failure',launchOptions:{slowMo:100,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox','--disable-setuid-sandbox','--disable-gpu']}}});`;
+  const adaptedConfig = `import{defineConfig,devices}from'@playwright/test';export default defineConfig({testDir:'.',testMatch:'rg03-forbidden-word.browser.ts',timeout:60000,workers:1,retries:0,maxFailures:1,reporter:[['json',{outputFile:process.env.J1_REPORT}]],outputDir:process.env.J1_ARTIFACTS,use:{baseURL:'http://127.0.0.1:3000',...devices['Desktop Chrome'],trace:'retain-on-failure',screenshot:'only-on-failure',launchOptions:{slowMo:100,executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox','--disable-setuid-sandbox','--disable-gpu']}}});`;
   writeFileSync(join(root, config), adaptedConfig);
   const diff = spawnSync('diff', ['-u', '--label', input, '--label', output, join(root, input), join(root, output)], {encoding: 'utf8'});
   if (diff.status !== 1) throw Error('Unable to record exact approved canonical 066 diff');
