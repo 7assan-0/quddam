@@ -15,6 +15,101 @@ def specs(report):
         yield from specs(suite)
 
 
+def execution_report_status(manifest, summary):
+    """Account only for results authenticated by collect(), never process exit status.
+
+    This describes the executed gate, not the frozen pre-execution inventory or
+    owner approval of an official Release Candidate. Missing or inconsistent
+    evidence cannot become PASS through a summary/header value.
+    """
+    required = {"canonical": 223, "supplemental": 38, "nativePostgres": 186}
+    groups = {
+        "canonical": [c for c in manifest["browserApi"]["cases"] if c["file"].startswith("tests/e2e/")],
+        "supplemental": [c for c in manifest["browserApi"]["cases"] if not c["file"].startswith("tests/e2e/")],
+        "nativePostgres": manifest["nativePostgres"]["cases"],
+    }
+    cases = [c for group in groups.values() for c in group]
+    if any(not isinstance(c.get("execution", "NOT_EXECUTED"), str) for c in cases):
+        return {"gateStatus": "INVALID_EVIDENCE", "releaseVerdict": "BLOCKED", "reportingIssues": ["INVALID_EXECUTION_STATUS"]}
+    invalid, failed, incomplete = [], [], []
+    counts = {name: dict(Counter(c.get("execution", "NOT_EXECUTED") for c in cases)) for name, cases in groups.items()}
+    if any(len(groups[name]) != count for name, count in required.items()) or len({c["identity"] for c in cases}) != len(cases):
+        invalid.append("INCONSISTENT_IDENTITY_INVENTORY")
+    if counts != summary.get("counts") or counts != manifest.get("finalCounts"):
+        invalid.append("INCONSISTENT_RECORDED_COUNTS")
+    if any(c.get("execution", "NOT_EXECUTED") not in {"PASS", "FAILED", "SKIPPED", "NOT_EXECUTED"} for c in cases):
+        invalid.append("INVALID_EXECUTION_STATUS")
+    if any(c.get("execution", "NOT_EXECUTED") == "NOT_EXECUTED" for c in cases):
+        incomplete.append("INCOMPLETE_EXECUTION")
+    if any(c.get("execution") in {"FAILED", "SKIPPED"} for c in cases) or summary.get("firstFailures"):
+        failed.append("FAILED_OR_SKIPPED_MANDATORY_IDENTITY")
+    executed = [c for c in cases if c.get("execution") in {"PASS", "FAILED", "SKIPPED"}]
+    if any(not isinstance(c.get("executionEvidence"), str) or not c["executionEvidence"] for c in executed):
+        incomplete.append("MISSING_IDENTITY_EVIDENCE")
+    if any(type(c.get("executedRetries")) is not int or c["executedRetries"] < 0 for c in executed):
+        incomplete.append("MISSING_OR_INVALID_RETRY_EVIDENCE")
+    retries = sum(c.get("executedRetries", 0) for c in cases if type(c.get("executedRetries", 0)) is int)
+    if retries != summary.get("automaticRetries") or retries != manifest.get("automaticRetries"):
+        invalid.append("INCONSISTENT_RETRY_COUNTS")
+    if retries:
+        invalid.append("UNAUTHORIZED_RETRIES")
+    if summary.get("auditErrors"):
+        invalid.append("RESULT_AUTHENTICATION_OR_FLAKY_ERRORS")
+    if not isinstance(summary.get("firstFailures"), list) or not isinstance(summary.get("auditErrors"), list):
+        incomplete.append("MISSING_FAILURE_AUDIT")
+    if manifest.get("previousOutcomesInherited") is not False or manifest.get("diagnosticsAndTargetedRunsExcludedFromFinalIdentityCounts") is not True:
+        invalid.append("FRESH_RESULT_SCOPE_NOT_PROVEN")
+
+    quality = summary.get("quality")
+    if quality is None:
+        quality = {}
+    elif not isinstance(quality, dict):
+        invalid.append("INVALID_QUALITY_EVIDENCE")
+        quality = {}
+    labels = {"lint", "typecheck", "test", "build", "content-validation", "ops-validation"}
+    if labels - quality.keys() or any(quality.get(label) == "NOT_EXECUTED" for label in labels):
+        incomplete.append("MISSING_OR_INCOMPLETE_QUALITY_EVIDENCE")
+    if quality.keys() - labels or any(status not in ("PASS", "FAILED", "NOT_EXECUTED") for status in quality.values()):
+        invalid.append("INVALID_QUALITY_EVIDENCE")
+    if "FAILED" in quality.values():
+        failed.append("FAILED_QUALITY_GATE")
+    unit = summary.get("unitIntegration")
+    if unit is None:
+        unit = {}
+    elif not isinstance(unit, dict):
+        invalid.append("INVALID_UNIT_EVIDENCE")
+        unit = {}
+    if unit.get("status") == "NOT_EXECUTED" or any(type(unit.get(key)) is not int for key in ["required", "total", "passed", "failed", "pending"]):
+        incomplete.append("MISSING_UNIT_EVIDENCE")
+    else:
+        if unit["required"] != 1185 or unit["total"] != 1185 or any(unit[key] < 0 for key in ["passed", "failed", "pending"]) or unit["passed"] + unit["failed"] + unit["pending"] != unit["total"]:
+            invalid.append("INCONSISTENT_UNIT_COUNTS")
+        if unit["failed"] or unit["pending"] or unit.get("status") == "FAILED":
+            failed.append("FAILED_OR_SKIPPED_UNIT_GATE")
+        if unit.get("status") not in ("PASS", "FAILED") or unit.get("status") == "PASS" and (unit["passed"] != 1185 or unit["failed"] or unit["pending"]):
+            invalid.append("INCONSISTENT_UNIT_STATUS")
+    for key in ["canonicalOverrides", "canonicalFixtures"]:
+        value = summary.get(key)
+        if value is None or value == []:
+            incomplete.append("MISSING_" + key.upper() + "_PROVENANCE")
+        elif not isinstance(value, list) or len(value) != 1 or not isinstance(value[0], dict):
+            invalid.append("INVALID_" + key.upper() + "_PROVENANCE")
+        if manifest.get(key) != value:
+            invalid.append("INCONSISTENT_" + key.upper() + "_PROVENANCE")
+
+    gate = "INVALID_EVIDENCE" if invalid else "FAILED" if failed else "INCOMPLETE" if incomplete else "PASS"
+    return {"gateStatus": gate, "releaseVerdict": "RELEASE_GATE_PASS" if gate == "PASS" else "BLOCKED",
+            "reportingIssues": invalid + failed + incomplete}
+
+
+def validate_execution_report(manifest, summary):
+    """Reject stale/forged headers before exporting any Release Candidate evidence."""
+    expected = execution_report_status(manifest, summary)
+    for document in [manifest, summary]:
+        assert all(document.get(key) == value for key, value in expected.items()), "Executed manifest/summary status contradicts audited results"
+    assert summary.get("status") == ("PASS" if expected["gateStatus"] == "PASS" else "INCOMPLETE_OR_FAILED"), "Execution summary status contradicts audited results"
+
+
 def collect():
     with zipfile.ZipFile(ROOT / "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip") as z:
         manifest = json.loads(z.read("Quddam-Phase-5.0J-2-Test-Manifest.json"))
@@ -190,6 +285,12 @@ def collect():
                "canonicalOverrides": [override] if override else [],
                "canonicalFixtures": [fixture] if fixture else [],
                "status": "PASS" if counts == {"canonical": {"PASS": 223}, "supplemental": {"PASS": 38}, "nativePostgres": {"PASS": 186}} and set(quality.values()) == {"PASS"} and unit["status"] == "PASS" and not retries and not failures and not audit_errors and override is not None and fixture is not None else "INCOMPLETE_OR_FAILED"}
+    reporting = execution_report_status(manifest, summary)
+    manifest.update(reporting)
+    summary.update(reporting)
+    if reporting["gateStatus"] != "PASS":
+        summary["status"] = "INCOMPLETE_OR_FAILED"
+    validate_execution_report(manifest, summary)
     save(ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json", manifest)
     save(ROOT / "results/Final-Execution-Summary.json", summary)
     return manifest, summary

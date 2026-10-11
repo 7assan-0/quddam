@@ -6,8 +6,8 @@ import shutil
 from pathlib import Path
 import zipfile
 from baseline import ROOT, fingerprint, save, sha, verify, canonical_override, canonical_fixture
-from evidence import export, archive, redact_text
-from results import collect
+from evidence import export, archive, redact_text, redact_json
+from results import collect, validate_execution_report
 
 FROZEN = "Quddam-Phase-5.0J-2-RG03-frozen-checkpoint.zip"
 
@@ -36,13 +36,16 @@ def executable_files():
     return files | ci | adapters, ci, adapters
 
 
-def bundle(path, files, extras):
+def bundle(path, files, extras, executed_reports=None):
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
         for name, expected in sorted(files.items()):
             assert sha((ROOT / name).read_bytes()) == expected
             z.write(ROOT / name, name)
         for name in extras:
             z.write(ROOT / name, name)
+        for name, data in (executed_reports or {}).items():
+            assert name not in files and name not in extras and name != "Frozen-File-Manifest.json", "Executed evidence cannot replace frozen inventory/source"
+            z.writestr(name, data)
         z.writestr("Frozen-File-Manifest.json", json.dumps(files, indent=2))
     with zipfile.ZipFile(path) as z:
         assert z.testzip() is None
@@ -92,8 +95,13 @@ def verify_freeze():
 
 def release():
     integrity = verify()
-    _, summary = collect()
+    manifest, summary = collect()
+    validate_execution_report(manifest, summary)
     assert summary["status"] == "PASS", "Incomplete/failed fresh gate: Release Candidate forbidden"
+    executed_manifest = (ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json").read_bytes()
+    assert json.loads(executed_manifest) == manifest, "Packaged executed manifest differs from audited results"
+    executed_summary = (ROOT / "results/Final-Execution-Summary.json").read_bytes()
+    assert json.loads(executed_summary) == summary, "Packaged execution summary differs from audited results"
     phase = json.loads((ROOT / "receipts/Phase-full.json").read_text())
     assert phase["status"] == "PASS" and len(phase["tasks"]) == 9 and all(t["status"] == "PASS" for t in phase["tasks"])
     ready = json.loads((ROOT / "receipts/Runtime-Readiness.json").read_text())
@@ -106,9 +114,14 @@ def release():
     assert frozen["canonicalFixtures"] == summary["canonicalFixtures"] == [fixture], "Release fixture provenance differs from frozen/fresh audited execution"
     output = ROOT / "deliverables"; output.mkdir(exist_ok=True)
     safe = export()
+    safe_manifest = json.loads((safe / "results/Quddam-Phase-5.0J-2-Test-Manifest.json").read_text())
+    safe_summary = json.loads((safe / "results/Final-Execution-Summary.json").read_text())
+    assert safe_manifest == redact_json(manifest) and safe_summary == redact_json(summary), "Exported executed reports differ from audited results"
+    validate_execution_report(safe_manifest, safe_summary)
     archive(output / "Quddam-Phase-5.0J-2-Final-Evidence.zip", safe)
-    bundle(output / "Quddam-Phase-5.0J-2-Release-Candidate.zip", files, ["Source-Manifest.json", "Migration-Integrity.json", "Authorized-Harness-Fingerprints.json", "Authorized-RG03-Mail-Harness-Patch.diff", "Quddam-Phase-5.0J-2-Test-Manifest.json", "receipts/RG03-Freeze.json", "receipts/Exact-CI-Adapter.diff", "receipts/Runtime-Readiness.json", "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip", "inputs/Quddam-Phase-5.0J-2-RG03-Evidence.zip"])
-    (output / "Quddam-Phase-5.0J-2-Test-Manifest.json").write_bytes((ROOT / "results/Quddam-Phase-5.0J-2-Test-Manifest.json").read_bytes())
+    bundle(output / "Quddam-Phase-5.0J-2-Release-Candidate.zip", files, ["Source-Manifest.json", "Migration-Integrity.json", "Authorized-Harness-Fingerprints.json", "Authorized-RG03-Mail-Harness-Patch.diff", "Quddam-Phase-5.0J-2-Test-Manifest.json", "receipts/RG03-Freeze.json", "receipts/Exact-CI-Adapter.diff", "receipts/Runtime-Readiness.json", "inputs/Quddam-Phase-5.0J-2-RG02-frozen-checkpoint.zip", "inputs/Quddam-Phase-5.0J-2-RG03-Evidence.zip"],
+           {"results/Quddam-Phase-5.0J-2-Test-Manifest.json": executed_manifest, "results/Final-Execution-Summary.json": executed_summary})
+    (output / "Quddam-Phase-5.0J-2-Test-Manifest.json").write_bytes(executed_manifest)
     run = ready["run"]
     report = f"""# PHASE 5.0J-2 — Final Report
 
@@ -150,6 +163,8 @@ Content validation / operations / lint / typecheck / production build PASS.
 
 0 failed; 0 skipped; 0 unresolved flaky; 0 automatic mandatory retries.
 Targeted verification and historical results are excluded from these counts.
+
+The root test manifest in the checkpoint/RC is frozen pre-execution inventory. Freshly audited execution statuses/counts are in `results/Quddam-Phase-5.0J-2-Test-Manifest.json` and `results/Final-Execution-Summary.json` inside the RC and evidence archive; the loose delivered test manifest is that same executed manifest.
 
 Non-blocking limitations: this manifest uses Chromium only, not Firefox/WebKit. GitHub-hosted Ubuntu patch image, official PostgreSQL 16 patch image and signed Ubuntu PostgreSQL 16 package patch versions can advance; exact runtime versions are recorded. Shared trace evidence is deliberately sanitized diagnostic data, not a replayable raw browser/session trace. No deployment or production behavior was exercised.
 """
