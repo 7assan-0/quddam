@@ -17,7 +17,7 @@ async function setup(page:Page,start=true){
   await page.getByLabel("البريد الإلكتروني").fill("letters-"+Date.now()+"-"+Math.random().toString(36).slice(2)+"@example.test");
   await page.getByLabel("كلمة المرور").fill("letters-password-123456");await page.getByRole("button",{name:"إنشاء الحساب"}).click();
   await expect(page).toHaveURL(/\/games$/);await page.goto("/games/letter-network/new");
-  await page.getByLabel("اسم الفريق أ · المرجاني").fill("فريق ياقوت");await page.getByLabel("اسم الفريق ب · التركوازي").fill("فريق ألف");
+  await page.getByLabel("اسم الفريق أ · البرتقالي").fill("فريق ياقوت");await page.getByLabel("اسم الفريق ب · السماوي").fill("فريق ألف");
   await page.getByRole("button",{name:"أنشئ المباراة"}).click();await expect(page).toHaveURL(/\/letter-network\/host\/[^/]+$/);
   const id=new URL(page.url()).pathname.split("/").at(-1)!;
   await expect(page.locator(".letter-page")).toHaveAttribute("data-live-ready","true");

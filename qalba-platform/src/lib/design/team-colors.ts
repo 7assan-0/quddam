@@ -1,2 +1,2 @@
-/** Default team colors match the public CSS design tokens. Persisted sessions keep their saved colors. */
-export const TEAM_COLORS = ["#F24C74", "#29C7C9", "#FFCA3A", "#42E29A"] as const;
+/** New sessions use the identity palette; existing sessions retain their saved colors. */
+export const TEAM_COLORS = ["#FF7A45", "#4DB8FF", "#FFE14D", "#E58FC0"] as const;

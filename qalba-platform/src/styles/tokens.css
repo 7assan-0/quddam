@@ -13,16 +13,24 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Lalezar";
+  src: url("/fonts/lalezar/Lalezar-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
-  --color-primary: #12352D;
-  --color-primary-surface: #1B463C;
-  --color-secondary: #F24C74;
-  --color-accent-gold: #FFCA3A;
-  --color-accent-turquoise: #29C7C9;
+  --color-primary: #0A2B22;
+  --color-primary-surface: #14493A;
+  --color-secondary: #FF4D7A;
+  --color-accent-gold: #FFD21F;
+  --color-accent-turquoise: #19E3D1;
   --color-bg: #FFFDF7;
-  --color-bg-dark: #12352D;
-  --color-surface: #1B463C;
+  --color-bg-dark: #0A2B22;
+  --color-surface: #14493A;
   --color-surface-light: #F2F7F4;
   --color-text: #163129;
   --color-text-inverse: #FFFDF7;
@@ -30,25 +38,25 @@
   --color-success: #42E29A;
   --color-danger: #FF5263;
   --color-warning: #FFCA3A;
-  --color-info: #29C7C9;
-  --neutral-900: #0D1613;
+  --color-info: #19E3D1;
+  --neutral-900: #0A2B22;
   --neutral-800: #163129;
-  --neutral-700: #20453A;
+  --neutral-700: #194C3E;
   --neutral-600: #356156;
   --neutral-500: #5E8B7E;
   --neutral-400: #8FB4A8;
   --neutral-300: #BDD4CC;
   --neutral-200: #DDEBE6;
   --neutral-100: #F2F7F4;
-  --team-a: #F24C74;
-  --team-b: #29C7C9;
-  --team-c: #FFCA3A;
-  --team-d: #42E29A;
+  --team-a: #FF7A45;
+  --team-b: #4DB8FF;
+  --team-c: #FFE14D;
+  --team-d: #E58FC0;
   --color-secondary-hover: #FF91AA;
   --color-secondary-soft: #FF8B8A;
-  --color-accent-gold-hover: #FFE08A;
+  --color-accent-gold-hover: #FFE36F;
   --color-accent-gold-soft: #FFDA70;
-  --color-accent-turquoise-hover: #78E4E5;
+  --color-accent-turquoise-hover: #78EFE3;
   --color-success-hover: #86F2BE;
   --color-danger-hover: #FF8893;
   --color-danger-surface: #693142;
@@ -58,15 +66,18 @@
   --color-warning-surface: #514426;
   --color-warning-text: #FFF0C1;
   --color-danger-text: #FFF0EE;
-  --color-primary-tint: #20453AAA;
-  --color-ink-tint: #0D161355;
-  --color-gold-ring: #FFCA3A33;
-  --color-header-glass: rgba(18,53,45,.95);
-  --color-overlay: rgba(13,22,19,.76);
+  --color-primary-tint: #14493AAA;
+  --color-ink-tint: #0A2B2255;
+  --color-gold-ring: #19E3D133;
+  --color-header-glass: rgba(10,43,34,.95);
+  --color-overlay: rgba(10,43,34,.8);
   --color-ghost-hover: rgba(255,253,247,.1);
   --color-room-surface: rgba(255,253,247,.08);
   --color-text-muted-light: #5E6E68;
   --font-arabic: "Qalba Arabic", Tahoma, Arial, sans-serif;
+  --font-display: "Lalezar", "Qalba Arabic", Tahoma, Arial, sans-serif;
+  --color-spark-text: #FF91AA;
+  --color-danger-label: #FF91A1;
   --font-numeral: Arial, Tahoma, sans-serif;
   --text-display-xl: clamp(3.5rem, 7vw, 7rem);
   --text-display-lg: clamp(2.8rem, 5vw, 5rem);
@@ -97,8 +108,8 @@
   --shadow-sm: 0 4px 12px rgba(13, 22, 19, .12);
   --shadow-md: 0 8px 24px rgba(13, 22, 19, .2);
   --shadow-lg: 0 16px 40px rgba(13, 22, 19, .32);
-  --shadow-glow: 0 0 0 4px rgba(255, 202, 58, .18), 0 8px 28px rgba(255, 202, 58, .16);
-  --shadow-celebrate: 0 0 42px rgba(255, 202, 58, .22);
+  --shadow-glow: 0 0 0 4px rgba(25,227,209,.18), 0 8px 28px rgba(25,227,209,.16);
+  --shadow-celebrate: 0 0 42px rgba(255,77,122,.22);
   --motion-fast: 120ms;
   --motion-normal: 180ms;
   --motion-emphasis: 260ms;
@@ -110,14 +121,14 @@
   --z-overlay: 30;
   --z-modal: 40;
   --z-toast: 50;
-  --focus-ring: 0 0 0 3px var(--color-primary), 0 0 0 6px var(--color-accent-gold);
+  --focus-ring: 0 0 0 3px var(--color-primary), 0 0 0 6px var(--color-accent-turquoise);
   /* Compatibility aliases used by the existing application. */
   --ink: var(--color-text-inverse);
   --muted: var(--neutral-300);
   --night: var(--color-bg-dark);
   --panel: var(--color-primary-surface);
-  --line: var(--neutral-600);
-  --lime: var(--color-accent-gold);
+  --line: var(--neutral-400);
+  --lime: var(--color-accent-turquoise);
   --coral: var(--color-secondary);
   --violet: var(--color-accent-turquoise);
 }

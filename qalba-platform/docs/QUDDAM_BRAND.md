@@ -1,4 +1,4 @@
-# قدّام — Phase 5.1 presentation guide
+# قدّام — forward identity presentation guide
 
 The customer name is **قدّام**. Create actions use **يلا قدّام**; same-session rematch actions use **جولة ثانية؟ قدّام!**. Specific action context remains in the accessible name. Game rules, credit rules, privacy projections and token/SSE behavior remain unchanged.
 
@@ -19,7 +19,11 @@ The mark is an original geometric RTL forward chevron with two dots suggesting �
 
 No manifest, service worker or installable PWA was present in the baseline. This phase adds no PWA behavior. `applicationName` and social metadata use the new name; the metadata origin uses the existing `APP_URL` setting.
 
-Keep the existing `src/styles/tokens.css` palette and bundled Arabic font. `src/styles/quddam.css` is a focused presentation layer, not a new theme or game framework. Team colors, success/danger contrast tokens, focus outlines and reduced motion remain authoritative.
+The identity palette is night `#0A2B22`, forest surfaces `#14493A`, sun `#FFD21F`, spark `#FF4D7A`, and wave `#19E3D1`. Sun is reserved for the mark and primary decision. Header and repeated marketing actions remain secondary, leaving one sun action on the home page. Wave identifies information, links, focus and selected controls. Spark identifies energy/status; its lighter text token is used for small text on dark surfaces.
+
+Lalezar is bundled locally under `public/fonts/lalezar` with its OFL license and used for headings. Existing bundled Noto Sans Arabic remains the body font. The repeated left-pointing chevrons in `quddam-chevrons.svg` follow RTL forward motion; they are static decorative masks and carry no interaction. `src/styles/quddam.css` remains a presentation layer, not a new game framework.
+
+New session defaults are orange `#FF7A45`, sky blue `#4DB8FF`, yellow `#FFE14D`, and pink `#E58FC0`, synchronized with `src/lib/design/team-colors.ts`. Persisted sessions retain their saved colors. The shared `TeamMarker` renders circle, triangle, square, and diamond by stable team position beside team names on Host, phone and TV; names and A/B labels remain available to screen readers. No database migration is needed.
 
 Library descriptions, approximate durations and icons live in `src/lib/brand/games.ts`. They do not determine availability or routing: the existing database flags and route predicate remain authoritative. The public preview features ten completed games. Existing legacy catalog entries remain in the signed-in library, preserving availability behavior.
 
@@ -27,6 +31,6 @@ The shared Category Board room QR contains the existing public join URL, rendere
 
 Intentionally retained technical names include the package/root directory, database example names, auth/participant cookies, `Qalba Arabic` font family, admin CSV download names, historical documentation and test fixtures. Do not mass-rename them. The older fictional story reference in the legacy party bank is historical authored content, not the current product identity.
 
-Primary controls use coral with dark text; alternate actions use green or outline; Undo uses a gold dashed outline; financial/game commands retain their existing handlers and guards. Destructive game actions retain existing confirmation behavior and use a distinct danger treatment. Correct/wrong judgments use success/danger. All tested touch controls are at least 44×44 CSS px.
+Primary controls use sun with dark text; alternate actions use green or wave outline; Undo uses a wave dashed outline; financial/game commands retain their existing handlers and guards. Destructive game actions retain existing confirmation behavior and use a distinct danger treatment. Correct/wrong judgments use success/danger. All tested touch controls are at least 44×44 CSS px.
 
 Release verification for this phase is lint, typecheck, all unit tests, production build and targeted UI/navigation/accessibility checks. The expensive full gameplay suite remains a later consolidated release gate.

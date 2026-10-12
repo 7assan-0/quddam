@@ -1,4 +1,5 @@
 "use client";
+import { TeamMarker } from "./team-marker";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { getPartySession } from "@/lib/games/party/service";
@@ -24,7 +25,7 @@ export function PartyHost({ initial }: { initial: View }) {
   const selector = <select className="input" aria-label="اختر الفريق" value={teamId} onChange={e => setTeamId(e.target.value)}>{view.teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}</select>;
   const playerSelector = <select className="input" aria-label="اختر اللاعب" value={playerId} onChange={e => setPlayerId(e.target.value)}>{view.players.map(player => <option key={player.id} value={player.id}>{player.name}</option>)}</select>;
   const answerField = <input className="input" aria-label="إجابة أو تخمين" value={value} maxLength={300} onChange={e => setValue(e.target.value)} placeholder="اكتب الإجابة هنا" />;
-  const scores = <div className="display-scores" aria-label="النتائج">{view.teams.map(team => <div className="display-team" key={team.id} style={{ borderColor: team.color }}><span>{team.name}</span><strong>{number(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{number(player.score)}</strong></div>)}</div>;
+  const scores = <div className="display-scores" aria-label="النتائج">{view.teams.map((team, index) => <div className="display-team" key={team.id} style={{ borderColor: team.color }}><span><TeamMarker position={index} color={team.color} />{team.name}</span><strong>{number(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{number(player.score)}</strong></div>)}</div>;
   return <div className="shell section party-host"><div className="page-title"><span className="eyebrow">{view.title} · الجولة {number(Math.min(state.index + 1, state.cards.length))}</span><h1>{phase === "DONE" ? "النتيجة النهائية" : "اقلبوا النتيجة"}</h1></div>
     {scores}<div className="utility-links"><Link className="btn btn-secondary" href="/games">مكتبة الألعاب</Link><Link className="btn btn-secondary" href={`/play/${view.id}/display`} target="_blank">شاشة العرض</Link>
       {view.status === "LOBBY" && button("ابدأ المباراة", { type: "START" })}
