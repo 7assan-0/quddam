@@ -1,4 +1,5 @@
 "use client";
+import { TeamMarker } from "./team-marker";
 import { connectLive } from "@/lib/realtime/client";
 import Link from "next/link";
 import Image from "next/image";
@@ -41,7 +42,7 @@ export function RoomLive({ initial, joinQr }: { initial: View; joinQr?: string }
     {view.host && <p><Link className="btn btn-secondary" href={`/play/${view.session.id}`}>ارجع إلى تحكم المضيف</Link></p>}
     {view.host && view.session.status === "LOBBY" && joinQr && <section className="panel room-qr"><Image unoptimized src={joinQr} width={240} height={240} alt="رمز QR لانضمام اللاعبين"/><div><h2>خلّوا الجماعة تنضم</h2><p>امسحوا الرمز من الجوال أو شاركوا رمز الغرفة. كل لاعب يختار فريقه ويجهّز نفسه.</p><Link className="btn btn-secondary" href={`/join?code=${view.code}`}>رابط الانضمام</Link></div></section>}
     {error && <p role="alert" className="form-error">{error}</p>}
-    <section className="scorebar">{view.session.teams.map((team) => <div className="team-score" key={team.id} style={{ borderColor: team.color }}><strong>{team.name}</strong><b>{team.score}</b></div>)}</section>
+    <section className="scorebar">{view.session.teams.map((team, index) => <div className="team-score" key={team.id} style={{ borderColor: team.color }}><strong><TeamMarker position={index} color={team.color} />{team.name}</strong><b>{team.score}</b></div>)}</section>
     <section className="panel"><h2>اللاعبون · {view.participants.length}</h2><div className="room-roster">{view.participants.map((person) => <div key={person.id} className="room-person"><strong>{person.name}{person.id === view.selfId ? " · أنت" : ""}</strong><span>{view.session.teams.find((team) => team.id === person.teamId)?.name} · {person.ready ? "جاهز" : "ينتظر"}</span></div>)}</div>
       {!view.host && view.session.status === "LOBBY" && <button className="btn btn-primary" disabled={busy} onClick={() => send("ready", { ready: !self?.ready })}>{self?.ready ? "إلغاء الجاهزية" : "أنا جاهز"}</button>}
       {view.session.status === "LOBBY" && <p>المضيف يبدأ المباراة من لوحة التحكم.</p>}</section>

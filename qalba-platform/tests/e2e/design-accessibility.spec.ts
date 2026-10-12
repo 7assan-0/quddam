@@ -95,7 +95,7 @@ test("six viewports, long Arabic content, four team tokens, focus and reduced mo
   await display.setViewportSize({ width: 1920, height: 1080 });
   const active = display.locator(".display-team--active");
   await expect(active.getByText("الدور الآن")).toBeVisible();
-  expect(await active.evaluate((element) => getComputedStyle(element).outlineColor)).toBe("rgb(255, 202, 58)");
+  expect(await active.evaluate((element) => getComputedStyle(element).outlineColor)).toBe("rgb(25, 227, 209)");
   const teamColors = await display.evaluate(() => ["--team-a", "--team-b", "--team-c", "--team-d"].map((token) => getComputedStyle(document.documentElement).getPropertyValue(token).trim()));
   expect(new Set(teamColors).size).toBe(4);
   await display.keyboard.press("Tab");

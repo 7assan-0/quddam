@@ -1,4 +1,5 @@
 "use client";
+import { TeamMarker } from "./team-marker";
 import { RematchCopy } from "./cta-copy";
 import Link from "next/link";
 import Image from "next/image";
@@ -132,7 +133,7 @@ export function BoardHost({ initial }: { initial: View }) {
     <div className="host-heading"><div><span className="eyebrow">لوحة التحدي · {view.status === "COMPLETED" ? "النتيجة النهائية" : `الجولة ${format(view.round)}`}</span>
       <h1>اقلبوا النتيجة</h1></div><Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
     <div className="scorebar" aria-label="نتائج الفريقين">{view.teams.map((team) => <div className={`team-score ${team.id === view.turnTeamId && view.status !== "COMPLETED" ? "turn" : ""}`} key={team.id} style={{ borderColor: team.color }}>
-      <span className="team-dot" style={{ background: team.color }} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
+      <TeamMarker position={team.position} color={team.color} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
     </div>)}</div>
     {error && <p role="alert" className="form-error">{error}</p>}
     {judgmentFeedback && <div className={`judgment-feedback judgment-feedback--${judgmentFeedback}`} role="status">{judgmentFeedback === "correct" ? "✓ إجابة صحيحة!" : "✕ إجابة غير صحيحة"}</div>}

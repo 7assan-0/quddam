@@ -1,4 +1,5 @@
 "use client";
+import { TeamMarker } from "./team-marker";
 import type { LetterView } from "@/lib/games/letter-network/service";
 export function LetterBoard({view,onSelect,disabled=false}:{view:LetterView;onSelect?:(id:string)=>void;disabled?:boolean}){
   return <div className="letter-board-wrap"><p className="letter-edge">الفريق ب: أعلى ↕ أسفل</p>
@@ -18,7 +19,7 @@ export function LetterBoard({view,onSelect,disabled=false}:{view:LetterView;onSe
 }
 export function LetterTeams({view}:{view:LetterView}){
   return <div className="letter-teams">{view.teams.map(t=><div className={"panel letter-team "+(view.answeringTeamId===t.id?"letter-team-active":"")} key={t.id} style={{borderColor:t.color}}>
-    <strong><span style={{color:t.color}}>{t.position===0?"أ":"ب"}</span> · {t.name}</strong><span>{t.captured} خلايا · {t.position===0?"يسار إلى يمين":"أعلى إلى أسفل"}</span>
+    <strong><TeamMarker position={t.position} color={t.color} /><span style={{color:t.color}}>{t.position===0?"أ":"ب"}</span> · {t.name}</strong><span>{t.captured} خلايا · {t.position===0?"يسار إلى يمين":"أعلى إلى أسفل"}</span>
     {view.answeringTeamId===t.id&&!["RESULTS","COMPLETED","ABANDONED","LOBBY"].includes(view.phase)&&<small>الدور الآن</small>}
   </div>)}</div>;
 }

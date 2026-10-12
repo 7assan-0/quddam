@@ -66,6 +66,11 @@ test("Quddam identity, metadata, icons and public navigation across six viewport
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute("content","قدّام");
   await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute("content","قدّام");
   await expect(page.locator("#games .game-card")).toHaveCount(10);
+  await expect(page.locator(".preview-scoreboard .team-marker")).toHaveCount(2);
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => document.fonts.check('400 32px "Lalezar"', "قدّام"))).toBe(true);
+  const sunActions = await page.locator(".btn").evaluateAll(buttons => buttons.filter(button => getComputedStyle(button).backgroundColor === "rgb(255, 210, 31)").length);
+  expect(sunActions).toBe(1);
   expect(await page.locator("body").innerText()).not.toMatch(/Qalba|قَلْبَة|قلبة/i);
   for (const asset of ["/favicon.ico","/icon.svg","/apple-icon.png","/brand/quddam-logo-dark.svg","/brand/quddam-logo-light.svg","/brand/quddam-logo-mono.svg","/brand/quddam-mark.svg","/brand/quddam-mark-mono.svg","/brand/quddam-icon-16.png","/brand/quddam-icon-32.png","/brand/quddam-icon-48.png","/brand/quddam-icon-192.png","/brand/quddam-icon-512.png"]) {
     expect((await page.request.get(asset)).status(), asset).toBe(200);
