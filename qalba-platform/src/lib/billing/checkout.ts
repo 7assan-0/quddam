@@ -50,8 +50,13 @@ export async function reconcilePurchase(id: string, provider: PaymentProvider = 
   validateLinkedInvoice(purchase, invoice);
   // The locked result, not the pre-lookup read, decides whether a racing PAID
   // settlement needs the existing authoritative refund compensation.
-  const reversal = hasRefundObservation(invoice);
+  let reversal = hasRefundObservation(invoice);
   if (purchase.status !== "PAID" || !reversal) purchase = await settleInvoice(id, invoice, source);
+  if (purchase.status === "PAID") {
+    const settled = await db().paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", eventType: "INVOICE_OBSERVATION",
+      processingResult: "SETTLED", observedState: "paid" }, select: { paymentReference: true } });
+    reversal = hasRefundObservation(invoice, settled?.paymentReference ?? null);
+  }
   if (reversal && purchase.status === "PAID") {
     try { await processObservedRefund(id, invoice, provider, source); }
     catch (error) {

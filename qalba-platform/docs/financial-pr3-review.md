@@ -33,11 +33,17 @@ rechecks the binding under the Purchase lock. An earlier void cannot compensate 
 grant bound to a different payment. Existing holds remain sticky; the correction
 supplies no retrospective release.
 
-The corrected coverage comprises the complete unit suite, 56 retained-fixture
+The corrected coverage comprises the complete unit suite, 60 retained-fixture
 native reversal scenarios, 13 B01 scenarios with complete synthetic observations,
 and a 14-case in-memory rollback-hazard probe. The exact tested source and executed
 results are recorded in the source-bound manifest and attached PR evidence.
 The earlier `3500c50` results establish only the historical behavior described below.
+
+Reversal detection also uses the recorded grant payment ID after the locked result,
+including a racing PENDING-to-PAID transition. A reversal of that payment cannot
+disappear into history when a newer paid or active attempt appears. Such mixed
+financial observations require review; they do not authorize guessed compensation.
+For legacy paid grants without a recorded ID, a void cannot be assumed unrelated.
 
 The owner also authorized the durable-hold
 [operations and rollback runbook](payment-review-operations.md). It specifies

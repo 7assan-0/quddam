@@ -358,6 +358,30 @@ async function main() {
       await assert.rejects(reconcilePurchase(f.purchase.id, provider(f, stale)), { status: 409 });
       assert.deepEqual(await financial(f), saved); return { purchaseId: f.purchase.id, wrongPaymentRejected: true };
     });
+    for (const status of ["initiated", "on_hold", "paid"]) await scenario(`bound reversal with a newer ${status} payment remains review rather than disappearing as history`, async () => {
+      const f = await fixture(); f.payment = { ...f.payment, captured: 0 }; f.invoice = { ...f.invoice, payments: [f.payment] };
+      await settleInvoice(f.purchase.id, f.invoice); const saved = await financial(f);
+      const actual = { ...f.payment, status: "voided", voided_at: "2026-10-13T00:00:00.000Z" };
+      const newer = { ...f.payment, id: randomUUID(), status: status === "paid" ? "paid" : "authorized" };
+      const observed = { ...f.invoice, status, payments: [actual, newer] };
+      await assert.rejects(reconcilePurchase(f.purchase.id, provider(f, observed)), { status: 409 });
+      assert.deepEqual(await financial(f), saved);
+      assert.ok(await db().paymentEvent.findFirst({ where: { purchaseId: f.purchase.id, eventType: "REFUND_REVIEW", processingResult: "REVIEW_REQUIRED" } }));
+      return { purchaseId: f.purchase.id, boundReversalReviewed: true, noCompensationGuess: true };
+    });
+    await scenario("native stale-PENDING observer rereads the winning payment binding before reviewing a newer paid attempt", async () => {
+      const f = await fixture(); f.payment = { ...f.payment, captured: 0 }; f.invoice = { ...f.invoice, payments: [f.payment] };
+      const actual = { ...f.payment, status: "voided", voided_at: "2026-10-13T00:00:00.000Z" }, newer = { ...f.payment, id: randomUUID() };
+      const invoice = { ...f.invoice, payments: [actual, newer] }; let statusAtFetch: string | undefined;
+      const observer = { ...provider(f, invoice), async fetchInvoice() {
+        statusAtFetch = (await db().purchase.findUniqueOrThrow({ where: { id: f.purchase.id } })).status; return invoice;
+      } };
+      const raced = await race("Purchase", f.purchase.id, [() => settleInvoice(f.purchase.id, f.invoice), () => reconcilePurchase(f.purchase.id, observer)]);
+      assert.equal(statusAtFetch, "PENDING"); assert.equal(raced.outcomes[0].status, "fulfilled"); assert.equal(raced.outcomes[1].status, "rejected");
+      assert.equal((raced.outcomes[1] as PromiseRejectedResult).reason.status, 409);
+      const saved = await assertPaid(f); assert.ok(await db().paymentEvent.findFirst({ where: { purchaseId: f.purchase.id, processingResult: "REVIEW_REQUIRED" } }));
+      return { purchaseId: f.purchase.id, gatePid: raced.gatePid, blockedBackendPids: raced.blockedBackendPids, statusAtFetch, financial: saved };
+    });
     await scenario("existing refund uniqueness constraint rolls back wallet and compensation atomically", async () => {
       const blocker = await fixture(), target = await fixture();
       target.payment = { ...target.payment, id: blocker.payment.id }; target.invoice = { ...target.invoice, payments: [target.payment] };

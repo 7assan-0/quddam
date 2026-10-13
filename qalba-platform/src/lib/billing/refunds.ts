@@ -54,9 +54,16 @@ function financialPayments(invoice: Invoice) {
   // Only complete identities and one distinct financial payment justify ignoring history.
   return completePayments(invoice) && financial.length === 1 ? financial : payments;
 }
-export function hasRefundObservation(invoice: Invoice) {
+export function hasRefundObservation(invoice: Invoice, settledPaymentId?: string | null) {
   // A review signal never authorizes compensation; the existing full-refund verifier does.
   const reversed = (status: string) => ["refunded", "voided", "reversed"].includes(status);
+  if (settledPaymentId) {
+    const bound = invoice.payments?.find(payment => payment.id === settledPaymentId);
+    if (!bound || !matchingPayment(invoice, bound) || reversed(bound.status) || bound.refunded > 0 || bound.refunded_at || bound.voided_at) return true;
+  } else if (settledPaymentId === null && invoice.payments?.some(payment => reversed(payment.status) || payment.refunded > 0)) {
+    // A legacy grant cannot establish that an observed void belongs to unrelated history.
+    return true;
+  }
   return requiresSettlementReview(invoice) || reversed(invoice.status)
     || financialPayments(invoice).some(payment => reversed(payment.status) || payment.refunded > 0);
 }

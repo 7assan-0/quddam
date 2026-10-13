@@ -381,6 +381,43 @@ describe("owner-approved historical zero-charge attempts", () => {
     expect(f.state.refunds[0].paymentReference).toBe(paymentId); expect(f.state.refunds[0].state).toBe("VOIDED");
   });
 
+  it.each(["initiated", "on_hold", "paid"])("detects a bound reversal hidden behind a newer %s attempt", async status => {
+    const f = fixture(); await settleInvoice(f.state.purchase.id, f.paidInvoice);
+    const before = f.financial(), boundVoid = { ...f.paidInvoice.payments![0], status: "voided", voided_at: "2026-10-06T00:00:00.000Z" };
+    const newer = { ...f.paidInvoice.payments![0], id: "2140190e-c0f6-438a-afdc-a7d57c74420e", status: status === "paid" ? "paid" : "authorized" };
+    const invoice = { ...f.invoice, status, payments: [boundVoid, newer] };
+    const provider = { ...f.provider, fetchInvoice: vi.fn(async () => invoice), fetchPayment: vi.fn(async () => boundVoid) };
+    await expect(reconcilePurchase(f.state.purchase.id, provider)).rejects.toMatchObject({ status: 409 });
+    expect(f.financial()).toEqual(before);
+    expect(f.state.events.some(event => event.eventType === "REFUND_REVIEW" && event.processingResult === "REVIEW_REQUIRED")).toBe(true);
+  });
+
+  it("uses the newly locked grant binding after initially reading PENDING", async () => {
+    const f = fixture(), originalGrant: Ledger = { userId: f.state.purchase.userId, delta: 3, reason: "Synthetic racing paid grant", idempotencyKey: `purchase:${f.state.purchase.id}` };
+    f.tx.$queryRaw.mockImplementationOnce(async () => {
+      Object.assign(f.state.purchase, { status: "PAID", paidAt: new Date("2026-10-05"), couponReserved: false });
+      f.state.balance = 3; f.state.coupon = { reservedCount: 0, usedCount: 1 }; f.state.ledger.push(originalGrant);
+      f.state.events.push({ provider: "moyasar", externalId: "synthetic-racing-settlement", purchaseId: f.state.purchase.id,
+        eventType: "INVOICE_OBSERVATION", observedState: "paid", processingResult: "SETTLED", paymentReference: paymentId });
+      return [];
+    });
+    const boundVoid = { ...f.paidInvoice.payments![0], status: "voided", voided_at: "2026-10-06T00:00:00.000Z" };
+    const newer = { ...f.paidInvoice.payments![0], id: "2140190e-c0f6-438a-afdc-a7d57c74420e" };
+    const invoice = { ...f.invoice, payments: [boundVoid, newer] }, provider = { ...f.provider, fetchInvoice: vi.fn(async () => invoice) };
+    await expect(reconcilePurchase(f.state.purchase.id, provider)).rejects.toMatchObject({ status: 409 });
+    expect(f.state.balance).toBe(3); expect(f.state.ledger).toEqual([originalGrant]); expect(f.state.refunds).toEqual([]);
+    expect(f.state.events.some(event => event.eventType === "REFUND_REVIEW" && event.processingResult === "REVIEW_REQUIRED")).toBe(true);
+  });
+
+  it("does not infer an unrelated void for a legacy paid grant with no recorded payment identity", async () => {
+    const f = fixture(); await settleInvoice(f.state.purchase.id, f.paidInvoice);
+    for (const event of f.state.events) if (event.processingResult === "SETTLED") event.paymentReference = null;
+    const before = f.financial(), invoice = { ...f.invoice, status: "initiated", payments: [historicalVoid(f), { ...f.paidInvoice.payments![0], status: "authorized" }] };
+    const provider = { ...f.provider, fetchInvoice: vi.fn(async () => invoice) };
+    await expect(reconcilePurchase(f.state.purchase.id, provider)).rejects.toMatchObject({ status: 409 });
+    expect(f.financial()).toEqual(before);
+  });
+
   it.each(["REFUND_REVIEW", "INVOICE_OBSERVATION"])("retains %s holds for all entry sources even when a snapshot is newly eligible", async eventType => {
     const f = fixture(), before = f.financial();
     f.state.events.push({ provider: "moyasar", externalId: "synthetic-persisted-hold", purchaseId: f.state.purchase.id, eventType, processingResult: "REVIEW_REQUIRED" });

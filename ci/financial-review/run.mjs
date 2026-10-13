@@ -202,18 +202,19 @@ try {
   const p05File = path.join(privateDirectory, 'p05.json'), b01File = path.join(privateDirectory, 'b01.json');
   await step('native-p05', process.execPath, ['--import', 'tsx', 'scripts/billing-reversal-postgres.ts'], { ...p05, BILLING_REVERSAL_EVIDENCE_FILE: p05File });
   activeStep = 'validate-p05';
-  const reversal = await jsonEvidence('reversal', p05File); passedResults(reversal, 56);
+  const reversal = await jsonEvidence('reversal', p05File); passedResults(reversal, 60);
   assert.equal(reversal.status, 'PASS'); assert.match(reversal.server, /^PostgreSQL 16\./);
   assert.equal(reversal.productionAccess, false); assert.equal(reversal.liveProviderAccess, false);
   assert.equal(reversal.destructiveSql, false); assert.equal(reversal.fixturesRetained, true);
   assert.ok(Number.isInteger(reversal.syntheticHttpRequests) && reversal.syntheticHttpRequests > 0);
   const races = reversal.results.filter(item => item.evidence?.blockedBackendPids);
-  assert.equal(races.length, 11); races.forEach(item => distinctBackends(item.evidence));
+  assert.equal(races.length, 12); races.forEach(item => distinctBackends(item.evidence));
   const originalRaceNames = [1, 2, 3].flatMap(n => [`native reversal-first then stale paid contender ${n}`, `native paid-first then stale-PENDING reversal observer ${n}`]);
   originalRaceNames.push('actual Board START/refund native wallet contention START first', 'actual Board START/refund native wallet contention REFUND first');
   const newRaceNames = ['native historical-attempt REVERSAL wins settlement/reversal ordering', 'native historical-attempt PAID wins settlement/reversal ordering',
     'concurrent full refund observers with historical attempts compensate exactly once'];
-  const raceNames = [...newRaceNames, ...originalRaceNames];
+  const bindingRace = 'native stale-PENDING observer rereads the winning payment binding before reviewing a newer paid attempt';
+  const raceNames = [...newRaceNames, bindingRace, ...originalRaceNames];
   assert.deepEqual(races.map(item => item.name), raceNames);
   const directNames = ['paid/full-refunded payment', 'paid/partial refund numeric evidence', 'paid/voided payment',
     'paid/reversed payment', 'paid/ambiguous multiple payments with reversal', 'refunded invoice', 'reversed invoice',
@@ -240,11 +241,13 @@ try {
     'fully consumed refund records zero compensation without clawing back later credits',
     'recorded automatic paid payment later voids beside older zero-counter void attempts',
     'stale older void cannot compensate a grant bound to a different payment',
+    ...['initiated', 'on_hold', 'paid'].map(status => `bound reversal with a newer ${status} payment remains review rather than disappearing as history`),
+    bindingRace,
     'existing refund uniqueness constraint rolls back wallet and compensation atomically', ...originalRaceNames];
   assert.deepEqual(reversal.results.map(item => item.name), reversalNames);
   assert.ok(reversal.results.every(item => item.evidence && typeof item.evidence === 'object'));
-  for (const item of races.filter(item => item.name.includes('stale-PENDING'))) assert.equal(item.evidence.purchaseStatusAtProviderFetch, 'PENDING');
-  Object.assign(manifest.checks.reversal, { passed: 56, failed: 0, nativeRaceCases: 11,
+  for (const item of races.filter(item => item.name.includes('stale-PENDING'))) assert.equal(item.evidence.purchaseStatusAtProviderFetch ?? item.evidence.statusAtFetch, 'PENDING');
+  Object.assign(manifest.checks.reversal, { passed: 60, failed: 0, nativeRaceCases: 12,
     distinctBackendPairs: true, syntheticHttpRequests: reversal.syntheticHttpRequests,
     cases: reversal.results.map(({ name, durationMs }) => ({ name: safeName(name), durationMs })) });
   await save();
@@ -283,7 +286,7 @@ try {
   assert.equal(unit.numTotalTests, assertions.length); assert.equal(unit.numPassedTests, assertions.length);
   assert.ok(unit.testResults.every(file => file.status === 'passed'));
   const regression = unit.testResults.find(file => file.name.endsWith('/src/lib/billing/settlement-refund.test.ts'));
-  assert.ok(regression && regression.assertionResults.length === 86);
+  assert.ok(regression && regression.assertionResults.length === 91);
   Object.assign(manifest.checks.unit, { passed: assertions.length, failed: 0, pending: 0,
     files: actualFiles.length, allTrackedTestFilesExecuted: true, retries: 0,
     regressionCases: regression.assertionResults.map(item => ({ name: safeName(item.fullName), status: item.status })) });

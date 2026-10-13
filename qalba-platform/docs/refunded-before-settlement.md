@@ -49,6 +49,12 @@ lock. A stale earlier void cannot compensate a grant bound to a different paymen
 Legacy grants with no recorded payment ID retain the existing strict authoritative
 refund verification path.
 
+For an existing PAID grant, reversal detection consults that original payment ID
+after the locked settlement result. Newer paid/active attempts cannot hide a void
+of the credited payment as harmless history. Ambiguous mixed histories require
+review without guessed compensation. Legacy grants lacking the recorded ID cannot
+assume a void is unrelated. Ordinary PENDING in-progress polling remains eligible.
+
 The marker persists across later stale paid/failed/canceled/expired/voided
 observations. Existing `INVOICE_OBSERVATION / REVIEW_REQUIRED` markers also
 retain the hold. Repeated observations cannot erase it or create another grant.

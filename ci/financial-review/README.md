@@ -5,10 +5,10 @@ The official PostgreSQL 16.15 image is pinned by digest. A local result does
 not establish a successful hosted Actions run; verify that run separately.
 It installs the frozen lockfile, generates the Prisma client, creates two new
 databases, applies forward migrations, seeds Board content only in P05, runs
-the 56 reversal and 13 B01 scenarios, and runs every tracked unit test file.
-It requires eleven reversal races with distinct waiting PostgreSQL backends,
+the 60 reversal and 13 B01 scenarios, and runs every tracked unit test file.
+It requires twelve reversal races with distinct waiting PostgreSQL backends,
 both settlement winner orders, real Board START/refund contention, and exactly
-86 assertions in the settlement/refund regression file. Unit retries
+91 assertions in the settlement/refund regression file. Unit retries
 are disabled. A failed command, missing/partial result, skipped assertion or
 tracked source change fails the job.
 
