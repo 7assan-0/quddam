@@ -38,7 +38,6 @@ jobs:
       AUTH_TRUST_PROXY: 'true'
       AUTH_CLIENT_IP_HEADER: x-quddam-client-ip
       JOIN_TEST_DATABASE: '1'
-      APP_URL: https://quddam.test
       PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
       EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -65,6 +64,8 @@ jobs:
           node --import tsx scripts/guest-join-postgres.ts
       - name: Lint, route types, typecheck and production build
         working-directory: qalba-platform
+        env:
+          APP_URL: https://quddam.test
         run: |
           npm run lint
           node node_modules/next/dist/bin/next typegen
