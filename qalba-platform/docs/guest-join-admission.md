@@ -8,7 +8,7 @@ Use the existing `authClientIdentity` function: with `AUTH_TRUST_PROXY=false` al
 
 For public staging, **block direct Next ingress**, strip incoming client-IP copies and overwrite `x-quddam-client-ip` from the actual trusted socket peer at the last controlled proxy. Verify malformed/missing chains become `unknown`; verify ordinary independent clients and public NAT behavior. This code does not prove proxy deployment.
 
-Board room codes are normalized by `normalizeCode` before both admission and `joinRoom`: lowercase and permitted whitespace aliases share a budget. Social/Court/Bluff use lowercased UUID route IDs as their room identity. Invalid route targets collapse to a single `invalid` subject per game (never create attacker-chosen cardinality); invalid requests still pass the shared rate gate before parsing/DB work.
+Board room codes are normalized by `normalizeCode` before both admission and `joinRoom`: lowercase and permitted whitespace aliases share a budget. Social and Bluff use lowercased UUID route IDs. Court uses the actual Prisma-generated 25-character lowercase CUID session ID (`GameSession.id @default(cuid())`), retaining independent room budgets. Invalid route targets collapse to a single `invalid` subject per game (never create attacker-chosen cardinality); invalid requests still pass the shared rate gate before parsing/DB work.
 
 ## Shared PostgreSQL budgets
 
@@ -27,6 +27,6 @@ The existing auth-attempt retention also covers these keys. Coordinate its daily
 
 ## Verification and launch boundary
 
-`src/lib/rooms/admission.test.ts` checks canonical keys, spoof resistance, mapped IPv4, IPv6 /64, unknown clients, HMAC privacy and transaction failure handling. A disposable PostgreSQL 16 service can run the guarded `scripts/guest-join-postgres.ts`: it requires `JOIN_TEST_DATABASE=1`, loopback port 55466, exact `join_admission_test` DB/user, fresh AuthAttempt inventory and synthetic config. It retains records and performs no reset, drops, customer-data access, or live provider requests.
+`src/lib/rooms/admission.test.ts` checks distinct Court CUID room buckets, canonical keys, spoof resistance, mapped IPv4, IPv6 /64, unknown clients, HMAC privacy and transaction failure handling. A disposable PostgreSQL 16 service can run the guarded `scripts/guest-join-postgres.ts`: it requires `JOIN_TEST_DATABASE=1`, loopback port 55466, exact `join_admission_test` DB/user, fresh AuthAttempt inventory and synthetic config. It retains records and performs no reset, drops, customer-data access, or live provider requests.
 
 Hosted `.github/workflows/guest-join-review.yml` runs unit, lint, typecheck, build and native admission checks against its checked-out PR head. Local/hosted outcomes must be reported separately. Test success is **not** evidence of real ingress header overwrite, direct-port isolation, public load capacity or complete successor release approval. Run a real staging ingress test before public exposure.
