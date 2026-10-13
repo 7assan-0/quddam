@@ -20,6 +20,7 @@ export function inspectStagingConfiguration(env) {
   const errors = [], warnings = [];
   const fail = code => errors.push(code);
   if (env.STAGING_CONTEXT !== "isolated-preparation") fail("STAGING_CONTEXT_NOT_EXPLICIT");
+  if (env.STAGING_PROVIDER !== "oci") fail("STAGING_PROVIDER_NOT_OCI");
   if (env.NODE_ENV !== "production") fail("NODE_ENV_NOT_PRODUCTION");
   const origin = httpsOrigin(env.APP_URL), expected = httpsOrigin(env.STAGING_EXPECTED_ORIGIN);
   if (!origin || !expected || origin !== expected) fail("STAGING_HTTPS_ORIGIN_MISMATCH");
