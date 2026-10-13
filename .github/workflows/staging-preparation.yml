@@ -4,8 +4,9 @@ on:
   pull_request:
     paths:
       - 'qalba-platform/scripts/staging-preflight.mjs'
-      - 'qalba-platform/scripts/staging-preflight.test.mjs'
+      - 'qalba-platform/scripts/staging-preflight.contract.mjs'
       - 'qalba-platform/docs/staging-preparation.md'
+      - 'qalba-platform/docs/staging-oci.md'
       - '.github/workflows/staging-preparation.yml'
   workflow_dispatch:
 
@@ -27,4 +28,4 @@ jobs:
           package-manager-cache: false
       - name: Synthetic contract test only; no deployment or external services
         working-directory: qalba-platform
-        run: node --test scripts/staging-preflight.test.mjs
+        run: node --test scripts/staging-preflight.contract.mjs
