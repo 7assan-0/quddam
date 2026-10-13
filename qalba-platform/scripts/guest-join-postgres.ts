@@ -44,11 +44,27 @@ async function main() {
     const third = await Promise.all(Array.from({ length: 10 }, () =>
       consumeJoinAdmission(request("203.0.113.21"), "board", "7K4P2Q")));
     assert.equal(third.filter(Boolean).length, 10, "Distinct trusted clients retain independent client budgets");
+    // Court uses Prisma's generated CUIDs. Exhausting the first room must not
+    // exhaust a different Court room's independent room/client limit.
+    const courtA = "cmv77xi9q002lo74c2fk522yi";
+    const courtB = "cmv77xi9q002lo74c2fk522yj";
+    const guest = request("203.0.113.22");
+    const firstCourt = await Promise.all(Array.from({ length: 12 }, () =>
+      consumeJoinAdmission(guest, "court", courtA)));
+    const secondCourt = await Promise.all(Array.from({ length: 12 }, () =>
+      consumeJoinAdmission(guest, "court", courtB)));
+    assert.equal(firstCourt.filter(Boolean).length, 12, "First Court room admits its own budget");
+    assert.equal(secondCourt.filter(Boolean).length, 12, "Distinct Court CUID room retains its own budget");
+    assert.notEqual(
+      joinAdmissionBudget(guest, "court", courtA).find(item => item.scope === "room-client")?.key,
+      joinAdmissionBudget(guest, "court", courtB).find(item => item.scope === "room-client")?.key,
+      "Two real Court room IDs cannot collapse to one budget",
+    );
     // This test proves atomic shared-table limits under concurrent calls. It
     // does not attest to the deployed proxy, multiple app replicas or load capacity.
     console.log(JSON.stringify({ scope: "dedicated synthetic native PostgreSQL join admission",
       passed: true, canonicalParallelAccepted: 12, canonicalParallelRejected: 2,
-      distinctRoomAccepted: 10, distinctClientAccepted: 10, liveIngressVerified: false }));
+      distinctRoomAccepted: 10, distinctClientAccepted: 10, independentCourtRoomsAccepted: [12, 12], liveIngressVerified: false }));
   } finally { await client.$disconnect(); }
 }
 main().catch(error => { console.error(error instanceof Error ? error.message : "Native join test failed"); process.exitCode = 1; });
