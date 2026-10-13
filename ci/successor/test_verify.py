@@ -272,6 +272,13 @@ class SourceGuardTests(unittest.TestCase):
             report = verify.record(self.root, self.path, False, output)
         self.assertEqual(report["status"], "FAILED")
 
+    def test_unit_fixtures_own_their_origin_without_changing_build_config(self):
+        original = {"APP_URL": "https://successor.invalid", "DATABASE_URL": "synthetic"}
+        self.assertNotIn("APP_URL", verify.check_environment(original, "unit"))
+        self.assertEqual(verify.check_environment(original, "build")["APP_URL"], original["APP_URL"])
+        self.assertEqual(verify.check_environment(original, "build")["NODE_ENV"], "production")
+        self.assertEqual(original["APP_URL"], "https://successor.invalid")
+
 
 if __name__ == "__main__":
     unittest.main()

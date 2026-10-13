@@ -171,6 +171,14 @@ def restore_next_declaration(path, original, row):
                               "allowedTransformation": ".next/dev/types/ to .next/types/ only"}
 
 
+def check_environment(environment, label):
+    result = {**environment, "NODE_ENV": "production" if label == "build" else "development"}
+    # Same contract as the approved quality runner: unit fixtures own their Origin.
+    if label == "unit":
+        result.pop("APP_URL", None)
+    return result
+
+
 def record(root, manifest_path, quality, output):
     output = Path(output).resolve()
     require(not output.is_relative_to(Path(root).resolve()) and not output.is_relative_to(TOOLING), "Evidence must be outside both checkouts")
@@ -180,9 +188,11 @@ def record(root, manifest_path, quality, output):
               "automaticRetries": 0, "releaseGroups": {name: "NOT_EXECUTED" for name in RELEASE_GROUPS},
               "qualityChecks": {name: "NOT_EXECUTED" for name in ("npm-ci", "prisma-generate", "route-types", "lint", "typecheck", "unit", "build")},
               "checks": [], "startedAtUTC": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    report["requestedCandidateSha"] = CANDIDATE_SHA
     write_summary(output, report)
     try:
         verify_provenance(manifest_path)
+        report["observedCheckoutSha"] = git(Path(root).resolve(), "rev-parse", "HEAD").decode().strip()
         report["source"] = verify(root, manifest_path)
         report["tooling"] = tooling_binding()
         report["toolingEvidence"] = "local-draft" if report["tooling"]["workingTreeModified"] else "committed"
@@ -239,7 +249,7 @@ def run_quality(root, manifest_path, output, report):
         with log.open("xb") as stream:
             log.chmod(0o600)
             try:
-                result = subprocess.run(command, cwd=app, env={**env, "NODE_ENV": "production" if label == "build" else "development"},
+                result = subprocess.run(command, cwd=app, env=check_environment(env, label),
                                         stdout=stream, stderr=subprocess.STDOUT, timeout=1200)
                 row["exitCode"] = result.returncode
             finally:

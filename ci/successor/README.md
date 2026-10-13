@@ -80,7 +80,9 @@ and a production build. Commands run serially; failures preserve the first
 failure and leave subsequent checks NOT_EXECUTED. No database, provider,
 infrastructure or deployment operation is performed. Only OS/network trust
 settings are inherited; application credentials are replaced with synthetic
-settings and an unreachable loopback database URL. TLS/checksum verification
+settings and an unreachable loopback database URL. Unit fixtures own their
+request Origin, so `APP_URL` is omitted for unit execution, as in the approved
+quality runner; the build retains the synthetic HTTPS origin. TLS/checksum verification
 is retained.
 
 Next's `next-env.d.ts` is a generated declaration. Only for `typegen` and build,
