@@ -25,11 +25,26 @@ describe("layered guest-join admission identities", () => {
     expect(joinAdmissionTarget("board", "0I1O6S")).toBe("invalid");
     expect(keys("board", "bad!")).toEqual(keys("board", "another-invalid"));
   });
-  it("canonicalizes UUID case, bounds invalid subjects and isolates game kinds", () => {
+  it("canonicalizes UUID IDs for Social/Bluff and bounds invalid subjects", () => {
     const id = "315afc1d-3444-4d72-aabc-8f1314112a9e";
-    expect(keys("court", id.toUpperCase())).toEqual(keys("court", id));
+    expect(keys("social", id.toUpperCase())).toEqual(keys("social", id));
+    expect(keys("bluff", id.toUpperCase())).toEqual(keys("bluff", id));
     expect(keys("bluff", "invalid-1")).toEqual(keys("bluff", "invalid-2"));
-    expect(ofScope(keys("court", id), "room")).not.toEqual(ofScope(keys("bluff", id), "room"));
+    expect(ofScope(keys("social", id), "room")).not.toEqual(ofScope(keys("bluff", id), "room"));
+  });
+  it("recognizes Prisma-generated Court CUID sessions as distinct rooms, never the shared invalid bucket", () => {
+    // Court calls gameSession.create without an explicit id: schema uses @default(cuid()).
+    const first = "cmv77xi9q002lo74c2fk522yi";
+    const second = "cmv77xi9q002lo74c2fk522yj";
+    expect(joinAdmissionTarget("court", first)).toBe(first);
+    expect(joinAdmissionTarget("court", second)).toBe(second);
+    expect(ofScope(keys("court", first), "room")).not.toEqual(ofScope(keys("court", second), "room"));
+    expect(ofScope(keys("court", first), "room-client")).not.toEqual(ofScope(keys("court", second), "room-client"));
+    expect(ofScope(keys("court", first), "client")).toEqual(ofScope(keys("court", second), "client"));
+    expect(ofScope(keys("court", first), "global")).toEqual(ofScope(keys("court", second), "global"));
+    expect(joinAdmissionTarget("court", "court-attacker-key")).toBe("invalid");
+    expect(joinAdmissionTarget("court", "cmv77xi9q002lo74c2fk522y!")).toBe("invalid");
+    expect(keys("court", "malformed-one")).toEqual(keys("court", "malformed-two"));
   });
   it("shares global/client budgets across all games and rooms", () => {
     const a = keys("board", "7K4P2Q"), b = keys("social", "315afc1d-3444-4d72-aabc-8f1314112a9e");
