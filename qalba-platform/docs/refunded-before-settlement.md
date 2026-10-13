@@ -13,7 +13,8 @@ so it did not exercise this shape.
 
 `settleInvoice` now checks reversal evidence and existing review markers after
 locking/re-reading Purchase and validating invoice identity. Full, partial,
-voided, reversed, and mixed-payment observations cannot authorize a fresh grant.
+voided, reversed, and mixed-payment observations containing reversal evidence
+cannot authorize a fresh grant.
 The purchase remains PENDING and the transaction commits a deduplicated
 `REFUND_REVIEW / REVIEW_REQUIRED` event. Purchase facts, wallet, purchase grant,
 coupon reservation/usage, refund rows and terminal analytics remain unchanged.
@@ -80,3 +81,8 @@ Evidence cannot overwrite an earlier run.
 
 These are scoped synthetic checks. Historical approved RC assets/manifests are
 unchanged; the changed source requires its own later successor release gate.
+
+For the reproducible clean PostgreSQL/CI procedure, see
+[financial-review](../../../ci/financial-review/README.md). Independent review
+findings and unresolved policy decisions are recorded separately in
+[financial-pr3-review.md](financial-pr3-review.md).
