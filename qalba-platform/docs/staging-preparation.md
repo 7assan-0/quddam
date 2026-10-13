@@ -1,5 +1,7 @@
 # Quddam private Staging — preparation only
 
+**Chosen provider: Oracle Cloud Infrastructure (OCI).** See the [OCI-specific staging topology, owner choices and ingress acceptance plan](staging-oci.md). This is a provider selection, not an OCI account or resource deployment.
+
 **Status:** planning and static safety checks only. No staging host, domain, public route, customer data, database, secrets, monitoring subscription, merchant integration or deployment is created by this PR. This is not a release pass.
 
 ## Roles and approval boundary
@@ -24,6 +26,7 @@ Required values (do not commit populated values):
 | Name | Purpose |
 | --- | --- |
 | STAGING_CONTEXT=isolated-preparation | Explicit environment purpose |
+| STAGING_PROVIDER=oci | Explicit selected OCI provider (not tenancy verification) |
 | NODE_ENV=production | Production runtime |
 | APP_URL and STAGING_EXPECTED_ORIGIN | Matching canonical private HTTPS origin |
 | STAGING_ACCESS_MODE=private-network or authenticated-ingress | Private-access intent, verify externally |
@@ -51,4 +54,4 @@ The preflight complements, not replaces, npm run ops:validate, independent DB in
 
 ## Verification boundary
 
-The staging-preparation GitHub workflow runs built-in Node contract tests using synthetic values only. It does not deploy or reach a real gateway. A green CI result means the preflight tool passed, not that Staging is live.
+The staging-preparation GitHub workflow runs a separately named built-in Node contract script (.contract.mjs) using synthetic values only; it must not be discovered as a Vitest application unit test. It does not deploy or reach a real gateway. A green CI result means the preflight tool passed, not that Staging is live.
