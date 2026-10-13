@@ -20,12 +20,16 @@ export const JOIN_ADMISSION_LIMITS: readonly Limit[] = [
 ];
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Unlike Social and Bluff (explicit UUIDs), Court uses GameSession.id @default(cuid()).
+// Validate its actual generated form so one room cannot exhaust another room's quota.
+const courtCuid = /^c[a-z0-9]{24}$/;
 
 /** Invalid paths share one fixed subject per game, never attacker-chosen keys. */
 export function joinAdmissionTarget(kind: JoinKind, value: string): string {
   if (kind === "board") {
     try { return normalizeCode(value); } catch { return "invalid"; }
   }
+  if (kind === "court") return courtCuid.test(value) ? value : "invalid";
   return uuid.test(value) ? value.toLowerCase() : "invalid";
 }
 
