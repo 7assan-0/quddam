@@ -6,7 +6,7 @@ import { inspectStagingConfiguration } from "./staging-preflight.mjs";
 
 const script = fileURLToPath(new URL("./staging-preflight.mjs", import.meta.url));
 const fixture = () => ({
-  STAGING_CONTEXT: "isolated-preparation", NODE_ENV: "production",
+  STAGING_CONTEXT: "isolated-preparation", STAGING_PROVIDER: "oci", NODE_ENV: "production",
   APP_URL: "https://staging.example.test", STAGING_EXPECTED_ORIGIN: "https://staging.example.test",
   STAGING_ACCESS_MODE: "authenticated-ingress",
   DATABASE_URL: "postgresql://synthetic:synthetic@db.example.test/staging_review?sslmode=require",
@@ -23,7 +23,7 @@ describe("isolated staging preflight; synthetic and network-free", () => {
   it("rejects invalid canonical origin, public ingress and wrong database identity/TLS", () => {
     for (const bad of [
       { APP_URL: "http://staging.example.test" }, { STAGING_EXPECTED_ORIGIN: "https://another.example.test" },
-      { STAGING_ACCESS_MODE: "public" },
+      { STAGING_ACCESS_MODE: "public" }, { STAGING_PROVIDER: "other" },
       { DATABASE_URL: "postgresql://x:y@db.example.test/production?sslmode=require", STAGING_EXPECTED_DATABASE: "production" },
       { STAGING_EXPECTED_DATABASE: "wrong" },
       { DATABASE_URL: "postgresql://x:y@db.example.test/staging_review" },
