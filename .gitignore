@@ -13,3 +13,7 @@ deliverables/
 incoming/
 verification/
 verification-tools/.ci-*.mjs
+
+# Never commit staging secrets, environment snapshots or private ingress evidence.
+qalba-platform/.env.staging*
+qalba-platform/staging-evidence/
