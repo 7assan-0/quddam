@@ -7,12 +7,14 @@ import os
 from pathlib import Path, PurePosixPath
 import secrets
 import shutil
+import stat
 import subprocess
 import sys
 
 APPROVED_SHA = "b69d8955ad5b33e570dd493e2eb5dfa9e603e72d"
 CANDIDATE_SHA = "2d4e868ba43700414c19ece1394bf6815e7639cf"
 TOOLING = Path(__file__).resolve().parents[2]
+TOOLING_PATHS = ("ci/successor", ".github/workflows/quddam-successor-verification.yml")
 GENERATED = ("qalba-platform/node_modules", "qalba-platform/.next",
              "qalba-platform/src/generated/prisma", "qalba-platform/tsconfig.tsbuildinfo",
              "qalba-platform/test-results", "qalba-platform/playwright-report")
@@ -47,46 +49,91 @@ def unique_object(pairs):
 
 
 def load(path):
-    return json.loads(Path(path).read_text(), object_pairs_hook=unique_object)
+    path = Path(path)
+    require(path.is_file() and not path.is_symlink(), "JSON input must be a regular file")
+    value = json.loads(path.read_text(), object_pairs_hook=unique_object)
+    require(isinstance(value, dict), "JSON document must be an object")
+    return value
 
 
 def git(root, *args, input=None):
-    env = {**os.environ, "GIT_NO_REPLACE_OBJECTS": "1"}
+    # Repository/index/object/config overrides must not redirect a local read.
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env["GIT_NO_REPLACE_OBJECTS"] = "1"
     result = subprocess.run(["git", "-c", "core.fsmonitor=false", "-C", str(root), *args],
                             input=input, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     require(result.returncode == 0, "Git operation failed: " + args[0])
     return result.stdout
 
 
-def commit_inventory(root, sha):
+def read_git_objects(root, identities, kind):
+    identities = sorted(set(identities))
+    payload = git(root, "cat-file", "--batch", input="".join(oid + "\n" for oid in identities).encode())
+    offset, objects = 0, {}
+    for oid in identities:
+        end = payload.index(b"\n", offset)
+        header = payload[offset:end].decode().split()
+        require(len(header) == 3 and header[:2] == [oid, kind], "Unexpected Git object")
+        size = int(header[2])
+        data = payload[end + 1:end + 1 + size]
+        require(size >= 0 and len(data) == size
+                and payload[end + 1 + size:end + 2 + size] == b"\n", "Truncated Git object")
+        require(hashlib.sha1(kind.encode() + b" " + str(size).encode() + b"\0" + data,
+                             usedforsecurity=False).hexdigest() == oid, "Git " + kind + " identity mismatch")
+        objects[oid] = data
+        offset = end + 2 + size
+    require(offset == len(payload), "Unexpected Git object bytes")
+    return objects
+
+
+def validate_literal_commit(root, sha):
+    # Git normally trusts object filenames. Recompute commit/tree identities too,
+    # so corrupt object storage cannot silently rebind the expected file list.
+    commit = read_git_objects(root, [sha], "commit")[sha]
+    header = commit.split(b"\n", 1)[0].split()
+    require(len(header) == 2 and header[0] == b"tree" and len(header[1]) == 40
+            and all(character in b"0123456789abcdef" for character in header[1]), "Invalid Git commit tree")
+    trees = [header[1].decode()]
+    for row in git(root, "ls-tree", "-rtz", sha).split(b"\0"):
+        if row:
+            fields, _ = row.split(b"\t", 1)
+            _, kind, oid = fields.decode().split()
+            if kind == "tree":
+                trees.append(oid)
+    read_git_objects(root, trees, "tree")
+    return trees[0]
+
+
+def committed_objects(root, sha, paths=()):
     """Read literal commit objects, without checkout filters or replacement refs."""
+    validate_literal_commit(root, sha)
     entries = []
-    for row in git(root, "ls-tree", "-rz", sha).split(b"\0"):
+    arguments = ["ls-tree", "-rz", sha]
+    if paths:
+        arguments.extend(("--", *paths))
+    for row in git(root, *arguments).split(b"\0"):
         if not row:
             continue
         fields, path = row.split(b"\t", 1)
         mode, kind, oid = fields.decode().split()
         require(kind == "blob" and mode in ("100644", "100755"), "Unsupported Git entry")
         entries.append((path.decode(), mode, oid))
-    payload = git(root, "cat-file", "--batch", input="".join(oid + "\n" for _, _, oid in entries).encode())
-    offset, files, modes = 0, {}, {}
-    for path, mode, oid in entries:
-        end = payload.index(b"\n", offset)
-        header = payload[offset:end].decode().split()
-        require(header[:2] == [oid, "blob"], "Unexpected Git object")
-        size = int(header[2])
-        data = payload[end + 1:end + 1 + size]
-        require(len(data) == size, "Truncated Git object")
-        files[path], modes[path] = digest(data), mode
-        offset = end + 2 + size
-    require(offset == len(payload), "Unexpected Git object bytes")
-    return files, modes
+    blobs = read_git_objects(root, [oid for _, _, oid in entries], "blob")
+    return {path: {"sha256": digest(blobs[oid]), "mode": mode, "objectId": oid}
+            for path, mode, oid in entries}
+
+
+def commit_inventory(root, sha):
+    objects = committed_objects(root, sha)
+    return ({path: entry["sha256"] for path, entry in objects.items()},
+            {path: entry["mode"] for path, entry in objects.items()})
 
 
 def verify(root, manifest_path, expected_sha=CANDIDATE_SHA, approved_sha=APPROVED_SHA):
     root = Path(root).resolve()
     manifest = load(manifest_path)
-    require(manifest.get("schemaVersion") == 1, "Unsupported manifest schema")
+    require(type(manifest.get("schemaVersion")) is int and manifest["schemaVersion"] == 1,
+            "Unsupported manifest schema")
     require(manifest.get("candidateSha") == expected_sha, "Candidate SHA differs from pinned target")
     require(manifest.get("approvedRcSha") == approved_sha, "Approved RC identity changed")
     require(git(root, "rev-parse", "--show-toplevel").decode().strip() == str(root), "Source root must be the Git root")
@@ -108,7 +155,8 @@ def verify(root, manifest_path, expected_sha=CANDIDATE_SHA, approved_sha=APPROVE
                for p in sorted(files.keys() | approved.keys()) if files.get(p) != approved.get(p)]
     require(manifest.get("sourceChangesFromApproved") == changes, "Approved-to-successor diff mismatch")
     application = {p.removeprefix("qalba-platform/"): h for p, h in files.items() if p.startswith("qalba-platform/")}
-    require(manifest.get("applicationFileCount") == len(application)
+    require(type(manifest.get("applicationFileCount")) is int
+            and manifest["applicationFileCount"] == len(application)
             and manifest.get("applicationFingerprint") == fingerprint(application), "Application inventory mismatch")
     for path, sha in files.items():
         file = root / path
@@ -145,13 +193,46 @@ def verify_provenance(manifest_path):
 
 
 def tooling_binding():
-    paths = [*sorted(p for p in (TOOLING / "ci/successor").iterdir() if p.is_file()),
-             TOOLING / ".github/workflows/quddam-successor-verification.yml"]
-    require(all(not p.is_symlink() for p in paths), "Symlink tooling is forbidden")
-    files = {p.relative_to(TOOLING).as_posix(): digest(p.read_bytes()) for p in paths}
-    return {"checkoutSha": git(TOOLING, "rev-parse", "HEAD").decode().strip(),
-            "fingerprint": fingerprint(files), "files": files,
-            "workingTreeModified": bool(git(TOOLING, "status", "--porcelain", "--", "ci/successor", ".github/workflows/quddam-successor-verification.yml").strip())}
+    root = TOOLING.resolve()
+    require(git(root, "rev-parse", "--show-toplevel").decode().strip() == str(root),
+            "Tooling root must be the Git root")
+    checkout_sha = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode().strip()
+    expected_sha = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else checkout_sha
+    require(isinstance(expected_sha, str) and len(expected_sha) == 40
+            and all(character in "0123456789abcdef" for character in expected_sha),
+            "CI requires a full hexadecimal dispatched tooling SHA")
+    require(checkout_sha == expected_sha, "CI tooling SHA differs from dispatched SHA")
+    objects = committed_objects(root, expected_sha, TOOLING_PATHS)
+    require(objects and "ci/successor/verify.py" in objects
+            and TOOLING_PATHS[1] in objects, "Committed tooling inventory is missing")
+    committed = {path: entry["sha256"] for path, entry in objects.items()}
+    paths = []
+
+    def collect(path):
+        require(not any(parent.is_symlink() for parent in (path, *path.parents)
+                        if parent.is_relative_to(root)), "Symlink tooling is forbidden")
+        mode = path.stat().st_mode
+        if stat.S_ISDIR(mode):
+            for child in sorted(path.iterdir()):
+                collect(child)
+        else:
+            require(stat.S_ISREG(mode), "Unsupported working-tree tooling entry")
+            paths.append(path)
+
+    for relative in TOOLING_PATHS:
+        collect(root / relative)
+    files = {path.relative_to(root).as_posix(): digest(path.read_bytes()) for path in paths}
+    modes = {path.relative_to(root).as_posix(): "100755" if path.stat().st_mode & 0o111 else "100644"
+             for path in paths}
+    require(files.keys() == committed.keys(), "Tooling inventory differs from committed objects")
+    require(files == committed, "Tooling bytes differ from committed objects")
+    require(modes == {path: entry["mode"] for path, entry in objects.items()},
+            "Tooling modes differ from committed objects")
+    return {"expectedSha": expected_sha, "checkoutSha": checkout_sha,
+            "treeObjectId": git(root, "rev-parse", "--verify", expected_sha + "^{tree}").decode().strip(),
+            "fingerprint": fingerprint(files), "files": files, "modes": modes,
+            "committedFingerprint": fingerprint(committed), "committedFiles": committed,
+            "committedObjects": objects, "workingTreeModified": False}
 
 
 def write_summary(output, report):
@@ -191,14 +272,15 @@ def record(root, manifest_path, quality, output):
     report["requestedCandidateSha"] = CANDIDATE_SHA
     write_summary(output, report)
     try:
-        verify_provenance(manifest_path)
-        report["observedCheckoutSha"] = git(Path(root).resolve(), "rev-parse", "HEAD").decode().strip()
-        report["source"] = verify(root, manifest_path)
+        # Reject unsupported tooling types before reading provenance bytes.
         report["tooling"] = tooling_binding()
-        report["toolingEvidence"] = "local-draft" if report["tooling"]["workingTreeModified"] else "committed"
         if os.environ.get("GITHUB_ACTIONS") == "true":
             require(not report["tooling"]["workingTreeModified"], "CI requires clean committed tooling")
             require(report["tooling"]["checkoutSha"] == os.environ.get("GITHUB_SHA"), "CI tooling SHA differs from dispatched SHA")
+        verify_provenance(manifest_path)
+        report["observedCheckoutSha"] = git(Path(root).resolve(), "rev-parse", "HEAD").decode().strip()
+        report["source"] = verify(root, manifest_path)
+        report["toolingEvidence"] = "committed"
         report["manifestSha256"] = digest(Path(manifest_path).read_bytes())
         write_summary(output, report)
         if quality:
@@ -206,9 +288,14 @@ def record(root, manifest_path, quality, output):
         require(report["tooling"] == tooling_binding(), "Verifier tooling changed during execution")
         require(report["source"] == verify(root, manifest_path), "Candidate changed during execution")
         report["status"] = "PASS"
-    except (VerificationError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+    except VerificationError as error:
         report["status"] = "FAILED"
         report["failure"] = str(error)
+    except Exception as error:
+        # Validation failures are terminal; do not publish arbitrary exception
+        # payloads. BaseException interruptions retain the INCOMPLETE checkpoint.
+        report["status"] = "FAILED"
+        report["failure"] = "Verification failed (" + type(error).__name__ + ")"
     finally:
         report["finishedAtUTC"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         write_summary(output, report)

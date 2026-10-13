@@ -45,8 +45,22 @@ and application fingerprints are reported, alongside the tooling commit and
 actual tooling hashes. Before/after checks detect candidate or tooling changes.
 
 The receipt deliberately separates the fixed application SHA from the verifier
-revision. Local dirty tooling is labeled `local-draft`; CI rejects dirty tooling
-or a tooling SHA different from the dispatched commit.
+revision. In GitHub Actions, the expected tooling identity is the full dispatched
+`GITHUB_SHA`; locally it is the literal checkout HEAD. The verifier reads the
+recursive `ci/successor` inventory and its own workflow from that commit, records
+the tree and blob identities, and compares every working file's SHA256 and Git
+executable mode against those objects. Missing, added, changed and unsupported
+entries fail, including ignored files and files hidden by `assume-unchanged` or
+`skip-worktree`. Git status and index flags are not integrity evidence. Inherited
+Git repository/index/object overrides are removed and replacement refs disabled
+for each read; commit, tree and blob bytes are also checked against their Git
+object identities. Tooling types and integrity are checked before provenance
+contents are read, so unsupported entries cannot block validation first.
+
+Only literal committed tooling can produce PASS or the `committed` tooling label.
+Dirty local tooling now fails too; commit changes before creating verification
+evidence. Tooling has no generated exclusions: use `python3 -B` as shown below to
+avoid adding bytecode files to the tooling inventory.
 
 ## Reproduce without touching the original candidate
 
@@ -65,6 +79,11 @@ python3 -B ci/successor/verify.py verify \
 Every output directory must be new and outside both checkouts. Existing evidence
 cannot be overwritten or silently reused. A wrong SHA or changed source exits
 nonzero and creates a FAILED summary when the output directory can be created.
+Malformed JSON or a manifest with the wrong object shape also exits nonzero and
+finalizes FAILED before any committed-tooling claim. Unexpected validation
+exceptions finalize FAILED with only their exception type, keeping arbitrary
+exception payloads out of the public summary. Process interruptions such as
+`KeyboardInterrupt` or termination retain INCOMPLETE, never PASS.
 
 Optional fresh quality execution:
 

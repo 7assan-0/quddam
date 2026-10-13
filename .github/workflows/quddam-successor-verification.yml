@@ -2,6 +2,13 @@ name: Quddam successor source and quality verification
 
 # Separate from the approved RG03 workflow. Never creates a release or deploys.
 on:
+  # Temporary PR #2-only registration; remove before final manual dispatch.
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'ci/successor/**'
+      - '.github/workflows/quddam-successor-verification.yml'
   workflow_dispatch:
     inputs:
       mode:
@@ -19,6 +26,11 @@ concurrency:
 
 jobs:
   successor:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.number == 2 &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'codex/successor-candidate-verification')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -42,7 +54,7 @@ jobs:
         run: python3 -B -m unittest discover -s tooling/ci/successor -p 'test_*.py' -v
       - name: Verify the exact successor source
         env:
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ inputs.mode || 'verify' }}
         run: >-
           python3 -B tooling/ci/successor/verify.py "$MODE"
           --root candidate --output "$RUNNER_TEMP/successor-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
