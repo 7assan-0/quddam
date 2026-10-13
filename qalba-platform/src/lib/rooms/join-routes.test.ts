@@ -42,20 +42,19 @@ const id = "315afc1d-3444-4d72-aabc-8f1314112a9e";
 const request = () => new NextRequest("https://quddam.test/api/join", {
   method: "POST", headers: { Origin: "https://quddam.test" }, body: "{}",
 });
-const params = (value: string, board: boolean) => board
-  ? { params: Promise.resolve({ code: value }) } as { params: Promise<{ code: string }> }
-  : { params: Promise.resolve({ id: value }) } as { params: Promise<{ id: string }> };
+const boardParams = (code: string) => ({ params: Promise.resolve({ code }) });
+const idParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
 describe("every guest join is admission-gated before parsing or session work", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     vi.mocked(joinAdmissionTarget).mockImplementation((_kind, raw) => raw.trim().toUpperCase());
     vi.mocked(consumeJoinAdmission).mockResolvedValue(false);
     vi.mocked(parseJson).mockResolvedValue({ code: "7K4P2Q", name: "Player", teamId: "team-1" });
   });
 
   it("Board returns 429 without invoking the join service for a canonical room", async () => {
-    const response = await boardJoin(request(), params(" 7k4p2q ", true));
+    const response = await boardJoin(request(), boardParams(" 7k4p2q "));
     expect(response.status).toBe(429);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(consumeJoinAdmission).toHaveBeenCalledWith(expect.any(NextRequest), "board", "7K4P2Q");
@@ -63,7 +62,7 @@ describe("every guest join is admission-gated before parsing or session work", (
     expect(joinRoom).not.toHaveBeenCalled();
   });
   it("Social returns 429 before preview/session lookup or body parsing", async () => {
-    const response = await socialJoin(request(), params(id, false));
+    const response = await socialJoin(request(), idParams(id));
     expect(response.status).toBe(429);
     expect(consumeJoinAdmission).toHaveBeenCalledWith(expect.any(NextRequest), "social", id);
     expect(parseJson).not.toHaveBeenCalled();
@@ -71,7 +70,7 @@ describe("every guest join is admission-gated before parsing or session work", (
     expect(joinSocialSession).not.toHaveBeenCalled();
   });
   it("Court returns 429 before user lookup, validation or participant admission", async () => {
-    const response = await courtJoin(request(), params(id, false));
+    const response = await courtJoin(request(), idParams(id));
     expect(response.status).toBe(429);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(consumeJoinAdmission).toHaveBeenCalledWith(expect.any(NextRequest), "court", id);
@@ -79,7 +78,7 @@ describe("every guest join is admission-gated before parsing or session work", (
     expect(joinCourt).not.toHaveBeenCalled();
   });
   it("Bluff returns 429 before validation or participant admission", async () => {
-    const response = await bluffJoin(request(), params(id, false));
+    const response = await bluffJoin(request(), idParams(id));
     expect(response.status).toBe(429);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(consumeJoinAdmission).toHaveBeenCalledWith(expect.any(NextRequest), "bluff", id);
