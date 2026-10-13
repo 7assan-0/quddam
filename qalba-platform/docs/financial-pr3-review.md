@@ -1,10 +1,77 @@
-# PR #3 independent review — 2026-10-13
+# PR #3 independent review and correction status — 2026-10-13
 
 This is a scoped review of financial behavior and test reproducibility, not a
 release verification or authorization to merge/deploy. Production billing,
 real merchant credentials and customer data were not used.
 
-## Source and PR status
+## Owner-authorized correction — 2026-10-13
+
+After the historical review below, the owner authorized a narrow correction:
+verified unrelated zero-charge historical void attempts must not permanently hold
+a valid distinct paid purchase. Multiple zero-charge attempts may settle an
+ordinary terminal invoice when complete financial evidence establishes that no
+paid payment is being reversed. Missing, inconsistent or ambiguous evidence must
+retain a durable hold. This authorization changes the prior-void acceptance
+decision; it does not permit ignoring reversal evidence or releasing an existing
+hold on a later snapshot.
+
+The current correction checks complete, uniquely identified attempt histories
+against the linked invoice, exact amount and SAR currency, bounded counters and
+consistent timestamps. It permits one clean paid/captured payment beside distinct
+ended failed/voided attempts with zero recorded capture/refund and no contradictory
+financial timestamps. Complete all-ended no-credit terminal histories, including
+multiple voids and explicit empty arrays, can settle; a missing array remains
+unknown. Active or ambiguous terminal history retains review. Ordinary consistent
+in-progress observations remain PENDING without creating a review marker.
+
+The available fields describe distinct ended void attempts and recorded financial
+evidence; they do not prove an earlier AUTHORIZED state or that the attempt was
+never charged. New paid settlements record the selected payment ID in the immutable
+settlement event. Compensation uses that ID to identify the actual reversal among
+multiple ended void attempts, validates every other attempt's strict history, and
+rechecks the binding under the Purchase lock. An earlier void cannot compensate a
+grant bound to a different payment. Existing holds remain sticky; the correction
+supplies no retrospective release.
+
+The corrected coverage comprises the complete unit suite, 56 retained-fixture
+native reversal scenarios, 13 B01 scenarios with complete synthetic observations,
+and a 14-case in-memory rollback-hazard probe. The exact tested source and executed
+results are recorded in the source-bound manifest and attached PR evidence.
+The earlier `3500c50` results establish only the historical behavior described below.
+
+The owner also authorized the durable-hold
+[operations and rollback runbook](payment-review-operations.md). It specifies
+detection, assignment, escalation, customer communication, immutable records and
+the required freeze/drain of callback, poll, cron, direct settlement and support
+refund confirmation paths, including in-flight workers.
+It adds no deployed alert, financial override or audited release endpoint. A safe
+fallback must preserve durable holds, strict attempt classification and the new
+grant/refund payment identity binding: honoring holds alone cannot prevent an old
+void from compensating a grant bound to a different payment. The approved older
+RC/main and earlier hold-aware PR3 artifacts must not be used as rollback targets
+for these records.
+**A safe, owner-approved audited resolution mechanism for held PENDING purchases
+remains a launch blocker before customers.** This limitation is separate from
+scoped code correctness and routine merge review.
+
+PR #2 remains OPEN and unmerged, and main remains `2d4e868`, as of this correction
+request. There is no authorization to merge, deploy, or treat a proposed GitHub
+merge SHA as a completed merge. PR #3 must be updated and its corrected checks
+rerun against the actual latest main after PR #2's approval and merge.
+
+Current recommendation: **NOT READY for routine merge** until PR #2 is actually
+approved and merged, PR #3 is updated against that resulting main, and its relevant
+checks pass on the new exact head. The prior-void policy decision is now authorized.
+Launch remains blocked by the audited resolution mechanism and operational
+readiness regardless of a later scoped merge result.
+
+## Historical independent review of `3500c50` — 2026-10-13
+
+The remaining sections preserve the findings and recommendation recorded before
+the owner authorized the correction. Their source references, observed behavior
+and acceptance decisions apply to `3500c50`, not to the corrected implementation.
+
+### Source and PR status at historical review start
 
 At review start, GitHub independently reported:
 
@@ -25,7 +92,7 @@ The approved `v1.0.0-rc.1` and its evidence remain immutable. PR #2's pinned
 successor target also does not establish verification of PR #3. These scoped
 tests cover neither the complete release gate nor live provider behavior.
 
-## Verified controls
+### Verified controls in the historical source
 
 - `src/lib/billing/checkout.ts:93–117`: Purchase FOR UPDATE precedes the
   authoritative reread, identity check and pending reversal/hold decision.
@@ -47,9 +114,9 @@ tests cover neither the complete release gate nor live provider behavior.
   callback is an invoice hint; its amount/status do not authorize a grant.
   The owned polling route and bounded cron queue use the same service.
 
-## Unresolved merge decisions and edge cases
+### Historical unresolved merge decisions and edge cases
 
-### 1. Prior zero-charge void attempts can permanently block a legitimate purchase
+#### 1. Prior zero-charge void attempts can permanently block a legitimate purchase
 
 Reproducible shape: a paid invoice has one historical payment
 `status=voided, captured=0, refunded=0` and one current paid payment. The new
@@ -82,7 +149,7 @@ or approves a narrowly defined way to distinguish an unrelated prepayment
 attempt from reversal of the actual financial payment, with counterexamples
 covered by unit/native tests. Do not automatically loosen the denial criterion.
 
-### 2. Review holds require an operator disposition policy
+#### 2. Review holds require an operator disposition policy
 
 `confirmSupportRefund` rejects PENDING purchases (`refunds.ts:93–99`). There
 is no audited hold-release mechanism. Ordinary polling reports PENDING and
@@ -95,7 +162,7 @@ customer communication and permissible disposition. Decide whether a separate
 authorized resolution implementation is required before exposure to customers.
 Deleting review/audit records or refunding an unpaid purchase is not a remedy.
 
-### 3. Rolling back to main would ignore durable holds
+#### 3. Rolling back to main would ignore durable holds
 
 The pre-PR main settlement path does not query review markers. A held PENDING
 purchase followed by a stale paid observation after software rollback could
@@ -106,7 +173,7 @@ suspend all settlement entry points until a safe forward fix. Restoring older
 code alone is not a safe rollback once holds have been written. No deployment
 or rollback was performed to demonstrate this operational hazard.
 
-### 4. Existing scope limitations remain
+#### 4. Existing scope limitations remain
 
 Two paid payments with no reversal still grant once. This predates PR #3; the
 hold applies to mixed histories containing reversal evidence. Documentation
@@ -115,9 +182,9 @@ unobserved provider reversals cannot be predicted; a valid paid winner is
 compensated when a later supported full reversal is verified. Live delivery,
 unsupported statuses, retention/recovery and monitoring remain launch gates.
 
-## Reproducible evidence
+### Historical reproducible evidence
 
-Follow [the clean PostgreSQL procedure](../../../ci/financial-review/README.md).
+Follow [the clean PostgreSQL procedure](../../ci/financial-review/README.md).
 It uses the original forward migrations and content-only seed on two fresh
 synthetic databases. No resets/deletion, live HTTP or release artifacts are
 needed. The new runner fails on dirty or changed tracked source, wrong/native
@@ -136,7 +203,7 @@ inventory, tool versions, command exits, case names/counts, raw report hashes
 and distinct backend counts. Raw fixtures/logs stay private. Hosted CI success
 must be observed separately; configuring the workflow is not executing it.
 
-## Recommendation
+### Historical recommendation
 
 NOT READY for merge until the prior-void/permanent-hold decisions have explicit
 owner disposition, PR #2 has been approved/merged, and PR #3 has been updated

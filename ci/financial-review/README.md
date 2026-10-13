@@ -5,12 +5,33 @@ The official PostgreSQL 16.15 image is pinned by digest. A local result does
 not establish a successful hosted Actions run; verify that run separately.
 It installs the frozen lockfile, generates the Prisma client, creates two new
 databases, applies forward migrations, seeds Board content only in P05, runs
-the 27 reversal and 13 B01 scenarios, and runs every tracked unit test file.
-It requires eight reversal races with distinct waiting PostgreSQL backends,
-both settlement winner orders, real Board START/refund contention, and at
-least 40 assertions in the new settlement/refund regression file. Unit retries
+the 56 reversal and 13 B01 scenarios, and runs every tracked unit test file.
+It requires eleven reversal races with distinct waiting PostgreSQL backends,
+both settlement winner orders, real Board START/refund contention, and exactly
+86 assertions in the settlement/refund regression file. Unit retries
 are disabled. A failed command, missing/partial result, skipped assertion or
 tracked source change fails the job.
+
+The B01 harness keeps its original 13 case identities, seven recorded races
+and business assertions. Its synthetic observations now include a matching
+paid payment and merchant metadata, or an explicit empty payment list for
+ordinary no-credit terminal outcomes. These fixture updates follow the
+owner's rule that missing terminal payment data requires review; B01 is not
+an unchanged historical harness.
+
+The 14-case rollback probe compiles current and immutable
+`2d4e868ba43700414c19ece1394bf6815e7639cf` and
+`b6c61cca11a87c69eec4372acb34a0fcb34f6cec` application modules in memory.
+It checks held fixtures across all four settlement source values and three
+reconciliation source values using a mock provider, then demonstrates that
+the older main grants credits despite the retained review marker. It also
+demonstrates that the earlier hold-aware PR3 source compensates a wrong historical
+void despite the new grant's recorded payment identity. Its passing
+result records the hazard: deployment rollback remains unsafe. It performs
+no deployment, database or provider access and proves no concurrency. The
+new workflow fetches history for this exact baseline; local checkouts must
+also contain it. Probe source inventories and result hashes bind the summary
+to all three revisions.
 
 The runner binds the result to the clean checkout's commit, tree and SHA256
 inventory of every tracked file before and after execution. It records tool

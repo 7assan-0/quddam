@@ -128,6 +128,58 @@ try {
   await save();
   await step('npm-ci', 'npm', ['ci', '--include=dev', '--no-audit', '--no-fund']);
   await step('prisma-generate', 'npm', ['run', 'db:generate']);
+  const rollbackFile = path.join(privateDirectory, 'rollback.json');
+  await step('rollback-probe', process.execPath, [path.join(repository, 'ci/financial-review/rollback-probe.mjs'), repository, rollbackFile]);
+  activeStep = 'validate-rollback';
+  const rollback = await jsonEvidence('rollback', rollbackFile);
+  assert.equal(rollback.status, 'PASS'); assert.equal(rollback.head, manifest.source.commit);
+  assert.equal(rollback.tree, manifest.source.tree);
+  assert.equal(rollback.baseline, '2d4e868ba43700414c19ece1394bf6815e7639cf');
+  assert.equal(rollback.probeSha256, source['ci/financial-review/rollback-probe.mjs']);
+  assert.equal(rollback.passed, 14); assert.ok(Array.isArray(rollback.cases)); assert.equal(rollback.cases.length, 14);
+  assert.ok(rollback.cases.every(item => item.status === 'passed'));
+  const rollbackSources = ['SETTLEMENT', 'CALLBACK', 'POLL', 'CRON'];
+  const rollbackNames = rollbackSources.flatMap(name => [`current_hold_survives_stale_paid_${name}`, `immutable_baseline_ignores_committed_hold_${name}`]);
+  rollbackNames.push(...['CALLBACK', 'POLL', 'CRON'].flatMap(name => [`current_binding_blocks_stale_void_${name}`, `b6_baseline_ignores_payment_binding_${name}`]));
+  assert.deepEqual(rollback.cases.map(item => item.name), rollbackNames);
+  for (let index = 0; index < rollbackSources.length; index++) {
+    const current = rollback.cases[index * 2], legacy = rollback.cases[index * 2 + 1];
+    assert.deepEqual(current.directSourcesChecked, rollbackSources);
+    assert.deepEqual(current.reconciliationSourcesChecked, ['CALLBACK', 'POLL', 'CRON']);
+    assert.equal(current.syntheticProviderLookups, 3); assert.equal(current.outcome.status, 'PENDING');
+    assert.equal(current.outcome.balance, 0); assert.equal(current.outcome.purchaseGrants, 0);
+    assert.ok(current.outcome.reviewMarkers >= 1); assert.equal(current.outcome.terminalAnalytics, 0);
+    assert.equal(legacy.unsafeRollbackObserved, true); assert.equal(legacy.outcome.status, 'PAID');
+    assert.equal(legacy.outcome.balance, 3); assert.equal(legacy.outcome.purchaseGrants, 1);
+    assert.equal(legacy.outcome.grantedCredits, 3); assert.equal(legacy.outcome.reviewMarkers, 1);
+  }
+  assert.equal(rollback.unsafeRollbackObserved, true); assert.equal(rollback.safeToRollback, false);
+  assert.equal(rollback.bindingBaseline, 'b6c61cca11a87c69eec4372acb34a0fcb34f6cec');
+  assert.equal(rollback.unsafeReviewRollbackObserved, true); assert.equal(rollback.unsafePaymentBindingRollbackObserved, true);
+  for (let index = 8; index < 14; index += 2) {
+    const current = rollback.cases[index], legacy = rollback.cases[index + 1];
+    assert.equal(current.rejectedStatus, 409); assert.equal(current.selectedPaymentBindingPreserved, true);
+    assert.equal(current.outcome.balance, 3); assert.equal(current.outcome.refundCount, 0); assert.equal(current.outcome.compensationCount, 0);
+    assert.equal(legacy.unsafeRollbackObserved, true); assert.equal(legacy.outcome.balance, 0);
+    assert.equal(legacy.outcome.refundUsesSelectedPayment, false); assert.equal(legacy.outcome.compensationDelta, -3);
+  }
+  for (const flag of ['databaseAccess', 'providerAccess', 'deploymentRollbackPerformed', 'concurrencyProven']) assert.equal(rollback[flag], false);
+  assert.ok(Object.keys(rollback.boundSourceSha256.current).length > 0 && Object.keys(rollback.boundSourceSha256.baseline).length > 0);
+  for (const [file, hash] of Object.entries(rollback.boundSourceSha256.current)) assert.equal(hash, source[file]);
+  for (const [file, hash] of Object.entries(rollback.boundSourceSha256.baseline)) {
+    const baselineBytes = await command('git', ['-C', repository, 'show', `${rollback.baseline}:${file}`]);
+    assert.equal(baselineBytes.exitCode, 0); assert.equal(sha256(baselineBytes.output), hash);
+  }
+  assert.ok(Object.keys(rollback.boundSourceSha256.bindingBaseline).length > 0);
+  for (const [file, hash] of Object.entries(rollback.boundSourceSha256.bindingBaseline)) {
+    const baselineBytes = await command('git', ['-C', repository, 'show', `${rollback.bindingBaseline}:${file}`]);
+    assert.equal(baselineBytes.exitCode, 0); assert.equal(sha256(baselineBytes.output), hash);
+  }
+  Object.assign(manifest.checks.rollback, { passed: 14, failed: 0, unsafeRollbackObserved: true,
+    safeToRollback: false, databaseAccess: false, providerAccess: false, concurrencyProven: false,
+    baseline: rollback.baseline, bindingBaseline: rollback.bindingBaseline, boundSourceSha256: rollback.boundSourceSha256,
+    cases: rollback.cases.map(({ name, status }) => ({ name, status })) });
+  await save();
   activeStep = 'native-postgres-preflight';
   const { default: pg } = await import(pathToFileURL(path.join(application, 'node_modules/pg/lib/index.js')));
   const pool = new pg.Pool({ connectionString: bootstrap.href, max: 1 });
@@ -150,32 +202,49 @@ try {
   const p05File = path.join(privateDirectory, 'p05.json'), b01File = path.join(privateDirectory, 'b01.json');
   await step('native-p05', process.execPath, ['--import', 'tsx', 'scripts/billing-reversal-postgres.ts'], { ...p05, BILLING_REVERSAL_EVIDENCE_FILE: p05File });
   activeStep = 'validate-p05';
-  const reversal = await jsonEvidence('reversal', p05File); passedResults(reversal, 27);
+  const reversal = await jsonEvidence('reversal', p05File); passedResults(reversal, 56);
   assert.equal(reversal.status, 'PASS'); assert.match(reversal.server, /^PostgreSQL 16\./);
   assert.equal(reversal.productionAccess, false); assert.equal(reversal.liveProviderAccess, false);
   assert.equal(reversal.destructiveSql, false); assert.equal(reversal.fixturesRetained, true);
   assert.ok(Number.isInteger(reversal.syntheticHttpRequests) && reversal.syntheticHttpRequests > 0);
   const races = reversal.results.filter(item => item.evidence?.blockedBackendPids);
-  assert.equal(races.length, 8); races.forEach(item => distinctBackends(item.evidence));
-  const raceNames = [1, 2, 3].flatMap(n => [`native reversal-first then stale paid contender ${n}`, `native paid-first then stale-PENDING reversal observer ${n}`]);
-  raceNames.push('actual Board START/refund native wallet contention START first', 'actual Board START/refund native wallet contention REFUND first');
+  assert.equal(races.length, 11); races.forEach(item => distinctBackends(item.evidence));
+  const originalRaceNames = [1, 2, 3].flatMap(n => [`native reversal-first then stale paid contender ${n}`, `native paid-first then stale-PENDING reversal observer ${n}`]);
+  originalRaceNames.push('actual Board START/refund native wallet contention START first', 'actual Board START/refund native wallet contention REFUND first');
+  const newRaceNames = ['native historical-attempt REVERSAL wins settlement/reversal ordering', 'native historical-attempt PAID wins settlement/reversal ordering',
+    'concurrent full refund observers with historical attempts compensate exactly once'];
+  const raceNames = [...newRaceNames, ...originalRaceNames];
   assert.deepEqual(races.map(item => item.name), raceNames);
   const directNames = ['paid/full-refunded payment', 'paid/partial refund numeric evidence', 'paid/voided payment',
     'paid/reversed payment', 'paid/ambiguous multiple payments with reversal', 'refunded invoice', 'reversed invoice',
     'initiated invoice with refunded payment', 'voided invoice with fully refunded payment',
     'voided invoice with partial refund', 'voided invoice with reversed payment',
-    'voided invoice with ambiguous multiple zero-charge voids', 'voided invoice with captured void payment'];
+    'voided invoice with duplicate zero-charge void identity', 'voided invoice with captured void payment',
+    'paid/missing payment list', 'paid/empty payment list', 'paid/partial captured amount', 'paid/foreign history invoice',
+    'paid/foreign history currency', 'paid/foreign history amount', 'paid/zero-counter capture timestamp',
+    'paid/active historical authorization', 'paid/unsupported history state', 'terminal/missing payment list'];
   const reversalNames = [...directNames.map(name => `direct ${name}: sticky hold and stale replays`),
     'real callback paid hint fetches reversed provider invoice and cannot grant',
     'POLL enters sticky hold from fresh reversal then stale paid observation',
     'CRON reconciliation marks a pending reversal and later blocks stale payment',
-    'prepayment invoice void no-payments remains VOIDED without a review hold',
+    'prepayment invoice void complete-empty-list remains VOIDED without a review hold',
     'prepayment invoice void one-zero-charge-void remains VOIDED without a review hold',
-    'normal paid settlement across direct/callback/POLL/CRON grants exactly once', ...raceNames];
+    'normal paid settlement across direct/callback/POLL/CRON grants exactly once',
+    ...[1, 3].map(count => `verified paid with ${count} ended historical attempts grants exactly once across all entry points`),
+    ...['failed', 'canceled', 'expired', 'voided'].map(status => `complete ${status} multiple zero-charge void history settles without credits`),
+    ...['missing counter', 'invalid timestamp'].map(kind => `authenticated callback ${kind} payment evidence creates a durable hold`),
+    'ordinary initiated historical void observation permits a later distinct paid payment',
+    ...['REFUND_REVIEW', 'INVOICE_OBSERVATION'].map(type => `existing ${type} review holds override eligible paid and complete terminal history`),
+    'partial refund of the recorded paid payment beside historical attempts remains review only',
+    ...newRaceNames,
+    'fully consumed refund records zero compensation without clawing back later credits',
+    'recorded automatic paid payment later voids beside older zero-counter void attempts',
+    'stale older void cannot compensate a grant bound to a different payment',
+    'existing refund uniqueness constraint rolls back wallet and compensation atomically', ...originalRaceNames];
   assert.deepEqual(reversal.results.map(item => item.name), reversalNames);
   assert.ok(reversal.results.every(item => item.evidence && typeof item.evidence === 'object'));
   for (const item of races.filter(item => item.name.includes('stale-PENDING'))) assert.equal(item.evidence.purchaseStatusAtProviderFetch, 'PENDING');
-  Object.assign(manifest.checks.reversal, { passed: 27, failed: 0, nativeRaceCases: 8,
+  Object.assign(manifest.checks.reversal, { passed: 56, failed: 0, nativeRaceCases: 11,
     distinctBackendPairs: true, syntheticHttpRequests: reversal.syntheticHttpRequests,
     cases: reversal.results.map(({ name, durationMs }) => ({ name: safeName(name), durationMs })) });
   await save();
@@ -214,7 +283,7 @@ try {
   assert.equal(unit.numTotalTests, assertions.length); assert.equal(unit.numPassedTests, assertions.length);
   assert.ok(unit.testResults.every(file => file.status === 'passed'));
   const regression = unit.testResults.find(file => file.name.endsWith('/src/lib/billing/settlement-refund.test.ts'));
-  assert.ok(regression && regression.assertionResults.length >= 40);
+  assert.ok(regression && regression.assertionResults.length === 86);
   Object.assign(manifest.checks.unit, { passed: assertions.length, failed: 0, pending: 0,
     files: actualFiles.length, allTrackedTestFilesExecuted: true, retries: 0,
     regressionCases: regression.assertionResults.map(item => ({ name: safeName(item.fullName), status: item.status })) });

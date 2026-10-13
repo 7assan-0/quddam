@@ -8,7 +8,7 @@ import { ensureInvoice, validateLinkedInvoice } from "./invoice-creation";
 import { PaymentError, paymentProvider, type Invoice, type PaymentProvider } from "./provider";
 
 import { recordPaymentEvent, type PaymentSource } from "./payment-events";
-import { hasRefundObservation, processObservedRefund } from "./refunds";
+import { hasRefundObservation, processObservedRefund, requiresSettlementReview } from "./refunds";
 
 const expirationMs = 30 * 60_000;
 export async function startCheckout(userId: string, productId: string, couponCode: string | undefined, key: string, provider: PaymentProvider = paymentProvider()) {
@@ -94,26 +94,24 @@ export async function settleInvoice(id: string, invoice: Invoice, source: Paymen
   return db().$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id = ${id} FOR UPDATE`;
     const purchase = await tx.purchase.findUnique({ where: { id } });
-    if (!purchase || purchase.provider !== "moyasar" || purchase.providerReference !== invoice.id || invoice.amount !== purchase.amountHalalas || invoice.currency !== "SAR") throw new PaymentError("فاتورة غير مطابقة", 409);
+    if (!purchase) throw new PaymentError("فاتورة غير مطابقة", 409);
+    validateLinkedInvoice(purchase, invoice);
     // First terminal result wins, including legacy REFUNDED. Conflicting retries return that authoritative result.
     const status = invoiceStatuses.get(invoice.status);
     if (purchase.status === "PENDING") {
       const review = await tx.paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", processingResult: "REVIEW_REQUIRED",
         eventType: { in: ["REFUND_REVIEW", "INVOICE_OBSERVATION"] } }, select: { id: true } });
-      const payments = invoice.payments ?? [];
-      const prePaymentVoid = status === "VOIDED" && payments.filter(payment => payment.status === "voided").length <= 1
-        && payments.every(payment => payment.refunded === 0 && payment.captured === 0
-          && ["voided", "failed", "canceled", "expired", "initiated", "authorized"].includes(payment.status));
       // Never grant reversed funds or forget an earlier reversal when a stale
       // invoice arrives. Ordinary pre-payment VOIDED still settles without credit.
-      if (review || hasRefundObservation(invoice) && !prePaymentVoid) {
+      if (review || requiresSettlementReview(invoice)) {
         await recordPaymentEvent(tx, purchase, { source, eventType: "REFUND_REVIEW", state: invoice.status, result: "REVIEW_REQUIRED" });
         return purchase;
       }
     }
     const result = purchase.status === "PENDING" && status ? await settleLockedPurchase(tx, purchase, status) : purchase;
     await recordPaymentEvent(tx, purchase, { source, eventType: "INVOICE_OBSERVATION", state: invoice.status,
-      result: purchase.status === "PENDING" ? status ? "SETTLED" : hasRefundObservation(invoice) ? "REVIEW_REQUIRED" : "PENDING" : status && status !== purchase.status ? "CONFLICT_IGNORED" : "NOOP" });
+      paymentReference: status === "PAID" && !requiresSettlementReview(invoice) ? invoice.payments?.find(payment => ["paid", "captured"].includes(payment.status))?.id : undefined,
+      result: purchase.status === "PENDING" ? status ? "SETTLED" : "PENDING" : status && status !== purchase.status ? "CONFLICT_IGNORED" : "NOOP" });
     return result;
   });
 }
