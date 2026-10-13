@@ -1,6 +1,12 @@
 # Scoped synthetic financial review
 
 The workflow checks the current pull request head with native PostgreSQL 16.
+PR #2 was independently confirmed merged into main at
+`84c87502ec7ed771b426437a4c91f190f4436eb8`. PR #3 includes that exact main and
+the approved financial source from `ce46dc4245380970422e3cd427f0b53217ceba56`.
+Every integration run creates fresh evidence for its explicit expected head;
+neither earlier financial receipts nor the predecessor `2d4e868` result
+certify this combined source.
 The official PostgreSQL 16.15 image is pinned by digest. A local result does
 not establish a successful hosted Actions run; verify that run separately.
 It installs the frozen lockfile, generates the Prisma client, creates two new
@@ -33,8 +39,14 @@ new workflow fetches history for this exact baseline; local checkouts must
 also contain it. Probe source inventories and result hashes bind the summary
 to all three revisions.
 
-The runner binds the result to the clean checkout's commit, tree and SHA256
-inventory of every tracked file before and after execution. It records tool
+The runner binds the result to an explicit expected commit, integrated main,
+literal commit/tree/blob identities, every tracked SHA256 and Git executable
+mode before and after execution. The source guard reuses PR #2's object readers
+without loading its pinned candidate manifest or historical approval. It rejects
+missing/extra/ignored authored files, symlinks, unsupported entries and changes
+hidden by Git index flags. Only documented dependency/build/Prisma outputs are
+excluded and remain unverified; initial generated outputs are forbidden.
+It records tool
 versions, step exit statuses, timings, case names and SHA256 hashes of private
 raw outputs. `npm ci --include=dev` and `npm run db:generate` are required;
 the native scripts do not load a dotenv file. CI pins Node 24.19.0; the package
@@ -55,6 +67,18 @@ the repository root:
 node ci/financial-review/run.mjs
 ```
 
+Also set `FINANCIAL_REVIEW_EXPECTED_SHA` to the full exact checkout commit and
+`FINANCIAL_REVIEW_BASE_SHA` to the actual integrated main SHA above. CI supplies
+these from PR head/base contexts; its `GITHUB_SHA` merge context is not used
+as the checked-out PR identity. Both must be full lowercase commit IDs, and
+the base must be an ancestor of the expected head.
+
+The same run executes inherited verifier and current-source binding regressions,
+then fresh route type generation, lint, typecheck and a production build.
+Only Next's exact known `.next/dev/types/` to `.next/types/` declaration
+substitution is accepted and restored; its original/generated/restored hashes
+are recorded. Other tracked changes fail source binding.
+
 The output directory is created with mode 0700. Only its sanitized
 `manifest.json` (mode 0600) is suitable for upload. Raw harness JSON and command
 logs are retained privately under `/tmp/quddam-financial-review-private-*`;
@@ -74,6 +98,7 @@ parser over that synthetic transport; native POLL and CRON cases exercise
 reconciliation services. The unit regression also exercises the actual HTTP
 handlers with mocked database/auth boundaries. These results do not verify
 live provider access, deployment, historical RC assets or a successor release
-gate. Typechecking and production build remain separate checks; they can
-generate tracked Next environment declarations and require their own source
-integrity handling.
+gate. Receipts explicitly record no inherited outcomes or full release approval.
+Complete successor gates, real merchant verification, staging/capacity, audited
+PENDING-hold resolution and implemented monitoring/alerting remain outstanding
+launch requirements.

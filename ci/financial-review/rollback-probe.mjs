@@ -19,7 +19,10 @@ const settlementSources = ['SETTLEMENT', 'CALLBACK', 'POLL', 'CRON'];
 const reconciliationSources = ['CALLBACK', 'POLL', 'CRON'];
 const expectedCases = (settlementSources.length + reconciliationSources.length) * 2;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
-const git = (...args) => execFileSync('git', ['-C', repository, ...args], { maxBuffer: 32 * 1024 * 1024 });
+const gitEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_')));
+gitEnvironment.GIT_NO_REPLACE_OBJECTS = '1';
+const git = (...args) => execFileSync('git', ['-c', 'core.fsmonitor=false', '-C', repository, ...args],
+  { maxBuffer: 32 * 1024 * 1024, env: gitEnvironment });
 const textGit = (...args) => git(...args).toString().trim();
 const head = textGit('rev-parse', 'HEAD'), tree = textGit('rev-parse', 'HEAD^{tree}');
 const sourceHashes = { current: {}, baseline: {}, bindingBaseline: {} }, modules = new Map();

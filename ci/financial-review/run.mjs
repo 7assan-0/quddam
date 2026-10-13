@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /** Scoped synthetic review checks. Raw fixtures/logs stay private; only manifest.json is public. */
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { readFile, writeFile, mkdir, mkdtemp, realpath } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, realpath, copyFile, lstat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -23,10 +23,14 @@ Object.assign(environment, { CI: 'true', TZ: 'UTC', NODE_ENV: 'test', CHECKPOINT
   BILLING_TEST_DATABASE: '1', DATABASE_POOL_MAX: '10', PUBLIC_WELCOME_CREDITS_ENABLED: 'false',
   APP_URL: 'https://quddam.test', MOYASAR_SECRET_KEY: 'synthetic-financial-review-never-live',
   MOYASAR_CALLBACK_TOKEN: 'synthetic-financial-review-callback-token-only',
-  BILLING_CRON_SECRET: 'synthetic-financial-review-cron-token-only' });
+  BILLING_CRON_SECRET: 'synthetic-financial-review-cron-token-only', GIT_NO_REPLACE_OBJECTS: '1' });
 const manifest = { schemaVersion: 1, scope: 'synthetic-financial-review', status: 'RUNNING',
-  releaseVerified: false, startedAt: new Date().toISOString(), steps: [], checks: {} };
+  releaseVerified: false, fullReleaseVerified: false, previousOutcomesInherited: false,
+  releaseGroups: Object.fromEntries(['complete-successor-gate', 'merchant-lifecycle',
+    'staging-infrastructure', 'capacity', 'owner-release-approval'].map(name => [name, 'NOT_EXECUTED'])),
+  startedAt: new Date().toISOString(), steps: [], checks: {} };
 let publicDirectory, privateDirectory, activeStep = 'output-preflight';
+const qualityEnvironment = { NODE_ENV: 'production', AUTH_RATE_LIMIT_SECRET: randomBytes(32).toString('hex') };
 
 async function command(executable, args, options = {}) {
   const chunks = [];
@@ -44,31 +48,15 @@ async function command(executable, args, options = {}) {
   return { ...result, output };
 }
 async function git(args) {
-  const result = await command('git', ['-C', repository, ...args]);
+  const result = await command('git', ['-c', 'core.fsmonitor=false', '-C', repository, ...args]);
   assert.equal(result.exitCode, 0, 'Git source inspection failed'); return result.output.toString().trim();
 }
-async function inventory() {
-  const files = (await git(['ls-files', '-z'])).split('\0').filter(Boolean).sort();
-  return Object.fromEntries(await Promise.all(files.map(async file => [file, sha256(await readFile(path.join(repository, file)))])));
-}
-async function committedInventory() {
-  const entries = (await git(['ls-tree', '-r', '-z', 'HEAD'])).split('\0').filter(Boolean).map(entry => {
-    const [metadata, file] = entry.split('\t'); const [, type, object] = metadata.split(' ');
-    assert.equal(type, 'blob', 'Tracked submodules are unsupported by this byte inventory'); return { file, object };
-  }).sort((left, right) => left.file.localeCompare(right.file, 'en'));
-  const result = await command('git', ['-C', repository, 'cat-file', '--batch'], { input: entries.map(entry => entry.object).join('\n') + '\n' });
-  assert.equal(result.exitCode, 0); let offset = 0;
-  const hashes = {};
-  for (const entry of entries) {
-    const end = result.output.indexOf(10, offset); assert.ok(end >= offset);
-    const [object, type, length] = result.output.subarray(offset, end).toString().split(' ');
-    assert.equal(object, entry.object); assert.equal(type, 'blob'); const size = Number(length);
-    assert.ok(Number.isInteger(size) && size >= 0); offset = end + 1;
-    hashes[entry.file] = sha256(result.output.subarray(offset, offset + size)); offset += size;
-    assert.equal(result.output[offset++], 10);
-  }
-  assert.equal(offset, result.output.length);
-  return Object.fromEntries(Object.entries(hashes).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
+async function sourceBinding(expectedCommit) {
+  const result = await command('python3', ['-B', path.join(repository, 'ci/financial-review/source-binding.py'), repository, expectedCommit]);
+  assert.equal(result.exitCode, 0, 'Literal source binding failed');
+  const binding = JSON.parse(result.output.toString());
+  assert.equal(binding.commit, expectedCommit);
+  return binding;
 }
 async function save() {
   await writeFile(path.join(publicDirectory, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', { mode: 0o600 });
@@ -80,6 +68,25 @@ async function step(name, executable, args, env = {}) {
   manifest.steps.push({ name, exitCode: result.exitCode, signal: result.signal,
     durationMs: Date.now() - started, outputSha256: sha256(result.output) });
   await save(); assert.equal(result.exitCode, 0, `${name} failed`);
+}
+async function nextStep(name, executable, args, expectedCommit) {
+  const declaration = path.join(application, 'next-env.d.ts');
+  assert.ok((await lstat(declaration)).isFile(), 'Next declaration must be a regular file');
+  const original = await readFile(declaration);
+  try {
+    await step(name, executable, args, qualityEnvironment);
+  } finally {
+    assert.ok((await lstat(declaration)).isFile(), 'Next declaration type changed');
+    const generated = await readFile(declaration);
+    const allowed = Buffer.from(original.toString().replaceAll('"./.next/dev/types/', '"./.next/types/'));
+    assert.ok(generated.equals(original) || generated.equals(allowed), 'Unexpected Next declaration transformation');
+    await writeFile(declaration, original);
+    manifest.checks[name] = { originalSha256: sha256(original), generatedSha256: sha256(generated),
+      restoredSha256: sha256(await readFile(declaration)),
+      allowedTransformation: '.next/dev/types/ to .next/types/ only' };
+    await save();
+  }
+  await sourceBinding(expectedCommit);
 }
 async function jsonEvidence(name, file) {
   const bytes = await readFile(file); const data = JSON.parse(bytes.toString());
@@ -108,11 +115,19 @@ try {
   privateDirectory = await mkdtemp('/tmp/quddam-financial-review-private-');
   await save(); activeStep = 'source-preflight';
   assert.equal(process.env.BILLING_TEST_DATABASE, '1', 'Explicit synthetic database authorization is required');
+  const expectedCommit = process.env.FINANCIAL_REVIEW_EXPECTED_SHA;
+  const baseCommit = process.env.FINANCIAL_REVIEW_BASE_SHA;
+  assert.match(expectedCommit ?? '', /^[0-9a-f]{40}$/, 'An explicit exact source SHA is required');
+  assert.match(baseCommit ?? '', /^[0-9a-f]{40}$/, 'An explicit integrated main SHA is required');
+  await git(['merge-base', '--is-ancestor', baseCommit, expectedCommit]);
   assert.equal(await git(['status', '--porcelain=v1', '--untracked-files=all']), '', 'A clean committed checkout is required');
-  const source = await inventory();
-  assert.deepEqual(source, await committedInventory(), 'Working tree bytes must match every HEAD blob, including files hidden from git status');
-  manifest.source = { commit: await git(['rev-parse', 'HEAD']), tree: await git(['rev-parse', 'HEAD^{tree}']),
-    trackedSha256: source, beforeInventorySha256: sha256(JSON.stringify(source)) };
+  const binding = await sourceBinding(expectedCommit);
+  for (const generated of binding.generatedExclusions) {
+    await lstat(path.join(repository, generated)).then(() => assert.fail('A fresh checkout without generated outputs is required'),
+      error => { assert.equal(error.code, 'ENOENT'); });
+  }
+  const source = binding.trackedSha256;
+  manifest.source = { ...binding, expectedCommit, baseCommit, beforeInventorySha256: sha256(JSON.stringify(source)) };
   const bootstrap = new URL(process.env.DATABASE_URL ?? '');
   assert.ok(['postgres:', 'postgresql:'].includes(bootstrap.protocol));
   assert.equal(bootstrap.hostname, '127.0.0.1'); assert.equal(bootstrap.port, '55465');
@@ -128,6 +143,8 @@ try {
   await save();
   await step('npm-ci', 'npm', ['ci', '--include=dev', '--no-audit', '--no-fund']);
   await step('prisma-generate', 'npm', ['run', 'db:generate']);
+  await step('successor-verifier-tests', 'python3', ['-B', '-m', 'unittest', 'discover', '-s', path.join(repository, 'ci/successor'), '-p', 'test_*.py', '-v']);
+  await step('integration-binding-tests', 'python3', ['-B', '-m', 'unittest', 'discover', '-s', path.join(repository, 'ci/financial-review'), '-p', 'test_*.py', '-v']);
   const rollbackFile = path.join(privateDirectory, 'rollback.json');
   await step('rollback-probe', process.execPath, [path.join(repository, 'ci/financial-review/rollback-probe.mjs'), repository, rollbackFile]);
   activeStep = 'validate-rollback';
@@ -276,6 +293,7 @@ try {
   activeStep = 'validate-unit';
   const unit = await jsonEvidence('unit', unitFile);
   assert.equal(unit.success, true); assert.equal(unit.numFailedTests, 0); assert.equal(unit.numPendingTests, 0);
+  assert.equal(unit.numTodoTests ?? 0, 0);
   assert.equal(unit.numFailedTestSuites, 0); assert.equal(unit.numPendingTestSuites ?? 0, 0);
   assert.ok(Array.isArray(unit.testResults) && unit.testResults.length > 0);
   const expectedFiles = Object.keys(source).filter(file => file.startsWith('qalba-platform/') && /\.(test|spec)\.[cm]?[jt]sx?$/.test(file) && !file.startsWith('qalba-platform/tests/e2e/')).sort();
@@ -290,11 +308,18 @@ try {
   Object.assign(manifest.checks.unit, { passed: assertions.length, failed: 0, pending: 0,
     files: actualFiles.length, allTrackedTestFilesExecuted: true, retries: 0,
     regressionCases: regression.assertionResults.map(item => ({ name: safeName(item.fullName), status: item.status })) });
+  await nextStep('route-types', process.execPath, [path.join(application, 'node_modules/next/dist/bin/next'), 'typegen'], expectedCommit);
+  const routeTarget = path.join(application, '.next/dev/types');
+  await mkdir(routeTarget, { recursive: true });
+  for (const name of ['routes.d.ts', 'root-params.d.ts']) await copyFile(path.join(application, '.next/types', name), path.join(routeTarget, name));
+  await step('lint', 'npm', ['run', 'lint'], qualityEnvironment);
+  await step('typecheck', 'npm', ['run', 'typecheck'], qualityEnvironment);
+  await nextStep('build', 'npm', ['run', 'build'], expectedCommit);
   activeStep = 'source-postflight';
   assert.equal(await git(['rev-parse', 'HEAD']), manifest.source.commit);
-  const after = await inventory(); assert.deepEqual(after, source, 'Tracked bytes changed during the review');
+  const after = await sourceBinding(expectedCommit); assert.deepEqual(after, binding, 'Literal source inventory changed during the review');
   assert.equal(await git(['status', '--porcelain=v1', '--untracked-files=all']), '', 'Checkout changed during the review');
-  manifest.source.afterInventorySha256 = sha256(JSON.stringify(after));
+  manifest.source.afterInventorySha256 = sha256(JSON.stringify(after.trackedSha256));
   manifest.status = 'PASS'; console.log('PASS scoped synthetic financial review');
 } catch (error) {
   manifest.status = 'FAILED'; manifest.failure = { step: activeStep, detail: 'Required command or evidence assertion failed; raw diagnostics are retained privately.' };

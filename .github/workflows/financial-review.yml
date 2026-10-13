@@ -5,6 +5,7 @@ on:
     paths:
       - 'qalba-platform/**'
       - 'ci/financial-review/**'
+      - 'ci/successor/**'
       - '.github/workflows/financial-review.yml'
   workflow_dispatch:
 
@@ -30,6 +31,8 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       BILLING_TEST_DATABASE: '1'
+      FINANCIAL_REVIEW_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      FINANCIAL_REVIEW_BASE_SHA: ${{ github.event.pull_request.base.sha || '84c87502ec7ed771b426437a4c91f190f4436eb8' }}
       DATABASE_URL: postgresql://quddam_financial_test:financial-ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:55465/postgres
       FINANCIAL_REVIEW_OUTPUT: /tmp/quddam-financial-review-evidence
     steps:

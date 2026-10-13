@@ -60,16 +60,21 @@ for these records.
 remains a launch blocker before customers.** This limitation is separate from
 scoped code correctness and routine merge review.
 
-PR #2 remains OPEN and unmerged, and main remains `2d4e868`, as of this correction
-request. There is no authorization to merge, deploy, or treat a proposed GitHub
-merge SHA as a completed merge. PR #3 must be updated and its corrected checks
-rerun against the actual latest main after PR #2's approval and merge.
+GitHub independently confirms PR #2 merged at 2026-10-13 18:26:27 UTC, with
+resulting main `84c87502ec7ed771b426437a4c91f190f4436eb8`. PR #3 integrated that
+exact main without conflicts; the approved financial application/test bytes from
+`ce46dc4245380970422e3cd427f0b53217ceba56`, branding/accessibility changes and
+historical RC files are preserved. Integration changes concern CI binding,
+fresh quality checks and review documentation, not financial behavior.
 
-Current recommendation: **NOT READY for routine merge** until PR #2 is actually
-approved and merged, PR #3 is updated against that resulting main, and its relevant
-checks pass on the new exact head. The prior-void policy decision is now authorized.
-Launch remains blocked by the audited resolution mechanism and operational
-readiness regardless of a later scoped merge result.
+The predecessor `2d4e868` inventory remains explicitly pinned historical source
+metadata. Its quality results and previous PR #3 receipts do not verify the new
+combined source. Routine merge readiness must use the fresh exact-head local and
+hosted evidence attached to PR #3, including complete units, native financial/
+concurrency, rollback-hazard, lint, typecheck and build checks. No automatic merge
+or release approval follows. Launch remains blocked by audited hold resolution,
+implemented monitoring/alerting, merchant verification and complete successor
+release gates regardless of a scoped merge result.
 
 ## Historical independent review of `3500c50` — 2026-10-13
 
