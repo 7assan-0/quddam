@@ -6,7 +6,9 @@ import { recordPaymentEvent, type PaymentSource } from "./payment-events";
 import { PaymentError, paymentProvider, type Invoice, type PaymentProvider, type ProviderPayment } from "./provider";
 
 export function hasRefundObservation(invoice: Invoice) {
-  return invoice.status === "refunded" || invoice.status === "voided" || Boolean(invoice.payments?.some(p => p.status === "refunded" || p.status === "voided" || p.refunded > 0));
+  // A reversal hint can deny a new grant; it never authorizes compensation.
+  const reversed = (status: string) => ["refunded", "voided", "reversed"].includes(status);
+  return reversed(invoice.status) || Boolean(invoice.payments?.some(p => reversed(p.status) || p.refunded > 0));
 }
 export function validateRefundInvoice(purchase: Purchase, invoice: Invoice) {
   validateLinkedInvoice(purchase, invoice);
