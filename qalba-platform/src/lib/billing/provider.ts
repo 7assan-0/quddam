@@ -3,9 +3,13 @@ import { z } from "zod";
 // Deliberately strip card/source/IP/callback fields from provider responses.
 const paymentSchema = z.object({ id: z.uuid(), status: z.string(), amount: z.number().int().positive(), currency: z.string(),
   refunded: z.number().int().nonnegative(), captured: z.number().int().nonnegative(), invoice_id: z.uuid().nullable(),
-  refunded_at: z.iso.datetime({ offset: true }).nullable().optional(), voided_at: z.iso.datetime({ offset: true }).nullable().optional() });
+  refunded_at: z.iso.datetime({ offset: true }).nullable().optional(), captured_at: z.iso.datetime({ offset: true }).nullable().optional(),
+  voided_at: z.iso.datetime({ offset: true }).nullable().optional() });
 export type ProviderPayment = z.infer<typeof paymentSchema>;
-const invoiceSchema = z.object({ id: z.string().uuid(), status: z.string(), amount: z.number().int(), currency: z.string(), url: z.string().url().optional(), metadata: z.record(z.string(), z.string()).optional(), payments: z.array(paymentSchema).optional() });
+// Preserve strictly validated invoice identity, but deny settlement of malformed
+// payment observations under the lock instead of forgetting them after a parse error.
+const incompletePayments: ProviderPayment[] = [{ id: "", invoice_id: null, status: "unknown", amount: 0, currency: "", captured: 0, refunded: 0 }];
+const invoiceSchema = z.object({ id: z.string().uuid(), status: z.string(), amount: z.number().int(), currency: z.string(), url: z.string().url().optional(), metadata: z.record(z.string(), z.string()).optional(), payments: z.array(paymentSchema).optional().catch(incompletePayments) });
 export type Invoice = z.infer<typeof invoiceSchema>;
 export interface PaymentProvider {
   createInvoice(input: { amount: number; title: string; purchaseId: string; expiresAt: Date }): Promise<Invoice>;

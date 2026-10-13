@@ -1,0 +1,57 @@
+name: Scoped synthetic financial review
+
+on:
+  pull_request:
+    paths:
+      - 'qalba-platform/**'
+      - 'ci/financial-review/**'
+      - 'ci/successor/**'
+      - '.github/workflows/financial-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  financial-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d # official PostgreSQL 16.15
+        env:
+          POSTGRES_USER: quddam_financial_test
+          POSTGRES_DB: postgres
+          # Disposable public synthetic service credential; no repository secrets are used.
+          POSTGRES_PASSWORD: financial-ci-${{ github.run_id }}-${{ github.run_attempt }}
+        ports:
+          - 55465:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam_financial_test -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      BILLING_TEST_DATABASE: '1'
+      FINANCIAL_REVIEW_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      FINANCIAL_REVIEW_BASE_SHA: ${{ github.event.pull_request.base.sha || '84c87502ec7ed771b426437a4c91f190f4436eb8' }}
+      DATABASE_URL: postgresql://quddam_financial_test:financial-ci-${{ github.run_id }}-${{ github.run_attempt }}@127.0.0.1:55465/postgres
+      FINANCIAL_REVIEW_OUTPUT: /tmp/quddam-financial-review-evidence
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0 # The in-memory rollback probe reads the exact immutable 2d4 baseline.
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Run checks against the checked-out source
+        run: node ci/financial-review/run.mjs
+      - name: Upload sanitized summary on success or failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: financial-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/quddam-financial-review-evidence/manifest.json
+          if-no-files-found: error
+          retention-days: 14

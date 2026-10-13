@@ -17,12 +17,22 @@ const server = (await pool.query("SELECT version() AS version")).rows[0].version
 assert.match(server, /^PostgreSQL /); assert.doesNotMatch(server, /PGlite/i);
 await db().featureFlag.upsert({ where: { key: "welcome-credits" }, create: { key: "welcome-credits", enabled: false, config: { count: 0 } }, update: { enabled: false, config: { count: 0 } } });
 const product = await db().product.create({ data: { slug: `race-${randomUUID()}`, title: "Billing race fixture", credits: 3, priceHalalas: 1500, active: true } });
+function paidInvoice(invoiceId: string, amount: number, purchaseId: string): Invoice {
+  return { id: invoiceId, status: "paid", amount, currency: "SAR", metadata: { purchase_id: purchaseId }, payments: [{
+    id: randomUUID(), invoice_id: invoiceId, status: "paid", amount, currency: "SAR", refunded: 0, captured: amount,
+    captured_at: "2026-10-13T00:00:00.000Z",
+  }] };
+}
 async function fixture() {
   const user = await db().user.create({ data: { email: `${randomUUID()}@example.test`, name: "Billing fixture" } });
   const coupon = await db().coupon.create({ data: { code: `R-${randomUUID()}`.toUpperCase(), discountPercent: 10, maxUses: 1, active: true, reservedCount: 1 } });
-  const invoice: Invoice = { id: randomUUID(), status: "paid", amount: 1350, currency: "SAR" };
-  const purchase = await db().purchase.create({ data: { userId: user.id, productId: product.id, couponId: coupon.id, couponReserved: true, amountHalalas: invoice.amount, credits: 3, provider: "moyasar", providerReference: invoice.id, idempotencyKey: `race:${randomUUID()}` } });
+  const purchaseId = randomUUID(), invoice = paidInvoice(randomUUID(), 1350, purchaseId);
+  const purchase = await db().purchase.create({ data: { id: purchaseId, userId: user.id, productId: product.id, couponId: coupon.id, couponReserved: true, amountHalalas: invoice.amount, credits: 3, provider: "moyasar", providerReference: invoice.id, idempotencyKey: `race:${randomUUID()}` } });
   return { user, coupon, invoice, purchase };
+}
+function observation(f: Awaited<ReturnType<typeof fixture>>, status: "paid" | "failed" | "canceled" | "expired" | "voided"): Invoice {
+  // Complete synthetic observations preserve the original terminal outcomes under the stricter review gate.
+  return { ...f.invoice, status, payments: status === "paid" ? f.invoice.payments : [] };
 }
 async function snapshot(f: Awaited<ReturnType<typeof fixture>>) {
   const purchase = await db().purchase.findUniqueOrThrow({ where: { id: f.purchase.id } });
@@ -65,11 +75,11 @@ async function scenario(name: string, action: () => Promise<object>) {
 }
 try {
   for (const status of ["paid", "failed"] as const) await scenario(`A/B concurrent ${status}`, async () => {
-    const f = await fixture(); const r = await race(f.purchase.id, [() => settleInvoice(f.purchase.id, { ...f.invoice, status }), () => settleInvoice(f.purchase.id, { ...f.invoice, status })]);
+    const f = await fixture(); const r = await race(f.purchase.id, [() => settleInvoice(f.purchase.id, observation(f, status)), () => settleInvoice(f.purchase.id, observation(f, status))]);
     return { backendPids: r.pids, result: await check(f, status.toUpperCase()) };
   });
   for (const first of ["paid", "failed"] as const) await scenario(`C ${first} wins conflicting race`, async () => {
-    const f = await fixture(); const r = await race(f.purchase.id, [() => settleInvoice(f.purchase.id, { ...f.invoice, status: first }), () => settleInvoice(f.purchase.id, { ...f.invoice, status: first === "paid" ? "failed" : "paid" })]);
+    const f = await fixture(); const r = await race(f.purchase.id, [() => settleInvoice(f.purchase.id, observation(f, first)), () => settleInvoice(f.purchase.id, observation(f, first === "paid" ? "failed" : "paid"))]);
     assert.equal((r.values[0] as {status:string}).status, (r.values[1] as {status:string}).status);
     return { backendPids: r.pids, result: await check(f, first.toUpperCase()) };
   });
@@ -84,16 +94,16 @@ try {
     } finally { globalThis.fetch = original; }
   });
   for (const status of ["paid", "failed", "canceled", "expired", "voided"] as const) await scenario(`E ${status} terminal retries and conflict`, async () => {
-    const f = await fixture(); await settleInvoice(f.purchase.id, { ...f.invoice, status });
+    const f = await fixture(); await settleInvoice(f.purchase.id, observation(f, status));
     const before = await snapshot(f);
-    for (const next of [status, "paid", "failed", "canceled", "expired", "voided"]) assert.equal((await settleInvoice(f.purchase.id, { ...f.invoice, status: next })).status, status.toUpperCase());
+    for (const next of [status, "paid", "failed", "canceled", "expired", "voided"] as const) assert.equal((await settleInvoice(f.purchase.id, observation(f, next))).status, status.toUpperCase());
     assert.deepEqual(await snapshot(f), before);
     await assert.rejects(settleInvoice(f.purchase.id, { ...f.invoice, id: randomUUID() }));
     await assert.rejects(settleInvoice(f.purchase.id, { ...f.invoice, amount: 1 }));
     return { result: await check(f, status.toUpperCase()) };
   });
   await scenario("F maxUses admission after failed settlement race", async () => {
-    const f = await fixture(); await race(f.purchase.id, [() => settleInvoice(f.purchase.id, { ...f.invoice, status: "failed" }), () => settleInvoice(f.purchase.id, { ...f.invoice, status: "failed" })]);
+    const f = await fixture(); await race(f.purchase.id, [() => settleInvoice(f.purchase.id, observation(f, "failed")), () => settleInvoice(f.purchase.id, observation(f, "failed"))]);
     const provider: PaymentProvider = { async createInvoice(input) { return { id: randomUUID(), amount: input.amount, currency: "SAR", metadata: { purchase_id: input.purchaseId }, status: "initiated", url: "https://checkout.moyasar.com/test" }; }, async fetchInvoice() { throw new Error("unexpected fetch"); } };
     const gate = await pool.connect(); await gate.query("BEGIN"); await gate.query('SELECT id FROM "Coupon" WHERE id=$1 FOR UPDATE', [f.coupon.id]);
     const attempts = [startCheckout(f.user.id, product.id, f.coupon.code, randomUUID(), provider), startCheckout(f.user.id, product.id, f.coupon.code, randomUUID(), provider)];
@@ -103,7 +113,8 @@ try {
     await gate.query("COMMIT"); gate.release(); assert.equal(pids.length, 2);
     const outcomes = await settled; assert.equal(outcomes.filter(r => r.status === "fulfilled").length, 1); assert.equal(outcomes.filter(r => r.status === "rejected").length, 1);
     const winner = outcomes.find(r => r.status === "fulfilled")! as PromiseFulfilledResult<Awaited<ReturnType<typeof startCheckout>>>;
-    await race(winner.value.id, [() => settleInvoice(winner.value.id, { id: winner.value.providerReference!, amount: winner.value.amountHalalas, currency: "SAR", status: "paid" }), () => reconcilePurchase(winner.value.id, { ...provider, async fetchInvoice() { return { id: winner.value.providerReference!, amount: winner.value.amountHalalas, currency: "SAR", metadata: { purchase_id: winner.value.id }, status: "paid" }; } })]);
+    const winnerInvoice = paidInvoice(winner.value.providerReference!, winner.value.amountHalalas, winner.value.id);
+    await race(winner.value.id, [() => settleInvoice(winner.value.id, winnerInvoice), () => reconcilePurchase(winner.value.id, { ...provider, async fetchInvoice() { return winnerInvoice; } })]);
     const c = await db().coupon.findUniqueOrThrow({ where: { id: f.coupon.id } }); assert.equal(c.reservedCount, 0); assert.equal(c.usedCount, 1);
     await assert.rejects(startCheckout(f.user.id, product.id, f.coupon.code, randomUUID(), provider)); return { backendPids: pids, reserved: c.reservedCount, used: c.usedCount, maxUses: c.maxUses };
   });

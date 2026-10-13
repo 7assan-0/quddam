@@ -8,7 +8,7 @@ import { ensureInvoice, validateLinkedInvoice } from "./invoice-creation";
 import { PaymentError, paymentProvider, type Invoice, type PaymentProvider } from "./provider";
 
 import { recordPaymentEvent, type PaymentSource } from "./payment-events";
-import { hasRefundObservation, processObservedRefund } from "./refunds";
+import { hasRefundObservation, processObservedRefund, requiresSettlementReview } from "./refunds";
 
 const expirationMs = 30 * 60_000;
 export async function startCheckout(userId: string, productId: string, couponCode: string | undefined, key: string, provider: PaymentProvider = paymentProvider()) {
@@ -48,7 +48,16 @@ export async function reconcilePurchase(id: string, provider: PaymentProvider = 
   if (!purchase.providerReference) throw new PaymentError("الفاتورة قيد الاسترداد", 409);
   const invoice = await provider.fetchInvoice(purchase.providerReference);
   validateLinkedInvoice(purchase, invoice);
-  if (hasRefundObservation(invoice) && purchase.status === "PAID") {
+  // The locked result, not the pre-lookup read, decides whether a racing PAID
+  // settlement needs the existing authoritative refund compensation.
+  let reversal = hasRefundObservation(invoice);
+  if (purchase.status !== "PAID" || !reversal) purchase = await settleInvoice(id, invoice, source);
+  if (purchase.status === "PAID") {
+    const settled = await db().paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", eventType: "INVOICE_OBSERVATION",
+      processingResult: "SETTLED", observedState: "paid" }, select: { paymentReference: true } });
+    reversal = hasRefundObservation(invoice, settled?.paymentReference ?? null);
+  }
+  if (reversal && purchase.status === "PAID") {
     try { await processObservedRefund(id, invoice, provider, source); }
     catch (error) {
       if (error instanceof PaymentError && error.status === 409) await db().$transaction(tx => recordPaymentEvent(tx, purchase!, { source, eventType: "REFUND_REVIEW", state: invoice.status, result: "REVIEW_REQUIRED" }));
@@ -56,7 +65,7 @@ export async function reconcilePurchase(id: string, provider: PaymentProvider = 
     }
     return db().purchase.findUniqueOrThrow({ where: { id } });
   }
-  return settleInvoice(id, invoice, source);
+  return purchase;
 }
 
 type SettlementStatus = Extract<PurchaseStatus, "PAID" | "FAILED" | "CANCELED" | "EXPIRED" | "VOIDED">;
@@ -90,12 +99,24 @@ export async function settleInvoice(id: string, invoice: Invoice, source: Paymen
   return db().$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id = ${id} FOR UPDATE`;
     const purchase = await tx.purchase.findUnique({ where: { id } });
-    if (!purchase || purchase.provider !== "moyasar" || purchase.providerReference !== invoice.id || invoice.amount !== purchase.amountHalalas || invoice.currency !== "SAR") throw new PaymentError("فاتورة غير مطابقة", 409);
+    if (!purchase) throw new PaymentError("فاتورة غير مطابقة", 409);
+    validateLinkedInvoice(purchase, invoice);
     // First terminal result wins, including legacy REFUNDED. Conflicting retries return that authoritative result.
     const status = invoiceStatuses.get(invoice.status);
+    if (purchase.status === "PENDING") {
+      const review = await tx.paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", processingResult: "REVIEW_REQUIRED",
+        eventType: { in: ["REFUND_REVIEW", "INVOICE_OBSERVATION"] } }, select: { id: true } });
+      // Never grant reversed funds or forget an earlier reversal when a stale
+      // invoice arrives. Ordinary pre-payment VOIDED still settles without credit.
+      if (review || requiresSettlementReview(invoice)) {
+        await recordPaymentEvent(tx, purchase, { source, eventType: "REFUND_REVIEW", state: invoice.status, result: "REVIEW_REQUIRED" });
+        return purchase;
+      }
+    }
     const result = purchase.status === "PENDING" && status ? await settleLockedPurchase(tx, purchase, status) : purchase;
     await recordPaymentEvent(tx, purchase, { source, eventType: "INVOICE_OBSERVATION", state: invoice.status,
-      result: purchase.status === "PENDING" ? status ? "SETTLED" : hasRefundObservation(invoice) ? "REVIEW_REQUIRED" : "PENDING" : status && status !== purchase.status ? "CONFLICT_IGNORED" : "NOOP" });
+      paymentReference: status === "PAID" && !requiresSettlementReview(invoice) ? invoice.payments?.find(payment => ["paid", "captured"].includes(payment.status))?.id : undefined,
+      result: purchase.status === "PENDING" ? status ? "SETTLED" : "PENDING" : status && status !== purchase.status ? "CONFLICT_IGNORED" : "NOOP" });
     return result;
   });
 }

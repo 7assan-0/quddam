@@ -5,17 +5,78 @@ import { validateLinkedInvoice } from "./invoice-creation";
 import { recordPaymentEvent, type PaymentSource } from "./payment-events";
 import { PaymentError, paymentProvider, type Invoice, type PaymentProvider, type ProviderPayment } from "./provider";
 
-export function hasRefundObservation(invoice: Invoice) {
-  return invoice.status === "refunded" || invoice.status === "voided" || Boolean(invoice.payments?.some(p => p.status === "refunded" || p.status === "voided" || p.refunded > 0));
+function matchingPayment(invoice: Invoice, payment: ProviderPayment) {
+  return z.uuid().safeParse(payment.id).success && payment.invoice_id === invoice.id
+    && payment.amount === invoice.amount && payment.currency === "SAR" && invoice.currency === "SAR"
+    && Number.isSafeInteger(payment.amount) && payment.amount > 0
+    && Number.isSafeInteger(payment.captured) && payment.captured >= 0 && payment.captured <= payment.amount
+    && Number.isSafeInteger(payment.refunded) && payment.refunded >= 0 && payment.refunded <= payment.amount
+    && [payment.refunded_at, payment.captured_at, payment.voided_at].every(timestamp =>
+      timestamp == null || z.iso.datetime({ offset: true }).safeParse(timestamp).success);
+}
+function completePayments(invoice: Invoice): invoice is Invoice & { payments: ProviderPayment[] } {
+  return Array.isArray(invoice.payments) && invoice.payments.every(payment => matchingPayment(invoice, payment))
+    && new Set(invoice.payments.map(payment => payment.id)).size === invoice.payments.length;
+}
+function zeroChargeAttempt(payment: ProviderPayment) {
+  // Evidence describes a distinct ended attempt, not an invented prior status.
+  return payment.captured === 0 && payment.refunded === 0 && !payment.captured_at && !payment.refunded_at
+    && (payment.status === "voided" ? Boolean(payment.voided_at) : payment.status === "failed" && !payment.voided_at);
+}
+function legitimatePaidPayment(payment: ProviderPayment) {
+  return payment.refunded === 0 && !payment.refunded_at && !payment.voided_at
+    && !(payment.captured === 0 && payment.captured_at)
+    && (payment.status === "paid" && (payment.captured === 0 || payment.captured === payment.amount)
+      || payment.status === "captured" && payment.captured === payment.amount);
+}
+
+/** No networking: every terminal decision is checked again under the Purchase lock. */
+export function requiresSettlementReview(invoice: Invoice) {
+  const pending = ["initiated", "on_hold"].includes(invoice.status);
+  // Ordinary in-progress polling cannot create a permanent hold before payment.
+  if (pending && invoice.payments === undefined) return false;
+  if (!completePayments(invoice)) return true;
+  if (invoice.status === "paid") {
+    const paid = invoice.payments.filter(legitimatePaidPayment);
+    return paid.length !== 1 || !invoice.payments.every(payment => payment.id === paid[0].id || zeroChargeAttempt(payment));
+  }
+  if (["failed", "canceled", "expired", "voided"].includes(invoice.status)) return !invoice.payments.every(zeroChargeAttempt);
+  if (!pending) return true;
+  const live = (payment: ProviderPayment) => ["initiated", "authorized", "verified"].includes(payment.status)
+    && payment.captured === 0 && payment.refunded === 0 && !payment.captured_at && !payment.refunded_at && !payment.voided_at;
+  return invoice.payments.filter(legitimatePaidPayment).length > 1
+    || !invoice.payments.every(payment => zeroChargeAttempt(payment) || legitimatePaidPayment(payment) || live(payment));
+}
+
+function financialPayments(invoice: Invoice) {
+  const payments = invoice.payments ?? [];
+  const financial = payments.filter(payment => !zeroChargeAttempt(payment));
+  // Only complete identities and one distinct financial payment justify ignoring history.
+  return completePayments(invoice) && financial.length === 1 ? financial : payments;
+}
+export function hasRefundObservation(invoice: Invoice, settledPaymentId?: string | null) {
+  // A review signal never authorizes compensation; the existing full-refund verifier does.
+  const reversed = (status: string) => ["refunded", "voided", "reversed"].includes(status);
+  if (settledPaymentId) {
+    const bound = invoice.payments?.find(payment => payment.id === settledPaymentId);
+    if (!bound || !matchingPayment(invoice, bound) || reversed(bound.status) || bound.refunded > 0 || bound.refunded_at || bound.voided_at) return true;
+  } else if (settledPaymentId === null && invoice.payments?.some(payment => reversed(payment.status) || payment.refunded > 0)) {
+    // A legacy grant cannot establish that an observed void belongs to unrelated history.
+    return true;
+  }
+  return requiresSettlementReview(invoice) || reversed(invoice.status)
+    || financialPayments(invoice).some(payment => reversed(payment.status) || payment.refunded > 0);
 }
 export function validateRefundInvoice(purchase: Purchase, invoice: Invoice) {
   validateLinkedInvoice(purchase, invoice);
   // Even legacy purchases need an explicit merchant identity for financial reversal.
   if (invoice.metadata?.purchase_id !== purchase.id) throw new PaymentError("هوية فاتورة الاسترداد غير مطابقة", 409);
 }
-export function selectRefundPayment(invoice: Invoice) {
-  const payments = invoice.payments?.filter(p => ["paid", "captured", "refunded", "voided"].includes(p.status) || p.refunded > 0) ?? [];
-  if (payments.length !== 1) throw new PaymentError("الاسترداد يحتاج عملية دفع واحدة موثقة", 409);
+export function selectRefundPayment(invoice: Invoice, settledPaymentId?: string | null) {
+  const candidates = settledPaymentId ? invoice.payments?.filter(payment => payment.id === settledPaymentId) ?? [] : financialPayments(invoice);
+  const payments = candidates.filter(p => ["paid", "captured", "refunded", "voided"].includes(p.status) || p.refunded > 0);
+  if (!completePayments(invoice) || payments.length !== 1
+    || !invoice.payments.every(payment => payment.id === payments[0].id || zeroChargeAttempt(payment))) throw new PaymentError("الاسترداد يحتاج عملية دفع واحدة موثقة", 409);
   return payments[0];
 }
 export function validateFullRefundPayment(invoice: Invoice, payment: ProviderPayment, expectedPaymentId: string) {
@@ -46,7 +107,9 @@ export async function processObservedRefund(id: string, invoice: Invoice, provid
   const before = await db().purchase.findUnique({ where: { id } });
   if (!before) throw new PaymentError("الشراء غير موجود", 404);
   validateRefundInvoice(before, invoice);
-  const candidate = selectRefundPayment(invoice);
+  const settled = await db().paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", eventType: "INVOICE_OBSERVATION",
+    processingResult: "SETTLED", observedState: "paid" }, select: { paymentReference: true } });
+  const candidate = selectRefundPayment(invoice, settled?.paymentReference);
   if (support && candidate.id !== support.paymentReference) throw new PaymentError("مرجع دعم الاسترداد غير مطابق", 409);
   if (!provider.fetchPayment) throw new PaymentError("التحقق من عملية الدفع غير متاح", 503);
   const payment = await provider.fetchPayment(candidate.id);
@@ -55,6 +118,10 @@ export async function processObservedRefund(id: string, invoice: Invoice, provid
     await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id = ${id} FOR UPDATE`;
     const purchase = await tx.purchase.findUniqueOrThrow({ where: { id } });
     validateRefundInvoice(purchase, invoice);
+    const settlement = await tx.paymentEvent.findFirst({ where: { purchaseId: id, provider: "moyasar", eventType: "INVOICE_OBSERVATION",
+      processingResult: "SETTLED", observedState: "paid" }, select: { paymentReference: true } });
+    // New grants bind the actual payment. Legacy grants retain the approved verification path.
+    if (settlement?.paymentReference && settlement.paymentReference !== payment.id) throw new PaymentError("عملية الدفع لا تطابق المنحة الأصلية", 409);
     if (support) {
       const admin = await tx.user.findUnique({ where: { id: support.operatorId }, select: { role: true, suspendedAt: true } });
       if (admin?.role !== "ADMIN" || admin.suspendedAt) throw new PaymentError("غير مصرح", 403);
