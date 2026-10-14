@@ -35,11 +35,11 @@ export default function Home() {
     </section>
     <section id="games" className="quddam-game-section section"><div className="shell">
       <div className="section-head"><div><span className="eyebrow">مكتبة التحديات</span><h2>اختاروا جوّكم</h2></div><p>أسئلة، تمويه، ترتيب ومرافعات. لكل جمعة لعبة.</p></div>
-      <div className="quddam-home-games">{featuredGames.map((game, i) => <Link href="/games" className="quddam-home-game" key={game.slug} aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
+      <div className="quddam-home-games">{featuredGames.map((game, i) => <article className="quddam-home-game" key={game.slug}><Link href="/games" className="quddam-home-game-link" aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
         <span className={`quddam-game-number quddam-game-number--${i % 4}`} aria-hidden="true">{arabicIndex(i)}</span>
         <span className="quddam-home-game-copy"><strong>{game.title}</strong><small>{game.description}</small></span>
         <GameEmblem name={game.icon} />
-      </Link>)}</div>
+      </Link></article>)}</div>
       <div className="home-games-action"><Link className="btn btn-primary" href="/games">تصفّح مكتبة الألعاب <span aria-hidden="true">←</span></Link></div>
     </div></section>
     <section id="how" className="shell section"><div className="section-head"><div><span className="eyebrow">ثلاث خطوات</span><h2>من «وش نلعب؟» إلى قدّام</h2></div></div><div className="steps"><div className="step"><span>٠١</span><h3>اختاروا اللعبة</h3><p>المضيف يدخل حسابه ويختار التحدّي من المكتبة.</p></div><div className="step"><span>٠٢</span><h3>جهّزوا الجماعة</h3><p>سمّوا الفرق، أو شاركوا رمز الغرفة للألعاب التي تحتاج جوالات.</p></div><div className="step"><span>٠٣</span><h3>يلا قدّام</h3><p>المضيف يدير المباراة، وشاشة العرض تجمعكم على النتيجة.</p></div></div></section>
