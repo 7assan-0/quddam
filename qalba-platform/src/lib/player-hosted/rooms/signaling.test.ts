@@ -125,6 +125,20 @@ describe("ephemeral room signaling authorization and limits", () => {
     }
     expect(store.execute({ op: "poll", ...auth(host) }).peers).toHaveLength(MAX_GUESTS);
   });
+  it("supports a full nine-client room polling every second without a false global rate limit", () => {
+    let now = 10_000;
+    const store = new SignalingStore(() => now);
+    const host = store.execute({ op: "create" }).credentials!;
+    const guests = Array.from({ length: MAX_GUESTS },
+      () => store.execute({ op: "join", code: host.code }).credentials!);
+    for (let second = 0; second < 60; second++) {
+      now += 1_000;
+      expect(store.execute({ op: "poll", ...auth(host) }).peers).toHaveLength(MAX_GUESTS);
+      for (const guest of guests)
+        expect(store.execute({ op: "poll", ...auth(guest) }).peers![0].active).toBe(true);
+    }
+    expect(store.execute({ op: "poll", ...auth(host) }).peers).toHaveLength(MAX_GUESTS);
+  });
   it("bounds retained rooms and periodically clears expired capabilities and SDP", () => {
     let now = 0;
     const store = new SignalingStore(() => now), hosts: Credentials[] = [];
