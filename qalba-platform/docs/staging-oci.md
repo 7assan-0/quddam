@@ -29,6 +29,10 @@
 - With a single 2 OCPU / 12 GB / 50 GB VM, app and DB share a failure domain; keep disk headroom, set log/WAL retention, monitor DB pool and 250 ms SSE polling, and avoid building during concurrent load. Verify backups in independent restricted storage only after cost and access approval.
 - GitHub's preparation CI uses synthetic test credentials and Docker Compose config validation **without starting PostgreSQL**. It is not a real ingress test, proof of capacity or permission to provision resources.
 
+## Next proof — owner-gated native ARM64 / PostgreSQL 17 CI
+
+A separate [native ARM64 + PostgreSQL 17 acceptance plan](staging-arm64-validation.md) and `.github/workflows/staging-arm64-pg17.yml` are prepared, **not automatically started**. GitHub supports standard ARM64 runners in private repos, but their minutes draw from the owner's Actions allowance and may become billable. The workflow runs only when an approved maintainer adds the exact `arm64-ci-approved` label to PR #5 after the owner reviews usage and explicitly authorizes the run. It tests original 24 migrations, fresh PostgreSQL 17 schema, synthetic transaction rollback, native build and a clone restore; it does not establish an OCI deployment, historic data upgrade, operational restore, memory/load headroom or actual regional capacity.
+
 ## Ingress acceptance checklist (must be demonstrated on the real OCI resources)
 
 | Layer | Required negative/positive evidence |
