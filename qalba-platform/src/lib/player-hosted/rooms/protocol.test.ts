@@ -4,6 +4,7 @@ import { acceptBuzz, CHANNEL, hostAction, initialState, MAX_GUESTS, MAX_PLAYERS,
 describe("multi-player transport-independent authority", () => {
   it("has exactly nine distinct slots, and only a current-round eighth guest may win", () => {
     expect(MAX_PLAYERS).toBe(9); expect(MAX_GUESTS).toBe(8);
+    expect(CHANNEL).toBe("quddam-rooms-v2");
     const base = initialState();
     expect(base.protocol).toBe(3); expect(base.scores).toHaveLength(9);
     const round = hostAction(base, "open");
