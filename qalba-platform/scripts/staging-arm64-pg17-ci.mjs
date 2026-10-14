@@ -34,7 +34,9 @@ assert.equal(expected.length, 24, "Review the migration count if the inventory c
 const ciMarker = "arm64-pg17-restore-fixture";
 const connect = async dbName => {
   assert.ok(["quddam_arm64_ci", "quddam_arm64_ci_restore"].includes(dbName));
-  const client = new Client({ connectionString: process.env.DATABASE_URL, database: dbName,
+  const target = new URL(process.env.DATABASE_URL);
+  target.pathname = "/" + dbName;
+  const client = new Client({ connectionString: target.toString(),
     connectionTimeoutMillis: 5000, statement_timeout: 30000 });
   await client.connect();
   return client;
