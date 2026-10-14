@@ -1,14 +1,15 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { MAX_GUESTS } from "./protocol";
 
-export const ROOM_TTL = 30 * 60_000;
+export const ROOM_TTL = 60 * 60_000;
 export const LEASE = 45_000;
 export const MAX_RETRIES = 3;
 export const MAX_ROOMS = 16;
 export const BODY_LIMIT = 100_000;
 const codeSchema = z.string().regex(/^[A-F0-9]{32}$/);
 const tokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
-const peerSchema = z.number().int().min(1).max(3);
+const peerSchema = z.number().int().min(1).max(MAX_GUESTS);
 const description = z.object({ type: z.enum(["offer", "answer"]),
   sdp: z.string().min(20).max(95_000).startsWith("v=0\r\n") }).strict();
 const auth = { code: codeSchema, token: tokenSchema, epoch: z.number().int().min(0).max(4) };
@@ -58,14 +59,14 @@ export class SignalingStore {
   private limit(key: string, max: number) {
     let rate = this.rates.get(key);
     if (!rate) {
-      if (this.rates.size >= 256) fail(429, "الخدمة مشغولة؛ حاول لاحقًا.");
+      if (this.rates.size >= 512) fail(429, "الخدمة مشغولة؛ حاول لاحقًا.");
       rate = { start: this.now(), count: 0 }; this.rates.set(key, rate);
     }
     if (++rate.count > max) fail(429, "طلبات كثيرة؛ انتظر دقيقة ثم أعد المحاولة.");
   }
   expire() { this.sweep(); }
   execute(raw: unknown): SignalReply {
-    this.sweep(); this.limit("all", 900);
+    this.sweep(); this.limit("all", 12_000);
     const parsed = inputSchema.safeParse(raw);
     if (!parsed.success) fail(400, "طلب غير صالح.");
     const input = parsed.data, now = this.now();
@@ -81,7 +82,7 @@ export class SignalingStore {
     const room = this.rooms.get(input.code);
     if (!room) fail(410, "الغرفة غير متاحة أو انتهت. اطلب رابطًا جديدًا من الهوست.");
     if (input.op === "join") {
-      if (room.guests.length >= 3) fail(409, "الغرفة مكتملة: هوست وثلاثة ضيوف كحد أقصى.");
+      if (room.guests.length >= MAX_GUESTS) fail(409, "الغرفة مكتملة: هوست وثمانية ضيوف كحد أقصى.");
       const guest: Guest = { token: randomBytes(32).toString("base64url"), slot: room.guests.length + 1,
         generation: 1, seen: now, active: true, connected: false };
       room.guests.push(guest);
@@ -113,7 +114,7 @@ export class SignalingStore {
         [{ slot: guest!.slot, active: guest!.active, generation: guest!.generation,
           ...(guest!.offer ? { description: guest!.offer } : {}) }] };
     }
-    this.limit(`${room.code}:${host ? 0 : guest!.slot}:signal`, 24);
+    this.limit(`${room.code}:${host ? 0 : guest!.slot}:signal`, host ? 96 : 24);
     const target = host ? room.guests.find(g => g.slot === input.peer) : guest;
     if (!target || (!host && input.peer !== guest!.slot)) fail(403, "وجهة غير مصرح بها.");
     if (!target.active || target.generation !== input.generation) fail(409, "محاولة اتصال قديمة.");
