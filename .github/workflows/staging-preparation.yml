@@ -7,6 +7,7 @@ on:
       - 'qalba-platform/scripts/staging-preflight.contract.mjs'
       - 'qalba-platform/docs/staging-preparation.md'
       - 'qalba-platform/docs/staging-oci.md'
+      - 'qalba-platform/docs/staging-arm64-validation.md'
       - 'qalba-platform/docker-compose.staging.yml'
       - 'qalba-platform/scripts/start-staging.mjs'
       - 'qalba-platform/scripts/staging-supervisor.contract.mjs'
