@@ -2,6 +2,7 @@
 import { TeamMarker } from "./team-marker";
 import { ProgressChevrons } from "./progress-chevrons";
 import { TimerRing } from "./timer-ring";
+import { VictorySpotlight } from "./victory-spotlight";
 import { connectLive, liveRetryDelay } from "@/lib/realtime/client";
 import { terminalAccessStatus } from "@/lib/realtime/access-status";
 import { Brand } from "./brand";
@@ -105,8 +106,8 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
         <button className="display-fullscreen" onClick={toggleFullscreen}>{fullscreen ? "الخروج من ملء الشاشة" : "ملء الشاشة"}</button></div>
     </div>
     {connection && <p className="display-connection" role="status">{connection}</p>}
-    {feedback && <p className="display-connection" role="status">{feedback}</p>}
-    {view.status === "COMPLETED" ? <section className="display-center display-victory"><span>انتهت المباراة</span><h1>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل!"}</h1><p>{view.endedEarly ? "النتيجة عند إنهاء المضيف للمباراة" : "اكتملت أسئلة اللوحة"}</p></section>
+    {feedback && <div key={feedback} className={`game-show-feedback ${feedback.startsWith("إجابة صحيحة") ? "game-show-feedback--correct" : feedback.startsWith("إجابة خاطئة") ? "game-show-feedback--wrong" : "game-show-feedback--edit"}`} role="status"><span aria-hidden="true">{feedback.startsWith("إجابة صحيحة") ? "✦" : feedback.startsWith("إجابة خاطئة") ? "!" : "↺"}</span><strong>{feedback}</strong></div>}
+    {view.status === "COMPLETED" ? <section className="display-center display-victory"><VictorySpotlight names={winners.map(winner => winner.name)} /><p>{view.endedEarly ? "النتيجة عند إنهاء المضيف للمباراة" : "اكتملت أسئلة اللوحة"}</p></section>
       : active ? <section className={`display-center display-question ${active.phase === "STEAL" ? "display-feedback-wrong" : ""}`}><div className="display-question-top"><span className="display-category-pill">{view.categories.find((category) => category.id === active.categoryId)?.title} · {number(active.value ?? 0)} نقطة{active.double ? " ×٢" : ""}</span><span className="display-phase">{active.phase === "STEAL" ? `إجابة غير صحيحة · فرصة السرقة · ${team?.name}` : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${team?.name}`}</span></div>
           <h1>{active.question}</h1>{active.type === "IMAGE" && active.imageUrl && (
             // Question media uses admin-controlled URLs from varied hosts.
