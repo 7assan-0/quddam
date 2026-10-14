@@ -1,4 +1,5 @@
 import { TeamMarker } from "@/components/team-marker";
+import { HeaderSurfaceSync } from "@/components/header-surface-sync";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
 import { GameEmblem } from "@/components/game-emblem";
@@ -8,6 +9,7 @@ const arabicIndex = (index: number) => new Intl.NumberFormat("ar-SA-u-nu-arab").
 
 export default function Home() {
   return <>
+    <HeaderSurfaceSync />
     <section className="quddam-sun-hero">
       <svg className="sun-chevron-pattern" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
         <defs><pattern id="sun-hero-chevron" width="56" height="56" patternUnits="userSpaceOnUse"><path d="M36 8L16 28L36 48" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" /></pattern></defs>
