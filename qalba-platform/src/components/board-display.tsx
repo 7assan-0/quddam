@@ -1,4 +1,5 @@
 "use client";
+import { teamColor } from "@/lib/design/team-colors";
 import { TeamMarker } from "./team-marker";
 import { ProgressChevrons } from "./progress-chevrons";
 import { TimerRing } from "./timer-ring";
@@ -119,7 +120,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
           <div className="display-clock-note" role="status">{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : view.status === "PAUSED" ? "المؤقت متوقف" : active.deadlineAt ? "الوقت جارٍ" : "بانتظار تشغيل المؤقت"}</div>
         </section>
         : <section className="display-center display-wait"><span>{view.status === "PAUSED" ? "ننتظر المضيف" : view.status === "LOBBY" ? "استعدوا للعب" : `الدور على ${view.teams.find((item) => item.id === view.turnTeamId)?.name}`}</span><h1>{view.status === "LOBBY" ? "جهزوا فرقكم" : "اختاروا السؤال التالي"}</h1></section>}
-    <div className="display-scores">{view.teams.map((item) => { const isTurn = canShowTurn && item.id === activeTeamId; return <div key={item.id} className={`display-team ${isTurn ? "display-team--active" : ""}`} style={{ "--quddam-team": item.color } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{isTurn && <small className="display-team-status">دورهم</small>}</div><AnimatedScore value={item.score} /></div>; })}</div>
+    <div className="display-scores">{view.teams.map((item) => { const isTurn = canShowTurn && item.id === activeTeamId; return <div key={item.id} className={`display-team ${isTurn ? "display-team--active" : ""}`} style={{ "--quddam-team": teamColor(item.position) } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{isTurn && <small className="display-team-status">دورهم</small>}</div><AnimatedScore value={item.score} /></div>; })}</div>
     <div className="display-grid" aria-label="لوحة الأسئلة">{view.categories.map((category) => <div className="display-column" key={category.id}><h2>{category.title}</h2>{[200, 400, 600].map((value) => {
       const cell = view.cells.find((item) => item.categoryId === category.id && item.value === value);
       return <div className={`display-cell ${cell?.completed ? "done" : ""}`} key={value}>{cell?.completed ? "✓" : number(value)}</div>;
