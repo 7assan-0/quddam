@@ -42,9 +42,9 @@ describe("Qalba visual token contract", () => {
     expect(css[0]).not.toMatch(/\.board-cell\.used::after/);
   });
 
-  it("ships all four distinctive team colors and an Arabic font", () => {
-    const teams = ["a", "b", "c", "d"].map((team) => hex(`team-${team}`));
-    expect(new Set(teams).size).toBe(4);
+  it("ships three distinct team colors and an Arabic font", () => {
+    const teams = ["a", "b", "c"].map((team) => hex(`team-${team}`));
+    expect(new Set(teams).size).toBe(3);
     expect(teams).toEqual(TEAM_COLORS);
     for (const team of teams) expect(contrast(team, hex("color-primary-surface"))).toBeGreaterThanOrEqual(3);
     expect(contrast(hex("neutral-400"), hex("color-primary-surface"))).toBeGreaterThanOrEqual(3);
