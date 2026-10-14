@@ -1,4 +1,5 @@
 import type { Credentials, SignalInput, SignalReply } from "./signaling";
+import { MAX_GUESTS } from "./protocol";
 
 export class ApiError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -23,13 +24,13 @@ export const requestSignal: SignalingClient = async (input, signal, keepalive = 
   } finally { clearTimeout(timeout); signal?.removeEventListener("abort", abort); }
 };
 
-const STORAGE_PREFIX = "quddam-guest-room-v2:";
+const STORAGE_PREFIX = "quddam-guest-room-v3:";
 // Never persist host credentials. A shared link and a refreshed guest cannot acquire host authority.
 export function readGuest(storage: Pick<Storage, "getItem">, code: string): Credentials | undefined {
   try {
     const value = JSON.parse(storage.getItem(STORAGE_PREFIX + code) ?? "null");
     if (value?.role === "guest" && value.code === code && typeof value.token === "string" && /^[A-Za-z0-9_-]{43}$/.test(value.token) &&
-      Number.isInteger(value.slot) && value.slot >= 1 && value.slot <= 3 && Number.isInteger(value.epoch) && value.epoch >= 1 && value.epoch <= 4 && value.expires > Date.now()) return value;
+      Number.isInteger(value.slot) && value.slot >= 1 && value.slot <= MAX_GUESTS && Number.isInteger(value.epoch) && value.epoch >= 1 && value.epoch <= 4 && value.expires > Date.now()) return value;
   } catch { /* Storage may be disabled. Joining still works without persistence. */ }
 }
 export function rememberGuest(storage: Pick<Storage, "setItem">, credentials: Credentials) {
