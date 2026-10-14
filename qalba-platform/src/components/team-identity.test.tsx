@@ -15,7 +15,7 @@ describe("Quddam team identity and hero comparison", () => {
     expect(markers[0]).toContain('aria-label="رمز البرق"');
     expect(markers[1]).toContain('aria-label="رمز الموج"');
     expect(markers[2]).toContain('aria-label="رمز المربع"');
-    markers.forEach((markup, position) => expect(markup).toContain(`color:${teamColor(position).toLowerCase()}`));
+    markers.forEach((markup, position) => expect(markup.toLowerCase()).toContain(`color:${teamColor(position).toLowerCase()}`));
     expect(new Set(markers.map(markup => markup.match(/<path[^>]+>|<rect[^>]+>/)?.[0])).size).toBe(3);
     expect(TEAM_COLORS).not.toContain("#FFD21F");
     expect(TEAM_COLORS).not.toContain("#19E3D1");
