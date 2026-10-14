@@ -7,6 +7,9 @@ on:
       - 'qalba-platform/scripts/staging-preflight.contract.mjs'
       - 'qalba-platform/docs/staging-preparation.md'
       - 'qalba-platform/docs/staging-oci.md'
+      - 'qalba-platform/docker-compose.staging.yml'
+      - 'qalba-platform/package.json'
+      - 'qalba-platform/package-lock.json'
       - '.github/workflows/staging-preparation.yml'
   workflow_dispatch:
 
@@ -16,7 +19,7 @@ permissions:
 jobs:
   contract-only:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -29,3 +32,17 @@ jobs:
       - name: Synthetic contract test only; no deployment or external services
         working-directory: qalba-platform
         run: node --test scripts/staging-preflight.contract.mjs
+      - name: Verify production-only launcher dependencies are installable
+        working-directory: qalba-platform
+        run: |
+          npm ci --omit=dev --no-audit --no-fund
+          node --import tsx --input-type=module -e "import { productionEnvironment } from './src/lib/operations/environment.ts'; if (typeof productionEnvironment !== 'function') process.exit(1)"
+      - name: Validate loopback-only staging PostgreSQL Compose config (no start)
+        working-directory: qalba-platform
+        env:
+          STAGING_POSTGRES_DB: quddam_staging_ci
+          STAGING_POSTGRES_USER: quddam_staging_ci
+          STAGING_POSTGRES_PASSWORD: synthetic-only-never-deploy
+        run: |
+          docker compose -f docker-compose.staging.yml config --quiet
+          node --input-type=module -e "import fs from 'node:fs'; const s=fs.readFileSync('docker-compose.staging.yml','utf8'); if (!s.includes('127.0.0.1:5432:5432') || s.includes('0.0.0.0:5432')) process.exit(1)"
