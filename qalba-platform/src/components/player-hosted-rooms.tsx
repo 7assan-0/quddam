@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RoomController, emptyView } from "@/lib/player-hosted/rooms/controller";
 import { readGuest, rememberGuest } from "@/lib/player-hosted/rooms/client";
+import { MAX_GUESTS, MAX_PLAYERS } from "@/lib/player-hosted/rooms/protocol";
 
-const labels = ["الهوست A", "اللاعب B", "اللاعب C", "اللاعب D"];
+const labels = Array.from({ length: MAX_PLAYERS }, (_, slot) => slot === 0 ? "الهوست A" : `اللاعب ${String.fromCharCode(65 + slot)}`);
 export function PlayerHostedRooms() {
   const [ui, setUi] = useState(emptyView);
   const [code, setCode] = useState("");
@@ -67,7 +68,7 @@ export function PlayerHostedRooms() {
     <div className="page-title">
       <span className="eyebrow">مختبر مستقل · غرف تلقائية</span>
       <h1>غرف قدّام باستضافة اللاعب</h1>
-      <p>أنشئ غرفة وشارك رابطها. جهاز الهوست يدير الجرس والنقاط، حتى ثلاثة ضيوف. تنتهي الغرفة عند إغلاق الهوست أو بعد 30 دقيقة.</p>
+      <p>أنشئ غرفة وشارك رابطها. جهاز الهوست يدير الجرس والنقاط، حتى ثمانية ضيوف. تنتهي الغرفة عند إغلاق الهوست أو بعد 60 دقيقة.</p>
     </div>
     <section className="panel" style={{ padding: 24, marginBlock: 16 }}>
       <h2>إنشاء أو انضمام</h2>
@@ -97,7 +98,7 @@ export function PlayerHostedRooms() {
     {ui.role && <section className="panel" data-testid="game-panel" style={{ padding: 24, marginBlock: 16 }}>
       <h2>جولة الجرس</h2>
       <p data-testid="connection">أنت: {labels[ui.slot]} · {ui.phase === "closed" ? "الجلسة مغلقة" : active ? "متصل" : "غير متصل"}
-        {ui.role === "host" && ` · الضيوف المتصلون: ${connected}/3`}</p>
+        {ui.role === "host" && ` · الضيوف المتصلون: ${connected}/${MAX_GUESTS}`}</p>
       <p data-testid="round">الجولة {ui.state.round} · الحالة {ui.state.phase} · الإصدار {ui.state.version}</p>
       {ui.role === "host" && <p data-testid="players">{ui.players.map(player =>
         `${labels[player.slot]}: ${player.connected ? "متصل" : "غير متصل"}`).join(" · ")}</p>}
