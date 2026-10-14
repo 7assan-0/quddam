@@ -2,6 +2,7 @@ import { teamColor } from "@/lib/design/team-colors";
 
 /** Shape is an independent identity cue across Host, TV, phone and results. */
 export function TeamMarker({ position, color: _savedColor }: { position: number; color?: string }) {
+  void _savedColor;
   const shape = ((position % 4) + 4) % 4;
   return <svg className="team-marker" viewBox="0 0 20 20" role="img" aria-label={shape === 0 ? "رمز البرق" : shape === 1 ? "رمز الموج" : shape === 2 ? "رمز المربع" : "رمز المعين"} style={{ color: teamColor(position) }} fill="currentColor">
     {shape === 0 ? <path d="M11.5 1 3.5 11h6L8 19l9-11h-6Z" /> :
