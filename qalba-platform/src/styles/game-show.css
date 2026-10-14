@@ -1,0 +1,143 @@
+/* Phase 3 · Game Show polish. Presentation only; game state stays in its existing modules. */
+
+/* Swap the *existing* sticky header once the Sun hero scrolls out of view. */
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header {
+  background:var(--color-primary); color:var(--color-text-inverse); border-color:var(--neutral-600);
+}
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav,
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost,
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { color:var(--color-text-inverse); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav a:hover { color:var(--color-accent-gold); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .quddam-mark { color:var(--color-accent-gold); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .quddam-mark-cut { fill:var(--color-primary); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-primary {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
+}
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-primary:hover { background:var(--color-accent-gold-hover); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost { border-color:var(--color-text-inverse); background:transparent; }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost:hover { background:var(--neutral-700); color:var(--color-accent-gold); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { border-color:var(--neutral-400); }
+
+/* Four vivid supporting accents: brand Night/Sun remain dominant. Never set small text in a team/accent color. */
+.quddam-home-game,.quddam-games .game-card { --game-accent:var(--color-accent-gold); }
+[data-game="category-board"] { --game-accent:var(--color-accent-gold); }
+[data-game="out-of-the-loop"] { --game-accent:var(--color-game-lilac); }
+[data-game="letter-network"] { --game-accent:var(--color-game-sky); }
+[data-game="survey-show"] { --game-accent:var(--color-game-coral); }
+[data-game="secret-word"] { --game-accent:var(--color-game-mint); }
+[data-game="bluff"] { --game-accent:var(--color-game-lilac); }
+[data-game="top-list"] { --game-accent:var(--color-accent-gold-soft); }
+[data-game="lightning-quiz"] { --game-accent:var(--color-game-coral); }
+[data-game="ordering-challenge"] { --game-accent:var(--color-game-sky); }
+[data-game="the-court"] { --game-accent:var(--color-game-mint); }
+.quddam-home-game,.quddam-games .game-card {
+  border-block-start:6px solid var(--game-accent);
+  background:
+    radial-gradient(ellipse at 95% 0%,color-mix(in srgb,var(--game-accent) 22%,transparent) 0%,transparent 57%),
+    var(--color-primary-surface);
+}
+.quddam-home-game::before,.quddam-games .game-card::before {
+  content:""; position:absolute; width:110px; height:110px; inset-block-start:0; inset-inline-end:0;
+  background:repeating-linear-gradient(135deg,transparent 0 13px,color-mix(in srgb,var(--game-accent) 15%,transparent) 13px 16px,transparent 16px 30px);
+  border-radius:0 24px 0 50%; opacity:.48; pointer-events:none;
+}
+.quddam-home-game { overflow:hidden; }
+.quddam-home-game-link { position:relative; isolation:isolate; }
+.quddam-home-game-copy { padding-block-end:40px; }
+.quddam-home-game-copy strong { color:var(--color-text-inverse); }
+.quddam-home-game-link>.game-emblem { width:48px; height:48px; color:var(--game-accent); }
+.quddam-games .game-card { position:relative; overflow:hidden; }
+.quddam-games .game-card>* { position:relative; z-index:1; }
+.quddam-games .game-card .game-emblem {
+  color:var(--game-accent);
+  background:color-mix(in srgb,var(--game-accent) 14%,var(--color-primary));
+  border:1px solid color-mix(in srgb,var(--game-accent) 45%,transparent);
+}
+.quddam-games .game-card .btn-secondary { background:var(--color-accent-gold); color:var(--color-primary); border-color:transparent; }
+.quddam-games .game-card .btn-secondary:hover { background:var(--color-accent-gold-hover); }
+.quddam-home-game:focus-within,.quddam-games .game-card:focus-within {
+  outline:3px solid var(--color-accent-gold); outline-offset:3px;
+}
+
+/* Live result feedback never changes scores; it only decorates the existing SSE message. */
+.game-show-feedback {
+  align-self:center; display:flex; align-items:center; gap:16px; max-width:100%;
+  border-radius:var(--radius-lg); padding:12px 22px; background:var(--color-primary-surface);
+  color:var(--color-text-inverse); border:3px solid var(--color-accent-gold);
+  font-size:clamp(1.25rem,2.1vw,2rem); font-weight:900; box-shadow:var(--shadow-lg);
+  animation:game-show-pop var(--motion-emphasis) var(--ease-standard) both;
+}
+.game-show-feedback>span { display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:50%; background:var(--color-accent-gold); color:var(--color-primary); font:400 32px/1 var(--font-display); }
+.game-show-feedback--correct { border-color:var(--color-game-mint); }
+.game-show-feedback--correct>span { background:var(--color-game-mint); }
+.game-show-feedback--wrong { border-color:var(--color-game-coral); }
+.game-show-feedback--wrong>span { background:var(--color-game-coral); }
+.game-show-feedback--edit { border-color:var(--color-game-sky); }
+.game-show-feedback--edit>span { background:var(--color-game-sky); }
+@keyframes game-show-pop { from { opacity:.4; transform:scale(.96) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+/* Accessible TV finale, fed by the actual winners rather than a fake preview. */
+.quddam-board-tv .display-victory,.lightning-tv .lightning-final {
+  position:relative; isolation:isolate; overflow:hidden;
+  background:radial-gradient(circle at 50% -10%,var(--neutral-600) 0%,var(--color-primary-surface) 44%,var(--color-primary) 100%);
+  color:var(--color-text-inverse); border:3px solid var(--color-accent-gold); border-radius:36px;
+  box-shadow:0 0 0 8px color-mix(in srgb,var(--color-accent-gold) 11%,transparent),var(--shadow-celebrate);
+}
+.victory-spotlight { position:relative; display:grid; justify-items:center; align-content:center; gap:10px; width:100%; min-height:210px; padding:22px; text-align:center; }
+.victory-label { border:2px solid var(--color-accent-gold); border-radius:var(--radius-pill); color:var(--color-accent-gold); padding:4px 22px; font-size:clamp(1.25rem,1.8vw,1.7rem); font-weight:900; }
+.victory-trophy { font-size:clamp(3rem,5vw,5rem); line-height:1; color:var(--color-accent-gold); text-shadow:0 0 30px color-mix(in srgb,var(--color-accent-gold) 45%,transparent); }
+.victory-spotlight :is(h1,h2) { font:400 clamp(3rem,6.5vw,7rem)/1.22 var(--font-display); color:var(--color-accent-gold); margin:0; overflow-wrap:anywhere; }
+.victory-tie { font-size:clamp(1.5rem,2.2vw,2rem); color:var(--color-text-inverse); margin:0; }
+.victory-signature { color:var(--neutral-200); font-size:clamp(1.1rem,1.5vw,1.5rem); font-weight:900; }
+.victory-spark { position:absolute; color:var(--color-game-lilac); font-size:clamp(2rem,4vw,4rem); pointer-events:none; animation:winner-spark 700ms var(--ease-standard) both; }
+.victory-spark--one { inset-block-start:12%; inset-inline-start:7%; }
+.victory-spark--two { inset-block-start:24%; inset-inline-end:8%; color:var(--color-game-coral); }
+.victory-spark--three { inset-block-end:8%; inset-inline-start:16%; color:var(--color-game-sky); }
+.quddam-board-tv .display-victory>p { color:var(--neutral-200); margin:0 0 20px; }
+.quddam-board-tv .display-victory::before { content:none; }
+
+/* A real Game Show TV treatment for Lightning; keep its entire stage and host controls intact. */
+.lightning-tv { max-width:var(--layout-tv); color:var(--color-text-inverse); }
+.lightning-tv .quddam-lightning-top { border-block-end:3px solid var(--neutral-600); margin-bottom:12px; }
+.lightning-tv .quddam-lightning-top h1 { color:var(--color-accent-gold); }
+.lightning-tv .lightning-scoreboard .panel {
+  background:var(--color-primary-surface); border:0; border-block-start:8px solid var(--lightning-team);
+  border-radius:24px; min-width:0;
+}
+.lightning-tv .lightning-scoreboard strong { font:400 clamp(3.25rem,6vw,6.5rem)/1.1 var(--font-display); color:var(--color-text-inverse); }
+.lightning-tv .lightning-active { outline:5px solid var(--color-accent-gold); outline-offset:2px; }
+.lightning-tv .lightning-round-head { padding:8px 0; color:var(--color-text-inverse); font-weight:900; font-size:clamp(1.5rem,2vw,2rem); }
+.lightning-tv .lightning-round-head .timer { color:var(--color-game-coral); font-family:var(--font-display); }
+.lightning-tv .lightning-status { border:0; border-radius:16px; background:var(--color-primary-surface); color:var(--color-text-inverse); text-align:center; }
+.lightning-tv .lightning-question {
+  border:0; border-radius:36px; background:var(--color-bg); color:var(--color-primary); text-align:center;
+  padding:clamp(24px,3vw,46px);
+}
+.lightning-tv .lightning-question .eyebrow { display:inline-block; border-radius:var(--radius-pill); padding:4px 22px; background:var(--color-primary); color:var(--color-accent-gold); font-size:clamp(1.25rem,1.8vw,1.8rem); }
+.lightning-tv .lightning-question h2 { font:400 clamp(2.5rem,6.5vw,7rem)/1.3 var(--font-display); color:var(--color-primary); overflow-wrap:anywhere; }
+.lightning-tv .lightning-result { border:3px solid var(--color-game-mint); border-radius:24px; color:var(--color-text-inverse); background:var(--color-primary-surface); }
+.lightning-tv .lightning-final .victory-spotlight h2 { margin:0; }
+.lightning-tv .lightning-final>p { font-size:clamp(1.25rem,1.8vw,1.75rem); color:var(--color-text-inverse); }
+
+/* Phone: clear selection targets and safe-area room without covering controls. */
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone) {
+  padding-block-end:max(32px,env(safe-area-inset-bottom));
+}
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone)
+:is(button,.btn,input[type="radio"]+label,input[type="checkbox"]+label) { min-height:52px; touch-action:manipulation; }
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone) :is(button,.btn):focus-visible { outline:4px solid var(--color-accent-gold); outline-offset:3px; }
+@media(max-width:600px) {
+  .quddam-home-game-copy strong { font-size:clamp(1.8rem,8vw,2.25rem); }
+  .quddam-board-tv .display-scores { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .quddam-board-tv .display-team { min-width:0; flex-direction:column; align-items:flex-start; gap:12px; }
+  .quddam-board-tv .display-team>div>span { font-size:1.2rem; overflow-wrap:anywhere; }
+  .quddam-board-tv .display-team strong.score-number { align-self:flex-end; }
+  .lightning-tv .lightning-question { padding:18px; border-radius:24px; }
+  .lightning-tv .lightning-question h2 { font-size:clamp(2.2rem,7vw,4rem); }
+  .victory-spotlight { padding:20px 12px; }
+  .victory-spark { opacity:.45; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .game-show-feedback,.victory-spark { animation:none; }
+  .quddam-home-game,.quddam-games .game-card { transition:none; }
+}
