@@ -13,13 +13,14 @@ export type LabState = {
   scores: [number, number];
 };
 export type GuestIntent = { type: "BUZZ"; round: number };
+export const MAX_ROUNDS = 100;
 
 export const initialLabState = (): LabState => ({
   protocol: 1, version: 0, round: 0, phase: "waiting", winner: null, scores: [0, 0],
 });
 
 export function openRound(state: LabState): LabState {
-  if (state.phase === "open" || state.phase === "locked" || state.round >= 100) return state;
+  if (state.phase === "open" || state.phase === "locked" || state.round >= MAX_ROUNDS) return state;
   return { ...state, version: state.version + 1, round: state.round + 1, phase: "open", winner: null };
 }
 
@@ -48,7 +49,7 @@ export function parseGuestIntent(raw: unknown): GuestIntent | null {
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     const obj = value as Record<string, unknown>;
     if (Object.keys(obj).length !== 2 || obj.type !== "BUZZ" || !Number.isSafeInteger(obj.round)) return null;
-    if (typeof obj.round !== "number" || obj.round < 1 || obj.round > 100) return null;
+    if (typeof obj.round !== "number" || obj.round < 1 || obj.round > MAX_ROUNDS) return null;
     return { type: "BUZZ", round: obj.round };
   } catch { return null; }
 }
@@ -62,16 +63,30 @@ export function parseHostSnapshot(raw: unknown): LabState | null {
     const obj = value as Record<string, unknown>;
     if (Object.keys(obj).sort().join(",") !== "phase,protocol,round,scores,version,winner") return null;
     const { protocol, version, round, phase, winner, scores } = obj;
-    if (protocol !== 1 || !Number.isSafeInteger(version) || typeof version !== "number" || version < 0) return null;
-    if (!Number.isSafeInteger(round) || typeof round !== "number" || round < 0 || round > 100) return null;
-    if (!["waiting", "open", "locked", "result"].includes(String(phase))) return null;
+    if (protocol !== 1 || !Number.isSafeInteger(version) || typeof version !== "number" || version < 0 || version > MAX_ROUNDS * 3) return null;
+    if (!Number.isSafeInteger(round) || typeof round !== "number" || round < 0 || round > MAX_ROUNDS) return null;
+    if (typeof phase !== "string" || !["waiting", "open", "locked", "result"].includes(phase)) return null;
     if (winner !== null && winner !== 0 && winner !== 1) return null;
     if (!Array.isArray(scores) || scores.length !== 2 || !scores.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 100)) return null;
     if ((phase === "waiting" || phase === "open") && winner !== null) return null;
     if (phase === "locked" && winner === null) return null;
-    if (round === 0 && phase !== "waiting") return null;
+    const total = scores[0] + scores[1];
+    if (phase === "waiting") {
+      if (round !== 0 || version !== 0 || total !== 0) return null;
+    } else {
+      if (round === 0 || total > round || (phase !== "result" && total >= round)) return null;
+      const minVersion = 2 * round - (phase === "open" ? 1 : 0);
+      const maxVersion = 3 * round - (phase === "open" ? 2 : phase === "locked" ? 1 : 0);
+      if (version < minVersion || version > maxVersion) return null;
+    }
     return { protocol: 1, version, round, phase: phase as LabPhase, winner: winner as 0 | 1 | null, scores: [scores[0], scores[1]] };
   } catch { return null; }
+}
+
+/** Reliable ordered snapshots never replace an accepted version or roll back a round/score. */
+export function isNewerHostSnapshot(current: LabState, next: LabState, lastVersion: number): boolean {
+  return next.version > lastVersion && next.round >= current.round &&
+    next.scores.every((score, team) => score >= current.scores[team]);
 }
 
 /** SDP copy/paste is for trusted testers, never put it in URLs, logs or GitHub. */

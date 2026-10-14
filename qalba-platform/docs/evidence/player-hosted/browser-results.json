@@ -1,0 +1,525 @@
+{
+  "schema": 1,
+  "recordedUTC": "2026-10-14T22:38:31.253715+00:00",
+  "decision": "PARTIAL",
+  "nativeLocalConnection": "PASS",
+  "environment": {
+    "OS": "Windows",
+    "browser": "Chrome via existing owner extension",
+    "Node": "24.21.0",
+    "npm": "11.19.0",
+    "Next": "16.3.6",
+    "origin": "http://localhost:3000",
+    "listener": "loopback only"
+  },
+  "realTestMode": "Two independent browser tabs on one computer, manual SDP exchange through UI",
+  "strictTwoPopupWindows": "BLOCKED: windows opened; browser automation input/capture timed out, so no pass claimed",
+  "twoDeviceLAN": "NOT_RUN: no second controllable device available in this session",
+  "crossNetwork": "NOT_RUN",
+  "iceServers": [],
+  "externalSignaling": false,
+  "SDPOrPrivateICEAddressesIncluded": false,
+  "steps": [
+    {
+      "step": "native-pair-connected-initial-state",
+      "UTC": "2026-10-14T22:27:50.321Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 0,
+        "phase": "waiting",
+        "version": 0,
+        "scores": [
+          0,
+          0
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 0,
+        "phase": "waiting",
+        "version": 0,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "host-opened-round-1",
+      "UTC": "2026-10-14T22:27:50.689Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": true,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": true,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "guest-buzz-locked-round-1-host-buzz-disabled",
+      "UTC": "2026-10-14T22:27:56.859Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": true,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "locked",
+        "version": 2,
+        "scores": [
+          0,
+          0
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "locked",
+        "version": 2,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "host-awarded-B-once-guest-has-no-score-controls",
+      "UTC": "2026-10-14T22:27:57.340Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "result",
+        "version": 3,
+        "scores": [
+          0,
+          1
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "result",
+        "version": 3,
+        "scores": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "step": "round-2-opens-clean-winner-scores-preserved",
+      "UTC": "2026-10-14T22:28:05.224Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": true,
+        "guestBuzzEnabled": false,
+        "round": 2,
+        "phase": "open",
+        "version": 4,
+        "scores": [
+          0,
+          1
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": true,
+        "round": 2,
+        "phase": "open",
+        "version": 4,
+        "scores": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "step": "host-buzz-locked-round-2-guest-disabled",
+      "UTC": "2026-10-14T22:28:05.824Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": true,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 2,
+        "phase": "locked",
+        "version": 5,
+        "scores": [
+          0,
+          1
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 2,
+        "phase": "locked",
+        "version": 5,
+        "scores": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "step": "two-rounds-complete-synchronized-score-1-1-v6",
+      "UTC": "2026-10-14T22:28:06.348Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 2,
+        "phase": "result",
+        "version": 6,
+        "scores": [
+          1,
+          1
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 2,
+        "phase": "result",
+        "version": 6,
+        "scores": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "step": "host-reset-closes-live-channel-and-clears-host-state",
+      "UTC": "2026-10-14T22:28:48.935Z",
+      "host": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      },
+      "guest": {
+        "connected": false,
+        "status": "انقطع اتصال اللاعب؛ أعد التجربة للاتصال من جديد.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 3,
+        "phase": "open",
+        "version": 7,
+        "scores": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "step": "both-peers-reset-all-signaling-and-game-ui-cleared",
+      "UTC": "2026-10-14T22:28:50.106Z",
+      "host": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      },
+      "guest": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      }
+    },
+    {
+      "step": "rapid-host-start-reset-does-not-resurrect-old-state",
+      "UTC": "2026-10-14T22:28:57.036Z",
+      "host": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      },
+      "guest": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      }
+    },
+    {
+      "step": "new-session-reconnected-with-zero-scores-round-0",
+      "UTC": "2026-10-14T22:29:05.556Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 0,
+        "phase": "waiting",
+        "version": 0,
+        "scores": [
+          0,
+          0
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 0,
+        "phase": "waiting",
+        "version": 0,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "new-session-live-round-before-host-page-close",
+      "UTC": "2026-10-14T22:29:06.432Z",
+      "host": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": true,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": true,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      },
+      "guest": {
+        "connected": true,
+        "status": "الاتصال المباشر جاهز",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": true,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "closing-host-page-ends-guest-channel-and-disables-buzz",
+      "UTC": "2026-10-14T22:29:22.289Z",
+      "host": {
+        "pageClosed": true
+      },
+      "guest": {
+        "connected": false,
+        "status": "حدث خطأ في قناة البيانات؛ أُغلقت الجلسة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "final-disconnected-ui-explicitly-closes-buzzer",
+      "UTC": "2026-10-14T22:32:47.532Z",
+      "host": {
+        "pageClosed": true
+      },
+      "guest": {
+        "connected": false,
+        "status": "حدث خطأ في قناة البيانات؛ أُغلقت الجلسة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false,
+        "round": 1,
+        "phase": "open",
+        "version": 1,
+        "scores": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "step": "final-guest-reset-clears-all-state",
+      "UTC": "2026-10-14T22:32:48.551Z",
+      "host": {
+        "pageClosed": true
+      },
+      "guest": {
+        "connected": false,
+        "status": "تم إغلاق الجلسة ومسح الحالة المؤقتة من الواجهة.",
+        "signalingFieldsPresent": false,
+        "hostAwardControlPresent": false,
+        "hostAwardEnabled": false,
+        "hostBuzzEnabled": false,
+        "guestBuzzEnabled": false
+      }
+    }
+  ],
+  "featureFlagOff": {
+    "utc": "2026-10-14T22:36:21.447Z",
+    "flag": false,
+    "builtApp": true,
+    "httpStatus": 200,
+    "notFoundUI": true,
+    "labControlsAbsent": true,
+    "signalInputsAbsent": true,
+    "result": "PASS: lab not rendered",
+    "note": "Next.js streamed notFound responses use HTTP200; verified against installed Next16.3.6 reference docs",
+    "DOM": {
+      "labButtons": 0,
+      "notFoundHeading": "ما لقينا الصفحة",
+      "signalInputs": 0
+    }
+  },
+  "checks": {
+    "npm ci": "PASS",
+    "npm run typecheck": "PASS",
+    "Vitest player-hosted": "PASS: 18 tests in 2 files",
+    "npm run lint": "PASS: 0 errors, 1 unchanged CI warning",
+    "npm run build": "PASS"
+  },
+  "baselineNotes": {
+    "npmAudit": {
+      "moderate": 3,
+      "high": 10,
+      "critical": 1
+    },
+    "dependencyLockfileChanged": false
+  },
+  "scope": {
+    "productionGamesBillingDatabaseOrSSEChanged": false,
+    "publicDeployment": false,
+    "cloudResourcesCreated": 0,
+    "paidResourcesCreated": 0,
+    "productionDataUsed": false
+  },
+  "cleanup": {
+    "testTabsAndPopupsClosed": true,
+    "loopbackTestServersStopped": true
+  }
+}

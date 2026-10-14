@@ -56,4 +56,31 @@ describe("isolated player-hosted buzzer protocol", () => {
     expect(() => parseSessionDescription("{", "offer")).toThrow();
     expect(() => parseSessionDescription("x".repeat(100001), "offer")).toThrow();
   });
+
+  it("rejects coerced phases, impossible round/score combinations and unbounded versions", () => {
+    const opened = openRound(initialLabState());
+    const result = awardPoint(buzz(opened, 0, 1));
+    for (const snapshot of [
+      { ...opened, phase: ["open"] }, { ...opened, version: 999 },
+      { ...opened, phase: "waiting" }, { ...opened, scores: [1, 0] },
+      { ...result, scores: [1, 1] }, { ...initialLabState(), version: 1 },
+      { ...result, version: 1 },
+    ]) expect(parseHostSnapshot(JSON.stringify(snapshot))).toBeNull();
+  });
+
+  it("accepts every legitimate bounded round including skips, then stops at 100", () => {
+    let state = initialLabState();
+    for (let round = 1; round <= 100; round++) {
+      state = openRound(state);
+      expect(parseHostSnapshot(JSON.stringify(state))).toEqual(state);
+      if (round % 3 === 0) state = skipRound(state);
+      else {
+        state = buzz(state, round % 2 ? 0 : 1, round);
+        expect(parseHostSnapshot(JSON.stringify(state))).toEqual(state);
+        state = round % 3 === 1 ? awardPoint(state) : skipRound(state);
+      }
+      expect(parseHostSnapshot(JSON.stringify(state))).toEqual(state);
+    }
+    expect(openRound(state)).toBe(state);
+  });
 });
