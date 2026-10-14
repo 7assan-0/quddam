@@ -121,13 +121,13 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 .lightning-tv .quddam-lightning-top { border-block-end:3px solid var(--neutral-600); margin-bottom:12px; }
 .lightning-tv .quddam-lightning-top h1 { color:var(--color-accent-gold); }
 .lightning-tv .lightning-scoreboard .panel {
-  background:var(--color-primary-surface); border:0; border-block-start:8px solid var(--lightning-team);
+  background:var(--color-primary-surface); border:2px solid var(--lightning-team);
   border-radius:24px; min-width:0;
 }
 .lightning-tv .lightning-scoreboard strong { font:400 clamp(3.25rem,6vw,6.5rem)/1.1 var(--font-display); color:var(--color-text-inverse); }
-.lightning-tv .lightning-active { outline:5px solid var(--color-accent-gold); outline-offset:2px; }
+.lightning-tv .lightning-scoreboard .panel.lightning-active { border:5px solid var(--lightning-team); outline:0; opacity:1; }
 .lightning-tv .lightning-turn-chip { display:inline-block; width:max-content; padding:4px 14px; border-radius:var(--radius-pill); background:var(--color-accent-gold); color:var(--color-primary); font:900 clamp(1.1rem,1.6vw,1.5rem)/1.4 var(--font-arabic); margin-block-start:var(--space-2); }
-.lightning-tv .lightning-scoreboard .panel:not(.lightning-active) { outline:0; box-shadow:none; }
+.lightning-tv .lightning-scoreboard .panel:not(.lightning-active) { border:2px solid var(--lightning-team); opacity:.6; outline:0; box-shadow:none; }
 .lightning-tv .lightning-round-head { padding:8px 0; color:var(--color-text-inverse); font-weight:900; font-size:clamp(1.5rem,2vw,2rem); }
 .lightning-tv .lightning-round-head .timer { color:var(--color-secondary); font-family:var(--font-display); }
 .lightning-tv .lightning-status { border:0; border-radius:16px; background:var(--color-primary-surface); color:var(--color-text-inverse); text-align:center; }
