@@ -1,21 +1,22 @@
 import { z } from "zod";
 
-// Transport-independent game rules. Slot 0 is always the host; slots 1–3 are guests.
-export const MAX_PLAYERS = 4;
+// Transport-independent game rules. Slot 0 is always the host; slots 1–8 are guests.
+export const MAX_PLAYERS = 9;
+export const MAX_GUESTS = MAX_PLAYERS - 1;
 export const MAX_ROUNDS = 100;
 export const CHANNEL = "quddam-rooms-v1";
 const slot = z.number().int().min(0).max(MAX_PLAYERS - 1);
 const phase = z.enum(["waiting", "open", "locked", "result"]);
 const stateSchema = z.object({
-  protocol: z.literal(2), version: z.number().int().min(0).max(300),
+  protocol: z.literal(3), version: z.number().int().min(0).max(300),
   round: z.number().int().min(0).max(MAX_ROUNDS), phase,
-  winner: slot.nullable(), scores: z.tuple([slotScore(), slotScore(), slotScore(), slotScore()]),
+  winner: slot.nullable(), scores: z.tuple([slotScore(), slotScore(), slotScore(), slotScore(), slotScore(), slotScore(), slotScore(), slotScore(), slotScore()]),
 }).strict();
 function slotScore() { return z.number().int().min(0).max(MAX_ROUNDS); }
 export type GameState = z.infer<typeof stateSchema>;
 export type HostAction = "open" | "buzz" | "award" | "skip";
-export const initialState = (): GameState => ({ protocol: 2, version: 0, round: 0,
-  phase: "waiting", winner: null, scores: [0, 0, 0, 0] });
+export const initialState = (): GameState => ({ protocol: 3, version: 0, round: 0,
+  phase: "waiting", winner: null, scores: [0, 0, 0, 0, 0, 0, 0, 0, 0] });
 
 export function hostAction(state: GameState, action: HostAction): GameState {
   if (action === "open" && ["waiting", "result"].includes(state.phase) && state.round < MAX_ROUNDS)
