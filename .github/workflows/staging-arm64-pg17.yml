@@ -63,7 +63,7 @@ jobs:
       - name: Install locked dependencies, generate ARM64 Prisma client and inspect code
         working-directory: qalba-platform
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --include=dev --no-audit --no-fund
           npm run db:generate
           npm run lint
           npm run typecheck
