@@ -10,6 +10,9 @@ on:
       - 'qalba-platform/docker-compose.staging.yml'
       - 'qalba-platform/scripts/start-staging.mjs'
       - 'qalba-platform/scripts/staging-supervisor.contract.mjs'
+      - 'qalba-platform/scripts/staging-arm64-pg17-ci.mjs'
+      - 'qalba-platform/scripts/staging-arm64.contract.mjs'
+      - '.github/workflows/staging-arm64-pg17.yml'
       - 'qalba-platform/ops/staging/**'
       - 'qalba-platform/package.json'
       - 'qalba-platform/package-lock.json'
@@ -47,6 +50,9 @@ jobs:
       - name: Validate private supervisor / ingress templates and fail-closed staging launcher
         working-directory: qalba-platform
         run: node --test scripts/staging-supervisor.contract.mjs
+      - name: Validate owner-gated ARM64/PG17 workflow and fail-closed synthetic probe (no ARM runner)
+        working-directory: qalba-platform
+        run: node --test scripts/staging-arm64.contract.mjs
       - name: Validate loopback-only staging PostgreSQL Compose config (no start)
         working-directory: qalba-platform
         env:
