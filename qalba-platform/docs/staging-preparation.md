@@ -8,6 +8,10 @@
 
 The optional [`ops/staging/README.md`](../ops/staging/README.md) explains the non-root systemd template, separate fail-closed `scripts/start-staging.mjs` and a **VPN/private-interface-only** Nginx HTTPS template. These files are not installed or started by this PR. The private template requires `STAGING_ACCESS_MODE=private-network` and `AUTH_TRUST_PROXY=false` even though the more general configuration preflight also describes an alternative authenticated-ingress option. Adopting another access mode requires a separately reviewed proxy design. Static synthetic CI exercises launcher rejection and template invariants; it does not establish access isolation, runtime cache writes, valid TLS or Oracle provisioning.
 
+## Next native validation (requires separate GitHub Actions usage approval)
+
+See [staging-arm64-validation.md](staging-arm64-validation.md). A workflow targeting GitHub-hosted native ARM64 and a disposable PostgreSQL 17 service is prepared but will not run on a push or ordinary PR update. The owner must first check remaining private-repository Actions minutes and explicitly authorize adding `arm64-ci-approved` to PR #5. This is not an Oracle instance or paid-resource authorization.
+
 ## Roles and approval boundary
 
 - Owner chooses the hosting provider, private-access method, domain and budget; owns accounts and secure secret manager. Do not send secrets to chat, repository or Actions logs.
