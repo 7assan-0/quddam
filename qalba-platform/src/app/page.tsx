@@ -16,7 +16,7 @@ export default function Home() {
       <div className="shell hero quddam-hero">
         <div className="hero-copy">
           <span className="eyebrow">اللعب يبدأ من هنا</span>
-          <h1>جمعتكم جاهزة.<span className="hero-headline-highlight">باقي التحدّي.</span></h1>
+          <h1>جمعتكم جاهزة.<br/><span className="hero-headline-highlight">باقي التحدّي.</span></h1>
           <p>ألعاب جماعية عربية للأهل والأصحاب. اختاروا لعبتكم، جهّزوا جماعتكم، وخلو المنافسة تبدأ.</p>
           <div className="hero-actions"><Link className="btn btn-on-sun btn-game" href="/games">يلا قدّام <span aria-hidden="true">←</span></Link><Link className="btn btn-on-sun-outline" href="#games">تصفّح الألعاب</Link></div>
           <div className="hero-notes"><span>١٠ ألعاب مكتملة</span><span>جوال + شاشة</span><span>المضيف يدير اللعب</span></div>
