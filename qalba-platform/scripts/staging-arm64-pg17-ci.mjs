@@ -3,7 +3,8 @@
 // CI only: the workflow supplies an ephemeral service and no repository secrets.
 import assert from "node:assert/strict";
 import { readdirSync, existsSync } from "node:fs";
-import { Client } from "pg";
+import pg from "pg";
+const { Client } = pg;
 
 const phase = process.argv[2];
 if (!["before-backup", "after-restore"].includes(phase)) {
