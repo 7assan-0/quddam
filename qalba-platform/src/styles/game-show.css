@@ -20,16 +20,16 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 
 /* Four vivid supporting accents: brand Night/Sun remain dominant. Never set small text in a team/accent color. */
 .quddam-home-game,.quddam-games .game-card { --game-accent:var(--color-accent-gold); }
-[data-game="category-board"] { --game-accent:var(--color-accent-gold); }
-[data-game="out-of-the-loop"] { --game-accent:var(--color-game-lilac); }
-[data-game="letter-network"] { --game-accent:var(--color-game-sky); }
-[data-game="survey-show"] { --game-accent:var(--color-game-coral); }
-[data-game="secret-word"] { --game-accent:var(--color-game-mint); }
-[data-game="bluff"] { --game-accent:var(--color-game-lilac); }
-[data-game="top-list"] { --game-accent:var(--color-accent-gold-soft); }
-[data-game="lightning-quiz"] { --game-accent:var(--color-game-coral); }
-[data-game="ordering-challenge"] { --game-accent:var(--color-game-sky); }
-[data-game="the-court"] { --game-accent:var(--color-game-mint); }
+.quddam-home-game[data-game="category-board"],.quddam-games .game-card[data-game="category-board"] { --game-accent:var(--color-accent-gold); }
+.quddam-home-game[data-game="out-of-the-loop"],.quddam-games .game-card[data-game="out-of-the-loop"] { --game-accent:var(--color-game-lilac); }
+.quddam-home-game[data-game="letter-network"],.quddam-games .game-card[data-game="letter-network"] { --game-accent:var(--color-game-sky); }
+.quddam-home-game[data-game="survey-show"],.quddam-games .game-card[data-game="survey-show"] { --game-accent:var(--color-game-coral); }
+.quddam-home-game[data-game="secret-word"],.quddam-games .game-card[data-game="secret-word"] { --game-accent:var(--color-game-mint); }
+.quddam-home-game[data-game="bluff"],.quddam-games .game-card[data-game="bluff"] { --game-accent:var(--color-game-lilac); }
+.quddam-home-game[data-game="top-list"],.quddam-games .game-card[data-game="top-list"] { --game-accent:var(--color-accent-gold-soft); }
+.quddam-home-game[data-game="lightning-quiz"],.quddam-games .game-card[data-game="lightning-quiz"] { --game-accent:var(--color-game-coral); }
+.quddam-home-game[data-game="ordering-challenge"],.quddam-games .game-card[data-game="ordering-challenge"] { --game-accent:var(--color-game-sky); }
+.quddam-home-game[data-game="the-court"],.quddam-games .game-card[data-game="the-court"] { --game-accent:var(--color-game-mint); }
 .quddam-home-game,.quddam-games .game-card {
   border-block-start:6px solid var(--game-accent);
   background:
