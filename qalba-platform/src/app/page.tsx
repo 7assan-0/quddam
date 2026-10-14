@@ -35,7 +35,7 @@ export default function Home() {
     </section>
     <section id="games" className="quddam-game-section section"><div className="shell">
       <div className="section-head"><div><span className="eyebrow">مكتبة التحديات</span><h2>اختاروا جوّكم</h2></div><p>أسئلة، تمويه، ترتيب ومرافعات. لكل جمعة لعبة.</p></div>
-      <div className="quddam-home-games">{featuredGames.map((game, i) => <article className="quddam-home-game" key={game.slug}><Link href="/games" className="quddam-home-game-link" aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
+      <div className="quddam-home-games">{featuredGames.map((game, i) => <article className="quddam-home-game" key={game.slug} data-game={game.slug}><Link href="/games" className="quddam-home-game-link" aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
         <span className={`quddam-game-number quddam-game-number--${i % 4}`} aria-hidden="true">{arabicIndex(i)}</span>
         <span className="quddam-home-game-copy"><strong>{game.title}</strong><small>{game.description}</small></span>
         <GameEmblem name={game.icon} />
