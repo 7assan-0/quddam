@@ -1,0 +1,22 @@
+# Staging-only PostgreSQL profile. Do NOT combine with docker-compose.yml (development).
+# This file never defines OCI resources or starts anything unless an operator invokes it.
+# Set separate staging-only POSTGRES_DB / USER / PASSWORD outside version control.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${STAGING_POSTGRES_DB:?set a dedicated staging DB name}
+      POSTGRES_USER: ${STAGING_POSTGRES_USER:?set a dedicated staging DB user}
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD:?set a secret outside source control}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - quddam_staging_pg17:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STAGING_POSTGRES_USER} -d ${STAGING_POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  quddam_staging_pg17:

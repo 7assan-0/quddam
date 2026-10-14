@@ -1,0 +1,103 @@
+name: Native ARM64 and PostgreSQL 17 isolated staging proof (owner-gated)
+
+# Deliberately NOT triggered by code pushes or ordinary PR updates.
+# Owner must review GitHub Actions remaining minutes and explicitly approve
+# adding the label arm64-ci-approved to PR #5. Private runner minutes may cost.
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  arm64-pg17:
+    if: ${{ github.event.pull_request.number == 5 && github.event.label.name == 'arm64-ci-approved' }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    concurrency:
+      group: arm64-pg17-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quddam_arm_ci
+          POSTGRES_DB: quddam_arm64_ci
+          POSTGRES_PASSWORD: ci-only-not-a-deployment-secret
+        ports:
+          - 55468:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam_arm_ci -d quddam_arm64_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      # All data is synthetic and scoped to the ephemeral GitHub-hosted runner.
+      ARM64_STAGING_TEST_DATABASE: '1'
+      DATABASE_URL: postgresql://quddam_arm_ci:ci-only-not-a-deployment-secret@127.0.0.1:55468/quddam_arm64_ci
+      NEXT_TELEMETRY_DISABLED: '1'
+      CHECKPOINT_DISABLE: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      NODE_ENV: production
+      APP_URL: https://staging.example.invalid
+      AUTH_RATE_LIMIT_SECRET: synthetic-arm64-ci-secret-0123456789abcdef
+      AUTH_TRUST_PROXY: 'false'
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Verify native runner and exact reviewed PR head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(uname -m)" = aarch64
+          test "$(node -p process.arch)" = arm64
+          test "$(node -v)" = v24.19.0
+          docker info --format '{{.Architecture}}'
+      - name: Install locked dependencies, generate ARM64 Prisma client and inspect code
+        working-directory: qalba-platform
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+          npm run lint
+          npm run typecheck
+      - name: Deploy original migrations once to brand-new isolated PostgreSQL 17
+        working-directory: qalba-platform
+        run: |
+          npm run db:migrate
+          npm exec -- prisma migrate status
+          node scripts/staging-arm64-pg17-ci.mjs before-backup
+      - name: Build native ARM64 production candidate
+        working-directory: qalba-platform
+        run: npm run build
+      - name: Dump and restore to a different throwaway database
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec "$PG_CONTAINER" pg_dump -U quddam_arm_ci -d quddam_arm64_ci -Fc > "$RUNNER_TEMP/arm64-ci.dump"
+          test -s "$RUNNER_TEMP/arm64-ci.dump"
+          docker exec "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U quddam_arm_ci -d postgres -c 'CREATE DATABASE quddam_arm64_ci_restore OWNER quddam_arm_ci'
+          docker exec -i "$PG_CONTAINER" pg_restore -U quddam_arm_ci -d quddam_arm64_ci_restore --exit-on-error --no-owner --no-privileges < "$RUNNER_TEMP/arm64-ci.dump"
+      - name: Verify migration inventory, synthetic rollback and restored clone independently
+        working-directory: qalba-platform
+        run: |
+          node scripts/staging-arm64-pg17-ci.mjs after-restore
+          npm run db:migrate
+          npm exec -- prisma migrate status
+      - name: Check production-only runtime dependency installation (no service start)
+        working-directory: qalba-platform
+        run: |
+          npm ci --omit=dev --no-audit --no-fund
+          node --import tsx scripts/production-env.ts > /dev/null
+      - name: Explicit result boundary
+        run: |
+          echo 'Native ARM64/PG17 synthetic migration/build/clone restore only.'
+          echo 'NO Oracle capacity, paid-resource, TLS/VPN ingress, production data, load or commercial release proof.'
