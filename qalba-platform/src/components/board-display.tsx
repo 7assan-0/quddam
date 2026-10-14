@@ -91,6 +91,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
   const active = view.active;
   const team = view.teams.find((item) => item.id === active?.answeringTeamId);
   const activeTeamId = active?.answeringTeamId ?? view.turnTeamId;
+  const canShowTurn = (view.status === "IN_PROGRESS" || view.status === "PAUSED") && Boolean(activeTeamId);
   const winners = view.teams.filter((item) => item.score === Math.max(...view.teams.map((entry) => entry.score)));
   const remainingMs = active ? (clock ? remainingOnClient(active.deadlineAt, active.remainingMs, clock, serverOffset) : active.remainingMs) : 0;
   const seconds = Math.ceil(remainingMs / 1000);
@@ -118,7 +119,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
           <div className="display-clock-note" role="status">{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : view.status === "PAUSED" ? "المؤقت متوقف" : active.deadlineAt ? "الوقت جارٍ" : "بانتظار تشغيل المؤقت"}</div>
         </section>
         : <section className="display-center display-wait"><span>{view.status === "PAUSED" ? "ننتظر المضيف" : view.status === "LOBBY" ? "استعدوا للعب" : `الدور على ${view.teams.find((item) => item.id === view.turnTeamId)?.name}`}</span><h1>{view.status === "LOBBY" ? "جهزوا فرقكم" : "اختاروا السؤال التالي"}</h1></section>}
-    <div className="display-scores">{view.teams.map((item) => <div key={item.id} className={`display-team ${item.id === activeTeamId && view.status !== "COMPLETED" ? "display-team--active" : ""}`} style={{ "--quddam-team": item.color } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{item.id === activeTeamId && view.status !== "COMPLETED" && <small className="display-team-status">دورهم ‹</small>}</div><AnimatedScore value={item.score} /></div>)}</div>
+    <div className="display-scores">{view.teams.map((item) => { const isTurn = canShowTurn && item.id === activeTeamId; return <div key={item.id} className={`display-team ${isTurn ? "display-team--active" : ""}`} style={{ "--quddam-team": item.color } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{isTurn && <small className="display-team-status">دورهم</small>}</div><AnimatedScore value={item.score} /></div>; })}</div>
     <div className="display-grid" aria-label="لوحة الأسئلة">{view.categories.map((category) => <div className="display-column" key={category.id}><h2>{category.title}</h2>{[200, 400, 600].map((value) => {
       const cell = view.cells.find((item) => item.categoryId === category.id && item.value === value);
       return <div className={`display-cell ${cell?.completed ? "done" : ""}`} key={value}>{cell?.completed ? "✓" : number(value)}</div>;
