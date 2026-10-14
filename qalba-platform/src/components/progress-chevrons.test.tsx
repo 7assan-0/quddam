@@ -7,7 +7,8 @@ describe("Phase 2 TV presentation components", () => {
   it("uses Arabic-Indic digits and fills the current and previous chevrons", () => {
     const html = renderToStaticMarkup(<ProgressChevrons current={3} total={5} />);
     expect(html).toContain('aria-label="الجولة ٣ من ٥"');
-    expect(html.match(/class="progress-chevron is-filled is-newly-filled"/g)).toHaveLength(3);
+    expect(html.match(/class="progress-chevron is-filled"/g)).toHaveLength(3);
+    expect(html).not.toContain("is-newly-filled");
     expect(html.match(/class="progress-chevron"/g)).toHaveLength(2);
     expect(html.match(/aria-hidden="true"/g)).toHaveLength(5);
   });
