@@ -1,4 +1,5 @@
 import { TeamMarker } from "./team-marker";
+import { VictorySpotlight } from "./victory-spotlight";
 import type { CSSProperties } from "react";
 import type { LightningView } from "@/lib/games/lightning/service";
 export function LightningStage({ view, remaining, tv = false }: { view: LightningView; remaining: number; tv?: boolean }) {
@@ -9,6 +10,6 @@ export function LightningStage({ view, remaining, tv = false }: { view: Lightnin
     {!final && <p className="lightning-status" role="status" data-buzz-winner={view.buzzWinnerTeamId ?? ""}>{status}</p>}
     {(!tv || !final) && view.question && <section className="panel lightning-question"><span className="eyebrow">{view.question.category}</span><h2>{view.question.text}</h2></section>}
     {view.revealedAnswer && (!tv || !final) && <section className="panel lightning-result" aria-label="نتيجة السؤال"><h2>الإجابة: {view.revealedAnswer.answer}</h2>{view.result?.voided ? <p>أُلغيت نقاط السؤال؛ الإجابة مكشوفة ولا يعاد اللعب بها.</p> : <p>{view.result?.original === "CORRECT" ? "إجابة صحيحة · +٢" : view.result?.steal === "CORRECT" ? "سرقة ناجحة · +١" : "لم تُسجّل نقاط"}</p>}{view.result?.original === "TIMEOUT" && <p>انتهت مهلة الفريق الأول</p>}{view.result?.steal === "TIMEOUT" && <p>انتهت مهلة السرقة</p>}{view.revealedAnswer.explanation && <p>{view.revealedAnswer.explanation}</p>}</section>}
-    {final && <section className="panel lightning-final" aria-label="النتيجة النهائية"><h2>{view.winnerIds?.length === 2 ? "تعادل!" : `الفائز: ${view.teams.find(t => view.winnerIds?.includes(t.id))?.name ?? ""}`}</h2><p>{view.teams.map(t => `${t.name}: ${t.score}`).join(" · ")}</p><p>{view.results?.length ?? 0} سؤالًا حُسم</p></section>}
+    {final && <section className="panel lightning-final" aria-label="النتيجة النهائية"><VictorySpotlight headingLevel="h2" names={view.teams.filter(t => view.winnerIds?.includes(t.id)).map(t => t.name)} /><p>{view.teams.map(t => `${t.name}: ${t.score}`).join(" · ")}</p><p>{view.results?.length ?? 0} سؤالًا حُسم</p></section>}
   </>;
 }
