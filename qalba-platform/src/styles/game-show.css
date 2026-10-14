@@ -60,6 +60,7 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 }
 .quddam-games .game-card { position:relative; overflow:hidden; }
 .quddam-games .game-card>* { position:relative; z-index:1; }
+.quddam-games .game-card .game-availability,.quddam-games .game-card .game-availability--off { color:var(--color-bg); }
 .quddam-games .game-card .btn-secondary {
   background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
 }
