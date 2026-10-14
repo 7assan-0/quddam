@@ -7,6 +7,7 @@ import "../styles/tokens.css";
 import "./globals.css";
 import "../styles/components.css";
 import "../styles/quddam.css";
+import "../styles/game-show.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
