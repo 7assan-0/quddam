@@ -1,5 +1,7 @@
 # Phase 2 verification — automatic player-hosted rooms
 
+> Historical verification for commit `83fad608` (host + **three** guests, 30-minute TTL). A later Phase 2.1 amendment changes the target to **host + eight guests and 60 minutes**. The results below must **not** be represented as a nine-player or 60-minute native browser PASS; that requires a new verification run.
+
 **PARTIAL overall; local automatic rooms PASS.** Verified 15 October 2026 Riyadh time (14 October UTC), building on PR #8 head `1a944902b9b11846e69667a2a1f6d9a8166d3204`. The new experimental branch is `experiment/player-hosted-auto-rooms`; its draft PR targets the PR #8 branch, preserving that PoC without merging either PR into main.
 
 ## What was implemented
