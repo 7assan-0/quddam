@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acceptBuzz, hostAction, initialState, MAX_GUESTS, MAX_PLAYERS, newer, parseIntent, parseSnapshot } from "./protocol";
+import { acceptBuzz, CHANNEL, hostAction, initialState, MAX_GUESTS, MAX_PLAYERS, newer, parseIntent, parseSnapshot } from "./protocol";
 
 describe("multi-player transport-independent authority", () => {
   it("has exactly nine distinct slots, and only a current-round eighth guest may win", () => {
