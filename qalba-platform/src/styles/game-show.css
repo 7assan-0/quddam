@@ -18,45 +18,66 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost { borde
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost:hover { background:var(--neutral-700); color:var(--color-accent-gold); }
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { border-color:var(--neutral-400); }
 
-/* Four vivid supporting accents: brand Night/Sun remain dominant. Never set small text in a team/accent color. */
-.quddam-home-game,.quddam-games .game-card { --game-accent:var(--color-accent-gold); }
-.quddam-home-game[data-game="category-board"],.quddam-games .game-card[data-game="category-board"] { --game-accent:var(--color-accent-gold); }
-.quddam-home-game[data-game="out-of-the-loop"],.quddam-games .game-card[data-game="out-of-the-loop"] { --game-accent:var(--color-game-lilac); }
-.quddam-home-game[data-game="letter-network"],.quddam-games .game-card[data-game="letter-network"] { --game-accent:var(--color-game-sky); }
-.quddam-home-game[data-game="survey-show"],.quddam-games .game-card[data-game="survey-show"] { --game-accent:var(--color-game-coral); }
-.quddam-home-game[data-game="secret-word"],.quddam-games .game-card[data-game="secret-word"] { --game-accent:var(--color-game-mint); }
-.quddam-home-game[data-game="bluff"],.quddam-games .game-card[data-game="bluff"] { --game-accent:var(--color-game-lilac); }
-.quddam-home-game[data-game="top-list"],.quddam-games .game-card[data-game="top-list"] { --game-accent:var(--color-accent-gold-soft); }
-.quddam-home-game[data-game="lightning-quiz"],.quddam-games .game-card[data-game="lightning-quiz"] { --game-accent:var(--color-game-coral); }
-.quddam-home-game[data-game="ordering-challenge"],.quddam-games .game-card[data-game="ordering-challenge"] { --game-accent:var(--color-game-sky); }
-.quddam-home-game[data-game="the-court"],.quddam-games .game-card[data-game="the-court"] { --game-accent:var(--color-game-mint); }
+/* Brand mark is always a Sun tile, Night left chevron, and two Spark squares. */
+.quddam-mark-tile { fill:var(--color-accent-gold); stroke:var(--color-primary); stroke-width:1.5px; }
+.quddam-mark-chevron { fill:var(--color-primary); }
+.quddam-mark-spark { fill:var(--color-secondary); }
+
+/* Marketing and library use a strict Forest/Cream card surface.
+   Only the number badge and icon chip cycle: Sun, Spark, Wave, Cream. */
+.quddam-home-game,.quddam-games .game-card { --card-chip:var(--color-accent-gold); }
+.quddam-home-game[data-color="1"],.quddam-games .game-card[data-color="1"] { --card-chip:var(--color-secondary); }
+.quddam-home-game[data-color="2"],.quddam-games .game-card[data-color="2"] { --card-chip:var(--color-accent-turquoise); }
+.quddam-home-game[data-color="3"],.quddam-games .game-card[data-color="3"] { --card-chip:var(--color-bg); }
 .quddam-home-game,.quddam-games .game-card {
-  border-block-start:6px solid var(--game-accent);
-  background:
-    radial-gradient(ellipse at 95% 0%,color-mix(in srgb,var(--game-accent) 22%,transparent) 0%,transparent 57%),
-    var(--color-primary-surface);
+  background:var(--color-primary-surface); color:var(--color-bg);
+  border:1px solid var(--neutral-600); border-radius:24px;
+  transition:background var(--motion-normal),color var(--motion-normal),border-color var(--motion-normal),transform var(--motion-normal);
 }
-.quddam-home-game::before,.quddam-games .game-card::before {
-  content:""; position:absolute; width:110px; height:110px; inset-block-start:0; inset-inline-end:0;
-  background:repeating-linear-gradient(135deg,transparent 0 13px,color-mix(in srgb,var(--game-accent) 15%,transparent) 13px 16px,transparent 16px 30px);
-  border-radius:0 24px 0 50%; opacity:.48; pointer-events:none;
-}
-.quddam-home-game { overflow:hidden; }
+.quddam-home-game { position:relative; overflow:hidden; }
+.quddam-home-game::before,.quddam-games .game-card::before { content:none; }
 .quddam-home-game-link { position:relative; isolation:isolate; }
 .quddam-home-game-copy { padding-block-end:40px; }
-.quddam-home-game-copy strong { color:var(--color-text-inverse); }
-.quddam-home-game-link>.game-emblem { width:48px; height:48px; color:var(--game-accent); }
+.quddam-home-game-copy strong,.quddam-games .game-card .game-card-copy :is(h2,h3) { color:var(--color-bg); }
+.quddam-home-game-copy small,.quddam-games .game-card p,.quddam-games .game-card .game-facts { color:var(--color-bg); }
+.quddam-home-game .quddam-game-number,.quddam-games .game-card .game-index {
+  display:grid; place-items:center; width:36px; height:36px;
+  border-radius:50%; border:2px solid var(--color-primary);
+  background:var(--card-chip); color:var(--color-primary);
+  opacity:1; font:900 1rem/1 var(--font-arabic);
+}
+.quddam-home-game .game-icon-chip,.quddam-games .game-card .game-icon-chip {
+  display:grid; place-items:center; flex:none; width:56px; height:56px;
+  border-radius:14px; border:2px solid var(--color-primary);
+  background:var(--card-chip); color:var(--color-primary);
+}
+.quddam-home-game .game-icon-chip {
+  position:absolute; inset-inline-end:var(--space-4); inset-block-end:var(--space-3);
+  width:48px; height:48px;
+}
+.quddam-home-game .game-icon-chip .game-emblem,
+.quddam-games .game-card .game-icon-chip .game-emblem {
+  width:34px; height:34px; padding:0; border:0; border-radius:0;
+  background:transparent; color:var(--color-primary);
+}
 .quddam-games .game-card { position:relative; overflow:hidden; }
 .quddam-games .game-card>* { position:relative; z-index:1; }
-.quddam-games .game-card .game-emblem {
-  color:var(--game-accent);
-  background:color-mix(in srgb,var(--game-accent) 14%,var(--color-primary));
-  border:1px solid color-mix(in srgb,var(--game-accent) 45%,transparent);
+.quddam-games .game-card .btn-secondary {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
 }
-.quddam-games .game-card .btn-secondary { background:var(--color-accent-gold); color:var(--color-primary); border-color:transparent; }
-.quddam-games .game-card .btn-secondary:hover { background:var(--color-accent-gold-hover); }
+.quddam-games .game-card .btn-secondary:hover { background:var(--color-accent-gold-hover); color:var(--color-primary); }
+.quddam-home-game:is(:hover,:focus-within),.quddam-games .game-card:is(:hover,:focus-within) {
+  background:var(--color-accent-gold); color:var(--color-primary);
+  border-color:var(--color-primary);
+}
+.quddam-home-game:is(:hover,:focus-within) .quddam-home-game-copy :is(strong,small),
+.quddam-games .game-card:is(:hover,:focus-within) :is(.game-card-copy h2,.game-card-copy h3,.game-card-copy p,.game-facts,.game-availability) { color:var(--color-primary); }
+.quddam-games .game-card:is(:hover,:focus-within) .btn-secondary,
+.quddam-games .game-card:is(:hover,:focus-within) .btn-secondary:hover {
+  background:var(--color-primary); color:var(--color-accent-gold); border-color:var(--color-primary);
+}
 .quddam-home-game:focus-within,.quddam-games .game-card:focus-within {
-  outline:3px solid var(--color-accent-gold); outline-offset:3px;
+  outline:3px solid var(--color-accent-turquoise); outline-offset:3px;
 }
 
 /* Live result feedback never changes scores; it only decorates the existing SSE message. */
@@ -68,12 +89,12 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
   animation:game-show-pop var(--motion-emphasis) var(--ease-standard) both;
 }
 .game-show-feedback>span { display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:50%; background:var(--color-accent-gold); color:var(--color-primary); font:400 32px/1 var(--font-display); }
-.game-show-feedback--correct { border-color:var(--color-game-mint); }
-.game-show-feedback--correct>span { background:var(--color-game-mint); }
-.game-show-feedback--wrong { border-color:var(--color-game-coral); }
-.game-show-feedback--wrong>span { background:var(--color-game-coral); }
-.game-show-feedback--edit { border-color:var(--color-game-sky); }
-.game-show-feedback--edit>span { background:var(--color-game-sky); }
+.game-show-feedback--correct { border-color:var(--color-accent-turquoise); }
+.game-show-feedback--correct>span { background:var(--color-accent-turquoise); }
+.game-show-feedback--wrong { border-color:var(--color-secondary); }
+.game-show-feedback--wrong>span { background:var(--color-secondary); }
+.game-show-feedback--edit { border-color:var(--color-accent-gold); }
+.game-show-feedback--edit>span { background:var(--color-accent-gold); }
 @keyframes game-show-pop { from { opacity:.4; transform:scale(.96) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
 
 /* Accessible TV finale, fed by the actual winners rather than a fake preview. */
@@ -89,10 +110,10 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 .victory-spotlight :is(h1,h2) { font:400 clamp(3rem,6.5vw,7rem)/1.22 var(--font-display); color:var(--color-accent-gold); margin:0; overflow-wrap:anywhere; }
 .victory-tie { font-size:clamp(1.5rem,2.2vw,2rem); color:var(--color-text-inverse); margin:0; }
 .victory-signature { color:var(--neutral-200); font-size:clamp(1.1rem,1.5vw,1.5rem); font-weight:900; }
-.victory-spark { position:absolute; color:var(--color-game-lilac); font-size:clamp(2rem,4vw,4rem); pointer-events:none; animation:winner-spark 700ms var(--ease-standard) both; }
+.victory-spark { position:absolute; color:var(--color-accent-gold); font-size:clamp(2rem,4vw,4rem); pointer-events:none; animation:winner-spark 700ms var(--ease-standard) both; }
 .victory-spark--one { inset-block-start:12%; inset-inline-start:7%; }
-.victory-spark--two { inset-block-start:24%; inset-inline-end:8%; color:var(--color-game-coral); }
-.victory-spark--three { inset-block-end:8%; inset-inline-start:16%; color:var(--color-game-sky); }
+.victory-spark--two { inset-block-start:24%; inset-inline-end:8%; color:var(--color-secondary); }
+.victory-spark--three { inset-block-end:8%; inset-inline-start:16%; color:var(--color-accent-turquoise); }
 .quddam-board-tv .display-victory>p { color:var(--neutral-200); margin:0 0 20px; }
 .quddam-board-tv .display-victory::before { content:none; }
 
@@ -106,8 +127,10 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 }
 .lightning-tv .lightning-scoreboard strong { font:400 clamp(3.25rem,6vw,6.5rem)/1.1 var(--font-display); color:var(--color-text-inverse); }
 .lightning-tv .lightning-active { outline:5px solid var(--color-accent-gold); outline-offset:2px; }
+.lightning-tv .lightning-turn-chip { display:inline-block; width:max-content; padding:4px 14px; border-radius:var(--radius-pill); background:var(--color-accent-gold); color:var(--color-primary); font:900 clamp(1.1rem,1.6vw,1.5rem)/1.4 var(--font-arabic); margin-block-start:var(--space-2); }
+.lightning-tv .lightning-scoreboard .panel:not(.lightning-active) { outline:0; box-shadow:none; }
 .lightning-tv .lightning-round-head { padding:8px 0; color:var(--color-text-inverse); font-weight:900; font-size:clamp(1.5rem,2vw,2rem); }
-.lightning-tv .lightning-round-head .timer { color:var(--color-game-coral); font-family:var(--font-display); }
+.lightning-tv .lightning-round-head .timer { color:var(--color-secondary); font-family:var(--font-display); }
 .lightning-tv .lightning-status { border:0; border-radius:16px; background:var(--color-primary-surface); color:var(--color-text-inverse); text-align:center; }
 .lightning-tv .lightning-question {
   border:0; border-radius:36px; background:var(--color-bg); color:var(--color-primary); text-align:center;
@@ -115,7 +138,7 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
 }
 .lightning-tv .lightning-question .eyebrow { display:inline-block; border-radius:var(--radius-pill); padding:4px 22px; background:var(--color-primary); color:var(--color-accent-gold); font-size:clamp(1.25rem,1.8vw,1.8rem); }
 .lightning-tv .lightning-question h2 { font:400 clamp(2.5rem,6.5vw,7rem)/1.3 var(--font-display); color:var(--color-primary); overflow-wrap:anywhere; }
-.lightning-tv .lightning-result { border:3px solid var(--color-game-mint); border-radius:24px; color:var(--color-text-inverse); background:var(--color-primary-surface); }
+.lightning-tv .lightning-result { border:3px solid var(--color-accent-turquoise); border-radius:24px; color:var(--color-text-inverse); background:var(--color-primary-surface); }
 .lightning-tv .lightning-final .victory-spotlight h2 { margin:0; }
 .lightning-tv .lightning-final>p { font-size:clamp(1.25rem,1.8vw,1.75rem); color:var(--color-text-inverse); }
 
