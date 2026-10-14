@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BODY_LIMIT, LEASE, ROOM_TTL, SignalingStore, signalingRequest, type Credentials } from "./signaling";
+import { MAX_GUESTS } from "./protocol";
 const offer = { type: "offer" as const, sdp: "v=0\r\n" + "a".repeat(30) };
 const answer = { ...offer, type: "answer" as const };
 const auth = (c: Credentials) => ({ code: c.code, token: c.token, epoch: c.epoch });
@@ -11,13 +12,18 @@ function setup() {
   return { store, host, guest, tick: (ms: number) => { now += ms; } };
 }
 describe("ephemeral room signaling authorization and limits", () => {
-  it("uses 128-bit invites, separate 256-bit capabilities and a fixed three-guest bound", () => {
+  it("uses 128-bit invites, separate 256-bit capabilities and a fixed eight-guest bound", () => {
     const { store, host, guest } = setup();
     expect(host.code).toMatch(/^[A-F0-9]{32}$/); expect(host.token).toHaveLength(43);
     expect(guest.token).not.toBe(host.token); expect(guest).toMatchObject({ role: "guest", slot: 1 });
-    expect(store.execute({ op: "join", code: host.code }).credentials!.slot).toBe(2);
-    expect(store.execute({ op: "join", code: host.code }).credentials!.slot).toBe(3);
+    const additional = Array.from({ length: MAX_GUESTS - 1 },
+      () => store.execute({ op: "join", code: host.code }).credentials!);
+    expect(additional.map(g => g.slot)).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    expect(new Set([guest.token, ...additional.map(g => g.token)]).size).toBe(MAX_GUESTS);
     expect(() => store.execute({ op: "join", code: host.code })).toThrow("مكتملة");
+    const last = additional.at(-1)!;
+    expect(store.execute({ op: "poll", ...auth(last) }).peers![0].slot).toBe(8);
+    expect(() => store.execute({ op: "signal", ...auth(guest), peer: 8, generation: 1, description: answer })).toThrow("مصرح");
     expect(() => store.execute({ op: "poll", code: host.code, token: "x".repeat(43), epoch: 1 })).toThrow("مصرح");
   });
   it("routes only host offers to the intended guest and guest answers to the host", () => {
@@ -68,7 +74,18 @@ describe("ephemeral room signaling authorization and limits", () => {
     const b = setup(); b.tick(30_000); b.store.execute({ op: "poll", ...auth(b.host) }); b.tick(20_000);
     expect(b.store.execute({ op: "poll", ...auth(b.host) }).peers![0].active).toBe(false);
     const c = setup(); c.tick(ROOM_TTL);
+    expect(ROOM_TTL).toBe(60 * 60_000);
     expect(() => c.store.execute({ op: "poll", ...auth(c.host) })).toThrow("انتهت");
+    const d = setup();
+    // Keep the host lease alive without extending the absolute one-hour deadline.
+    for (let minute = 0; minute < 119; minute++) {
+      d.tick(30_000);
+      d.store.execute({ op: "poll", ...auth(d.host) });
+    }
+    d.tick(29_999);
+    expect(() => d.store.execute({ op: "poll", ...auth(d.host) })).not.toThrow();
+    d.tick(1);
+    expect(() => d.store.execute({ op: "poll", ...auth(d.host) })).toThrow("انتهت");
   });
   it("bounds retry attempts and rejects malformed, extraneous and oversized fields", () => {
     const { store, host, guest } = setup();
@@ -89,8 +106,24 @@ describe("ephemeral room signaling authorization and limits", () => {
     for (let i = 0; i < 11; i++) b.store.execute({ op: "create" });
     expect(() => b.store.execute({ op: "create" })).toThrow("كثيرة");
     const c = setup(), send = { op: "signal", ...auth(c.host), peer: 1, generation: 1, description: offer };
-    for (let i = 0; i < 24; i++) c.store.execute(send);
+    for (let i = 0; i < 96; i++) c.store.execute(send);
     expect(() => c.store.execute(send)).toThrow("كثيرة");
+  });
+  it("allows bounded host offers/acks for eight guests, including allowed reconnect generations", () => {
+    const { store, host, guest } = setup();
+    const peers = [guest, ...Array.from({ length: MAX_GUESTS - 1 },
+      () => store.execute({ op: "join", code: host.code }).credentials!)];
+    for (let generation = 1; generation <= 4; generation++) {
+      for (let index = 0; index < peers.length; index++) {
+        const current = peers[index];
+        const peer = current.slot;
+        store.execute({ op: "signal", ...auth(host), peer, generation, description: offer });
+        store.execute({ op: "signal", ...auth(current), peer, generation, description: answer });
+        store.execute({ op: "connected", ...auth(host), peer, generation });
+        if (generation !== 4) peers[index] = store.execute({ op: "retry", ...auth(current) }).credentials!;
+      }
+    }
+    expect(store.execute({ op: "poll", ...auth(host) }).peers).toHaveLength(MAX_GUESTS);
   });
   it("bounds retained rooms and periodically clears expired capabilities and SDP", () => {
     let now = 0;
