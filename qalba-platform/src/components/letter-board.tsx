@@ -1,4 +1,5 @@
 "use client";
+import { teamColor } from "@/lib/design/team-colors";
 import { TeamMarker } from "./team-marker";
 import type { LetterView } from "@/lib/games/letter-network/service";
 export function LetterBoard({view,onSelect,disabled=false}:{view:LetterView;onSelect?:(id:string)=>void;disabled?:boolean}){
@@ -9,7 +10,7 @@ export function LetterBoard({view,onSelect,disabled=false}:{view:LetterView;onSe
           const team=view.teams.find(t=>t.id===cell.ownerTeamId),winning=view.winningPath.includes(cell.cellId);
           const label="الحرف "+cell.letter+"، صف "+(cell.row+1)+"، عمود "+(cell.col+1)+"، "+(team?"ملك "+team.name:cell.state==="ACTIVE"?"السؤال النشط":"متاحة");
           const content=<><span>{cell.letter}</span>{team&&<small>{team.position===0?"أ":"ب"}</small>}{winning&&<span className="visually-hidden">ضمن المسار الفائز</span>}</>;
-          const props={className:"letter-cell "+(team?"letter-owned ":"")+(cell.state==="ACTIVE"?"letter-active ":"")+(winning?"letter-winning":""),style:{"--letter-owner":team?.color} as React.CSSProperties,"aria-label":label,"data-cell":cell.cellId,"data-owner":team?.position??"","data-winning":winning?"true":"false"};
+          const props={className:"letter-cell "+(team?"letter-owned ":"")+(cell.state==="ACTIVE"?"letter-active ":"")+(winning?"letter-winning":""),style:{"--letter-owner":team ? teamColor(team.position) : undefined} as React.CSSProperties,"aria-label":label,"data-cell":cell.cellId,"data-owner":team?.position??"","data-winning":winning?"true":"false"};
           return onSelect?<button {...props} key={cell.cellId} disabled={disabled||view.phase!=="READY"||cell.state!=="AVAILABLE"} onClick={()=>onSelect(cell.cellId)}>{content}</button>
             :<div {...props} key={cell.cellId} role="img">{content}</div>;
         })}
@@ -18,8 +19,8 @@ export function LetterBoard({view,onSelect,disabled=false}:{view:LetterView;onSe
   </div>;
 }
 export function LetterTeams({view}:{view:LetterView}){
-  return <div className="letter-teams">{view.teams.map(t=><div className={"panel letter-team "+(view.answeringTeamId===t.id?"letter-team-active":"")} key={t.id} style={{borderColor:t.color}}>
-    <strong><TeamMarker position={t.position} color={t.color} /><span style={{color:t.color}}>{t.position===0?"أ":"ب"}</span> · {t.name}</strong><span>{t.captured} خلايا · {t.position===0?"يسار إلى يمين":"أعلى إلى أسفل"}</span>
+  return <div className="letter-teams">{view.teams.map(t=><div className={"panel letter-team "+(view.answeringTeamId===t.id?"letter-team-active":"")} key={t.id} style={{borderColor:teamColor(t.position)}}>
+    <strong><TeamMarker position={t.position} color={t.color} /><span style={{color:teamColor(t.position)}}>{t.position===0?"أ":"ب"}</span> · {t.name}</strong><span>{t.captured} خلايا · {t.position===0?"يسار إلى يمين":"أعلى إلى أسفل"}</span>
     {view.answeringTeamId===t.id&&!["RESULTS","COMPLETED","ABANDONED","LOBBY"].includes(view.phase)&&<small>الدور الآن</small>}
   </div>)}</div>;
 }
