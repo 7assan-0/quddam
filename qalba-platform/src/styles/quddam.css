@@ -164,7 +164,7 @@ body:has(.quddam-sun-hero) .header .quddam-mark { color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .quddam-mark-cut { fill:var(--color-accent-gold); }
 body:has(.quddam-sun-hero) .header .btn-primary { background:var(--color-primary); color:var(--color-accent-gold); border-color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .btn-primary:hover { background:var(--neutral-800); }
-body:has(.quddam-sun-hero) .header .btn-ghost { color:var(--color-primary); }
+body:has(.quddam-sun-hero) .header .btn-ghost { color:var(--color-primary); border:3px solid var(--color-primary); }
 body:has(.quddam-sun-hero) .header .btn-ghost:hover { background:var(--color-primary-tint); color:var(--color-accent-gold); }
 body:has(.quddam-sun-hero) .header .account-menu summary { color:var(--color-primary); border-color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-inverse); }
@@ -188,13 +188,12 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
 .quddam-game-section .section-head h2 { color:var(--color-accent-gold); font:400 clamp(3rem,5vw,5rem)/1.2 var(--font-display); }
 .quddam-game-section .section-head p { color:var(--neutral-200); }
 .quddam-home-games { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:var(--space-4); }
-.quddam-home-game { position:relative; display:grid; grid-template-columns:36px minmax(0,1fr); align-content:start; align-items:start; gap:var(--space-3); background:var(--color-primary-surface); color:var(--color-text-inverse); min-height:120px; border:1px solid var(--neutral-600); border-radius:24px; padding:var(--space-4); transition:transform var(--motion-normal) var(--ease-standard),border-color var(--motion-normal); }
-.quddam-home-game:hover,.quddam-home-game:focus-visible { border-color:var(--color-accent-gold); transform:translateY(-3px); }
+.quddam-home-game { position:relative; display:block; background:var(--color-primary-surface); color:var(--color-text-inverse); min-height:120px; border:1px solid var(--neutral-600); border-radius:24px; padding:0; transition:transform var(--motion-normal) var(--ease-standard),border-color var(--motion-normal); }
+.quddam-home-game:hover,.quddam-home-game:focus-within { border-color:var(--color-accent-gold); transform:translateY(-3px); }
 .quddam-game-number { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:var(--color-accent-gold); color:var(--color-primary); font:900 1.125rem/1 var(--font-arabic); }
 .quddam-game-number--1 { background:var(--color-secondary); }
 .quddam-game-number--2 { background:var(--color-accent-turquoise); }
 .quddam-game-number--3 { background:var(--color-bg); }
-.quddam-home-game { display:block; padding:0; }
 .quddam-home-game-link { display:grid; grid-template-columns:36px minmax(0,1fr); align-content:start; align-items:start; gap:var(--space-3); min-height:120px; padding:var(--space-4); border-radius:inherit; }
 .quddam-home-game-copy { display:grid; gap:var(--space-2); padding-bottom:26px; min-width:0; }
 .quddam-home-game-copy strong { font:400 36px/1.2 var(--font-display); overflow-wrap:anywhere; }
@@ -237,7 +236,7 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
 .quddam-board-tv .display-scores { order:2; }
 .quddam-board-tv .display-team { background:var(--color-primary-surface); border:0; border-block-start:8px solid var(--quddam-team); border-radius:24px; padding:clamp(16px,2vw,28px); }
 .quddam-board-tv .display-team--active { background:var(--color-primary-surface); outline:5px solid var(--color-accent-gold); outline-offset:2px; }
-.quddam-board-tv .display-team span { display:inline-flex; align-items:center; font-size:clamp(1.75rem,2.3vw,2.5rem); font-weight:900; }
+.quddam-board-tv .display-team>div>span { display:inline-flex; align-items:center; font-size:clamp(1.75rem,2.3vw,2.5rem); font-weight:900; }
 .quddam-board-tv .display-team strong.score-number { font:400 clamp(3.25rem,7.2vw,5.75rem)/1 var(--font-display); }
 .quddam-board-tv .display-team-status { width:max-content; border-radius:var(--radius-pill); background:var(--color-accent-gold); color:var(--color-primary); font-size:clamp(1.25rem,1.8vw,1.5rem); padding:4px 12px; font-weight:900; margin-top:var(--space-2); }
 .quddam-board-tv .display-grid { order:3; }
@@ -267,5 +266,5 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
   .progress-chevron.is-newly-filled { animation:none; }
   .timer-ring-progress { transition:none; }
   .quddam-home-game { transition:none; }
-  .quddam-home-game:hover,.quddam-home-game:focus-visible { transform:none; }
+  .quddam-home-game:hover,.quddam-home-game:focus-within { transform:none; }
 }
