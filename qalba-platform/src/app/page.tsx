@@ -10,7 +10,7 @@ const arabicIndex = (index: number) => new Intl.NumberFormat("ar-SA-u-nu-arab").
 export default function Home() {
   return <>
     <HeaderSurfaceSync />
-    <section className="quddam-sun-hero">
+    <section className="quddam-sun-hero" data-hero-theme={process.env.NEXT_PUBLIC_QUDDAM_SUN_HERO === "1" ? "sun" : "night"}>
       <svg className="sun-chevron-pattern" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
         <defs><pattern id="sun-hero-chevron" width="56" height="56" patternUnits="userSpaceOnUse"><path d="M36 8L16 28L36 48" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" /></pattern></defs>
         <rect width="100%" height="100%" fill="url(#sun-hero-chevron)" />
@@ -23,14 +23,27 @@ export default function Home() {
           <div className="hero-actions"><Link className="btn btn-on-sun btn-game" href="/games">يلا قدّام <span aria-hidden="true">←</span></Link><Link className="btn btn-on-sun-outline" href="#games">تصفّح الألعاب</Link></div>
           <div className="hero-notes"><span>١٠ ألعاب مكتملة</span><span>جوال + شاشة</span><span>المضيف يدير اللعب</span></div>
         </div>
-        <div className="quddam-preview" role="img" aria-label="معاينة توضيحية للعبة: فريق البرق ٦٠٠ نقطة ضد فريق الموج ٤٠٠ نقطة">
+        <div className="quddam-preview" aria-label="معاينة توضيحية للتلفزيون والجوال، وليست مباراة مباشرة">
           <div className="preview-heading"><span className="pill">معاينة التحدّي</span><BrandMark /></div>
-          <div className="preview-scoreboard">
-            <div className="preview-team team-a"><span><TeamMarker position={0} />فريق البرق</span><strong>٦٠٠</strong></div>
-            <span className="preview-vs">ضد</span>
-            <div className="preview-team team-b"><span><TeamMarker position={1} />فريق الموج</span><strong>٤٠٠</strong></div>
+          <div className="preview-device-pair">
+            <div className="preview-tv" aria-label="معاينة شاشة التلفزيون">
+              <span className="preview-device-caption">التلفزيون</span>
+              <div className="preview-scoreboard">
+                <div className="preview-team team-a"><span><TeamMarker position={0} />فريق البرق</span><strong>٦٠٠</strong></div>
+                <span className="preview-vs">ضد</span>
+                <div className="preview-team team-b"><span><TeamMarker position={1} />فريق الموج</span><strong>٤٠٠</strong></div>
+              </div>
+              <div className="preview-question"><span>المعلومات العامة · ٤٠٠</span><strong>سؤال واحد يغيّر ترتيب الفرق.</strong><div className="preview-answer"><span>جاهزين؟</span><span aria-hidden="true">←</span></div></div>
+            </div>
+            <div className="preview-phone" aria-label="معاينة تصويت الجوال">
+              <span className="preview-phone-speaker" aria-hidden="true"></span>
+              <span className="preview-device-caption">الجوال · تصويت</span>
+              <strong>صوّت لفريقك</strong>
+              <div className="preview-phone-option preview-phone-option--a"><TeamMarker position={0} />البرق</div>
+              <div className="preview-phone-option preview-phone-option--b"><TeamMarker position={1} />الموج</div>
+              <small>معاينة فقط</small>
+            </div>
           </div>
-          <div className="preview-question"><span>المعلومات العامة · ٤٠٠</span><strong>سؤال واحد يغيّر ترتيب الفرق.</strong><div className="preview-answer"><span>جاهزين؟</span><span aria-hidden="true">←</span></div></div>
           <div className="preview-bottom"><span>معرفة. سرعة. وحجة تقنع الجماعة.</span></div>
         </div>
       </div>
