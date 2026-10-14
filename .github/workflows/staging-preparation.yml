@@ -36,7 +36,11 @@ jobs:
         working-directory: qalba-platform
         run: |
           npm ci --omit=dev --no-audit --no-fund
-          node --import tsx --input-type=module -e "import { productionEnvironment } from './src/lib/operations/environment.ts'; if (typeof productionEnvironment !== 'function') process.exit(1)"
+          NODE_ENV=production \
+          DATABASE_URL='postgresql://staging:synthetic@127.0.0.1:5432/quddam_staging_ci' \
+          APP_URL='https://staging.example.invalid' \
+          AUTH_RATE_LIMIT_SECRET='synthetic-ci-only-secret-1234567890' \
+          node --import tsx scripts/production-env.ts > /dev/null
       - name: Validate loopback-only staging PostgreSQL Compose config (no start)
         working-directory: qalba-platform
         env:
