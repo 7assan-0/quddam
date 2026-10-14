@@ -1,4 +1,5 @@
 "use client";
+import { teamColor } from "@/lib/design/team-colors";
 import { TeamMarker } from "./team-marker";
 import { Brand } from "./brand";
 import { useEffect, useState } from "react";
@@ -15,7 +16,7 @@ export function PartyDisplay({ initial }: { initial: View }) {
   const { state } = view, card = state.cards[state.index], remaining = state.deadlineAt ? Math.ceil(Math.max(0, new Date(state.deadlineAt).getTime() - clock) / 1000) : Math.ceil(state.remainingMs / 1000);
   return <div className="display-mode party-display"><div className="display-top"><div><span className="display-brand"><Brand/></span><span className="display-caption">{view.title} · الجولة {number(Math.min(state.index + 1, state.cards.length))}</span></div>
     <button className="display-fullscreen" onClick={() => { void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => setError("المتصفح منع ملء الشاشة")); }}>{fullscreen ? "الخروج من ملء الشاشة" : "ملء الشاشة"}</button></div>
-    {error && <p role="status">{error}</p>}<div className="display-scores">{view.teams.map((team, index) => <div className="display-team" key={team.id} style={{ borderColor: team.color }}><span><TeamMarker position={index} color={team.color} />{team.name}</span><strong>{number(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{number(player.score)}</strong></div>)}</div>
+    {error && <p role="status">{error}</p>}<div className="display-scores">{view.teams.map((team, index) => <div className="display-team" key={team.id} style={{ borderColor: teamColor(index) }}><span><TeamMarker position={index} color={team.color} />{team.name}</span><strong>{number(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{number(player.score)}</strong></div>)}</div>
     <section className="display-center"><span>{state.phase === "DONE" ? "النتيجة النهائية" : state.phase === "LOBBY" ? "انتظار المضيف" : state.phase.startsWith("PAUSED") ? "المباراة متوقفة" : "التحدي مستمر"}</span>
       {state.phase === "DONE" ? <h1>{(() => { if (state.winnerId) return `الفائز: ${view.teams.find(t => t.id === state.winnerId)?.name}`; const contestants = view.slug === "bluff" ? view.players : view.teams; const highest = Math.max(...contestants.map(t => t.score)); const winners = contestants.filter(t => t.score === highest); return winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل!"; })()}</h1>
         : view.slug === "letter-battle" ? <><h1>{state.selected !== null ? card?.question : "اختاروا حرفًا"}</h1><div className="letter-grid">{state.owners.map((owner, index) => <div key={index} className="letter-cell" style={{ background: owner ? view.teams.find(t => t.id === owner)?.color : undefined }}>{(state.cards[index].options as { letter: string }).letter}</div>)}</div></>
