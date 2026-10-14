@@ -4,7 +4,7 @@ import { z } from "zod";
 export const MAX_PLAYERS = 9;
 export const MAX_GUESTS = MAX_PLAYERS - 1;
 export const MAX_ROUNDS = 100;
-export const CHANNEL = "quddam-rooms-v1";
+export const CHANNEL = "quddam-rooms-v2";
 const slot = z.number().int().min(0).max(MAX_PLAYERS - 1);
 const phase = z.enum(["waiting", "open", "locked", "result"]);
 const stateSchema = z.object({
