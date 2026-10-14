@@ -48,6 +48,11 @@
   --neutral-300: #BDD4CC;
   --neutral-200: #DDEBE6;
   --neutral-100: #F2F7F4;
+  /* Phase 3: distinct game-show accents, never used as small text on Sun. */
+  --color-game-coral: #FF956B;
+  --color-game-lilac: #C4ACFF;
+  --color-game-sky: #78D9FF;
+  --color-game-mint: #89E8A4;
   --team-a: #FF7A45;
   --team-b: #4DB8FF;
   --team-c: #FFE14D;
