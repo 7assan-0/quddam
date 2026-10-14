@@ -163,3 +163,71 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summ
   .game-show-feedback,.victory-spark { animation:none; }
   .quddam-home-game,.quddam-games .game-card { transition:none; }
 }
+
+/* Final pass: team identity and comparison flags. */
+.court-phone .court-vote .court-vote-team {
+  background:var(--vote-team); color:var(--color-primary); border:2px solid var(--color-primary);
+  display:flex; justify-content:flex-start; gap:14px; width:100%; font-weight:900; text-align:start;
+  min-height:60px;
+}
+.court-phone .court-vote .court-vote-team:hover,.court-phone .court-vote .court-vote-team:focus-visible {
+  background:var(--vote-team); color:var(--color-primary); outline:3px solid var(--color-primary); outline-offset:2px;
+}
+.court-phone .court-vote .court-vote-team:disabled { opacity:.65; }
+.court-vote-icon { display:grid; place-items:center; width:36px; height:36px; flex:none; border-radius:10px; background:var(--color-primary); }
+.court-vote-icon .team-marker { width:24px; height:24px; margin:0; }
+
+/* The skyline is an isolated bottom row: never an image behind winner text. */
+.victory-skyline { display:block; width:100%; height:42px; flex:none; color:var(--color-accent-gold); opacity:.2; margin-block-start:12px; pointer-events:none; }
+.victory-spark--four { inset-block-end:14%; inset-inline-end:9%; color:var(--color-bg); }
+.victory-team-identity { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+.victory-team-identity>span { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--neutral-600); border-radius:var(--radius-pill); padding:8px 14px; color:var(--color-bg); background:var(--color-primary); font-size:clamp(1.1rem,1.5vw,1.5rem); font-weight:900; }
+.victory-team-identity .team-marker { width:28px; height:28px; margin:0; }
+
+/* The hero alone switches themes. Both versions keep the gameplay mockup on Night.
+   Default = Night; ?hero=sun or NEXT_PUBLIC_QUDDAM_SUN_HERO=1 enables Sun. */
+.quddam-sun-hero[data-hero-theme="sun"] { background:var(--color-accent-gold); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] { background:var(--color-primary); color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .sun-chevron-pattern { color:var(--color-accent-turquoise); opacity:.11; }
+.quddam-sun-hero[data-hero-theme="night"] :is(.eyebrow,.hero-copy,.hero-copy h1,.hero-copy p,.hero-notes) { color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .hero-headline-highlight { background:var(--color-accent-gold); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] .hero-notes span::before { background:var(--color-accent-turquoise); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
+}
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun:hover { background:var(--color-accent-gold-hover); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun-outline { background:transparent; color:var(--color-bg); border-color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun-outline:hover { background:var(--color-bg); color:var(--color-primary); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header { background:var(--color-primary); color:var(--color-bg); border-color:var(--neutral-600); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header :is(.nav,.btn-ghost,.account-menu summary) { color:var(--color-bg); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .btn-primary { background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .btn-ghost { border-color:var(--color-bg); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .account-menu summary { border-color:var(--neutral-400); }
+
+.quddam-sun-hero .quddam-preview {
+  background:var(--color-primary); color:var(--color-bg); border:2px solid var(--neutral-600);
+}
+.preview-device-pair { display:grid; grid-template-columns:minmax(0,1fr) 130px; gap:14px; align-items:stretch; margin-block-start:16px; }
+.preview-tv { min-width:0; }
+.preview-device-caption { display:block; font-size:.75rem; font-weight:900; color:var(--color-accent-gold); }
+.preview-tv .preview-scoreboard { gap:8px; margin-block:12px; }
+.preview-tv .preview-team { min-width:0; padding:8px; border-block-start-color:var(--team-a); }
+.preview-tv .preview-team.team-b { border-block-start-color:var(--team-b); }
+.preview-tv .preview-team strong { font-size:clamp(1.5rem,2.9vw,2.5rem); }
+.preview-tv .preview-team span { display:inline-flex; align-items:center; gap:2px; flex-wrap:wrap; justify-content:center; }
+.preview-tv .preview-question { padding:16px; }
+.preview-tv .preview-question>strong { font-size:clamp(1.15rem,1.8vw,1.7rem); margin-block:10px; }
+.preview-phone {
+  display:flex; flex-direction:column; justify-content:center; align-items:stretch; text-align:center;
+  gap:8px; border:4px solid var(--neutral-400); border-radius:24px; background:var(--color-primary);
+  color:var(--color-bg); padding:12px 7px; min-width:0;
+}
+.preview-phone-speaker { display:block; background:var(--neutral-400); border-radius:var(--radius-pill); width:30px; height:4px; margin:0 auto 8px; }
+.preview-phone>strong { font-size:.85rem; }
+.preview-phone>small { color:var(--color-bg); }
+.preview-phone-option { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:3px; min-height:42px; border-radius:9px; font-size:.85rem; font-weight:900; color:var(--color-primary); }
+.preview-phone-option--a { background:var(--team-a); }
+.preview-phone-option--b { background:var(--team-b); }
+.preview-phone-option .team-marker { width:20px; height:20px; margin:0; background:var(--color-primary); border-radius:5px; padding:3px; box-sizing:content-box; }
+@media(max-width:1100px) { .preview-device-pair { grid-template-columns:minmax(0,1fr); } .preview-phone { width:min(220px,100%); justify-self:center; } }
+@media(max-width:650px) { .preview-tv .preview-team strong { font-size:1.8rem; } }
