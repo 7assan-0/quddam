@@ -194,10 +194,12 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
 .quddam-game-number--1 { background:var(--color-secondary); }
 .quddam-game-number--2 { background:var(--color-accent-turquoise); }
 .quddam-game-number--3 { background:var(--color-bg); }
+.quddam-home-game { display:block; padding:0; }
+.quddam-home-game-link { display:grid; grid-template-columns:36px minmax(0,1fr); align-content:start; align-items:start; gap:var(--space-3); min-height:120px; padding:var(--space-4); border-radius:inherit; }
 .quddam-home-game-copy { display:grid; gap:var(--space-2); padding-bottom:26px; min-width:0; }
 .quddam-home-game-copy strong { font:400 36px/1.2 var(--font-display); overflow-wrap:anywhere; }
 .quddam-home-game-copy small { color:var(--neutral-200); font-size:var(--text-body-sm); line-height:1.6; }
-.quddam-home-game>.game-emblem { position:absolute; inset-inline-end:var(--space-4); bottom:var(--space-3); width:28px; height:28px; padding:2px; background:transparent; color:var(--color-accent-turquoise); }
+.quddam-home-game-link>.game-emblem { position:absolute; inset-inline-end:var(--space-4); bottom:var(--space-3); width:28px; height:28px; padding:2px; background:transparent; color:var(--color-accent-turquoise); }
 .home-games-action { display:flex; justify-content:center; margin-top:var(--space-8); }
 
 /* Reusable round indicator and state-derived timer ring. */
