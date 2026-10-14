@@ -202,5 +202,12 @@ describe("automatic room lifecycle, authority and multi-guest isolation", () => 
     rememberGuest(storage, f.host); expect(entries.size).toBe(0);
     rememberGuest(storage, f.guest); expect(readGuest(storage, f.guest.code)).toEqual(f.guest);
     entries.set([...entries.keys()][0], JSON.stringify(f.host)); expect(readGuest(storage, f.host.code)).toBeUndefined();
+    const lastGuest = Array.from({ length: MAX_GUESTS - 1 },
+      () => f.store.execute({ op: "join", code: f.host.code }).credentials!).at(-1)!;
+    expect(lastGuest.slot).toBe(8);
+    rememberGuest(storage, lastGuest);
+    expect(readGuest(storage, lastGuest.code)).toEqual(lastGuest);
+    rememberGuest(storage, { ...lastGuest, role: "host" });
+    expect(readGuest(storage, lastGuest.code)).toEqual(lastGuest);
   });
 });
