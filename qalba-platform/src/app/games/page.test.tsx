@@ -27,7 +27,7 @@ describe("launch-only customer catalog preserves Quddam presentation", () => {
   });
   it("keeps the public showcase at exactly ten official games", () => {
     const html = renderToStaticMarkup(Home()); expect(html.match(/<article /g)).toHaveLength(10);
-    for (const game of featuredGames) expect(html).toContain(game.title);
+    for (const game of featuredGames) { expect(html).toContain(game.title); expect(html).toContain(`data-game="${game.slug}"`); }
     for (const title of ["حرب الحروف", "خاطف", "محكمة الطاولة"]) expect(html).not.toContain(title);
   });
 });

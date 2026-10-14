@@ -4,7 +4,6 @@
 .skip-link:focus { transform:none; }
 .quddam-brand { display:inline-flex; align-items:center; gap:var(--space-3); font-size:1.9rem; font-weight:700; white-space:nowrap; }
 .quddam-mark { width:44px; height:44px; flex:none; color:var(--color-accent-gold); }
-.quddam-mark-cut { fill:var(--color-primary); }
 .header { backdrop-filter:none; background:var(--color-primary); border-color:var(--neutral-600); }
 :is(#games,#how,#faq) { scroll-margin-block-start:135px; }
 .header-inner { gap:var(--space-6); }
@@ -31,8 +30,8 @@
 .preview-heading { display:flex; justify-content:space-between; align-items:center; }
 .preview-heading .pill { color:var(--neutral-900); background:var(--color-secondary); border-color:transparent; }
 .preview-scoreboard { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:var(--space-4); margin-block:var(--space-5); }
-.preview-team { text-align:center; padding:var(--space-3); border:1px solid var(--line); border-block-start:4px solid var(--team-a); border-radius:var(--radius-md); background:var(--color-primary); }
-.preview-team.team-b { border-block-start-color:var(--team-b); }
+.preview-team { text-align:center; padding:var(--space-3); border:1px solid var(--line); border-block-start:4px solid var(--color-accent-gold); border-radius:var(--radius-md); background:var(--color-primary); }
+.preview-team.team-b { border-block-start-color:var(--color-accent-turquoise); }
 .preview-team span { font-weight:700; }
 .preview-team strong { display:block; font-size:3rem; line-height:1.4; font-variant-numeric:tabular-nums; }
 .preview-vs { color:var(--neutral-300); font-size:var(--text-body-sm); }
@@ -41,7 +40,6 @@
 .preview-question>strong { display:block; font-size:clamp(1.6rem,2.5vw,2.2rem); line-height:1.5; margin-block:var(--space-3) var(--space-6); }
 .preview-answer { display:flex; justify-content:space-between; align-items:center; padding:var(--space-3) var(--space-4); background:var(--color-accent-turquoise); border-radius:var(--radius-sm); font-weight:700; }
 .preview-bottom { display:flex; align-items:center; gap:var(--space-3); color:var(--neutral-300); font-size:var(--text-body-sm); padding-top:var(--space-5); }
-.preview-bottom .game-emblem { width:30px; height:30px; padding:0; background:none; }
 .quddam-games { grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-5); }
 .quddam-games .game-card { min-width:0; min-height:315px; gap:var(--space-4); padding:var(--space-6); background:var(--panel); color:var(--ink); border-radius:var(--radius-lg); transition:border-color var(--motion-normal),transform var(--motion-normal); }
 .quddam-games .game-card:hover,.quddam-games .game-card:focus-within { border-color:var(--color-accent-turquoise); transform:translateY(-3px); }
@@ -160,8 +158,6 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 body:has(.quddam-sun-hero) .header { background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .nav { color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .nav a:hover { color:var(--neutral-700); }
-body:has(.quddam-sun-hero) .header .quddam-mark { color:var(--color-primary); }
-body:has(.quddam-sun-hero) .header .quddam-mark-cut { fill:var(--color-accent-gold); }
 body:has(.quddam-sun-hero) .header .btn-primary { background:var(--color-primary); color:var(--color-accent-gold); border-color:var(--color-primary); }
 body:has(.quddam-sun-hero) .header .btn-primary:hover { background:var(--neutral-800); }
 body:has(.quddam-sun-hero) .header .btn-ghost { color:var(--color-primary); border:3px solid var(--color-primary); }
@@ -179,8 +175,8 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
 .quddam-sun-hero .hero-notes span::before { background:var(--color-primary); }
 .quddam-sun-hero .quddam-preview { background:var(--color-primary-surface); color:var(--color-text-inverse); border:0; border-radius:32px; transform:rotate(-2deg); }
 .quddam-sun-hero .preview-heading .pill { background:var(--color-secondary); color:var(--color-primary); border:0; font-weight:900; }
-.quddam-sun-hero .preview-team { background:var(--color-primary); border:1px solid var(--neutral-600); border-block-start:6px solid var(--team-a); }
-.quddam-sun-hero .preview-team.team-b { border-block-start-color:var(--team-b); }
+.quddam-sun-hero .preview-team { background:var(--color-primary); border:1px solid var(--neutral-600); border-block-start:6px solid var(--color-accent-gold); }
+.quddam-sun-hero .preview-team.team-b { border-block-start-color:var(--color-accent-turquoise); }
 .quddam-sun-hero .preview-question { background:var(--color-bg); color:var(--color-primary); }
 .quddam-sun-hero .preview-question>span { color:var(--neutral-600); }
 .quddam-sun-hero .preview-answer { background:var(--color-accent-turquoise); color:var(--color-primary); }
@@ -234,8 +230,9 @@ body:has(.quddam-sun-hero) .header .account-menu>div { color:var(--color-text-in
 .quddam-board-tv .display-answer { background:var(--color-accent-turquoise); color:var(--color-primary); }
 .quddam-board-tv .display-clock-note { color:var(--color-primary); font-size:clamp(1.25rem,1.8vw,1.5rem); font-weight:900; }
 .quddam-board-tv .display-scores { order:2; }
-.quddam-board-tv .display-team { background:var(--color-primary-surface); border:0; border-block-start:8px solid var(--quddam-team); border-radius:24px; padding:clamp(16px,2vw,28px); }
-.quddam-board-tv .display-team--active { background:var(--color-primary-surface); outline:5px solid var(--color-accent-gold); outline-offset:2px; }
+.quddam-board-tv .display-team { background:var(--color-primary-surface); border:2px solid var(--quddam-team); border-radius:24px; padding:clamp(16px,2vw,28px); }
+.quddam-board-tv .display-team--active { background:var(--color-primary-surface); border:5px solid var(--quddam-team); outline:0; opacity:1; }
+.quddam-board-tv .display-team:not(.display-team--active) { opacity:.6; }
 .quddam-board-tv .display-team>div>span { display:inline-flex; align-items:center; font-size:clamp(1.75rem,2.3vw,2.5rem); font-weight:900; }
 .quddam-board-tv .display-team strong.score-number { font:400 clamp(3.25rem,7.2vw,5.75rem)/1 var(--font-display); }
 .quddam-board-tv .display-team-status { width:max-content; border-radius:var(--radius-pill); background:var(--color-accent-gold); color:var(--color-primary); font-size:clamp(1.25rem,1.8vw,1.5rem); padding:4px 12px; font-weight:900; margin-top:var(--space-2); }

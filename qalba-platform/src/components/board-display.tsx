@@ -1,7 +1,9 @@
 "use client";
+import { teamColor } from "@/lib/design/team-colors";
 import { TeamMarker } from "./team-marker";
 import { ProgressChevrons } from "./progress-chevrons";
 import { TimerRing } from "./timer-ring";
+import { VictorySpotlight } from "./victory-spotlight";
 import { connectLive, liveRetryDelay } from "@/lib/realtime/client";
 import { terminalAccessStatus } from "@/lib/realtime/access-status";
 import { Brand } from "./brand";
@@ -90,6 +92,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
   const active = view.active;
   const team = view.teams.find((item) => item.id === active?.answeringTeamId);
   const activeTeamId = active?.answeringTeamId ?? view.turnTeamId;
+  const canShowTurn = (view.status === "IN_PROGRESS" || view.status === "PAUSED") && Boolean(activeTeamId);
   const winners = view.teams.filter((item) => item.score === Math.max(...view.teams.map((entry) => entry.score)));
   const remainingMs = active ? (clock ? remainingOnClient(active.deadlineAt, active.remainingMs, clock, serverOffset) : active.remainingMs) : 0;
   const seconds = Math.ceil(remainingMs / 1000);
@@ -105,8 +108,8 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
         <button className="display-fullscreen" onClick={toggleFullscreen}>{fullscreen ? "الخروج من ملء الشاشة" : "ملء الشاشة"}</button></div>
     </div>
     {connection && <p className="display-connection" role="status">{connection}</p>}
-    {feedback && <p className="display-connection" role="status">{feedback}</p>}
-    {view.status === "COMPLETED" ? <section className="display-center display-victory"><span>انتهت المباراة</span><h1>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل!"}</h1><p>{view.endedEarly ? "النتيجة عند إنهاء المضيف للمباراة" : "اكتملت أسئلة اللوحة"}</p></section>
+    {feedback && <div key={feedback} className={`game-show-feedback ${feedback.startsWith("إجابة صحيحة") ? "game-show-feedback--correct" : feedback.startsWith("إجابة خاطئة") ? "game-show-feedback--wrong" : "game-show-feedback--edit"}`} role="status"><span aria-hidden="true">{feedback.startsWith("إجابة صحيحة") ? "✦" : feedback.startsWith("إجابة خاطئة") ? "!" : "↺"}</span><strong>{feedback}</strong></div>}
+    {view.status === "COMPLETED" ? <section className="display-center display-victory"><VictorySpotlight names={winners.map(winner => winner.name)} positions={winners.map(winner => winner.position)} /><p>{view.endedEarly ? "النتيجة عند إنهاء المضيف للمباراة" : "اكتملت أسئلة اللوحة"}</p></section>
       : active ? <section className={`display-center display-question ${active.phase === "STEAL" ? "display-feedback-wrong" : ""}`}><div className="display-question-top"><span className="display-category-pill">{view.categories.find((category) => category.id === active.categoryId)?.title} · {number(active.value ?? 0)} نقطة{active.double ? " ×٢" : ""}</span><span className="display-phase">{active.phase === "STEAL" ? `إجابة غير صحيحة · فرصة السرقة · ${team?.name}` : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${team?.name}`}</span></div>
           <h1>{active.question}</h1>{active.type === "IMAGE" && active.imageUrl && (
             // Question media uses admin-controlled URLs from varied hosts.
@@ -117,7 +120,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
           <div className="display-clock-note" role="status">{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : view.status === "PAUSED" ? "المؤقت متوقف" : active.deadlineAt ? "الوقت جارٍ" : "بانتظار تشغيل المؤقت"}</div>
         </section>
         : <section className="display-center display-wait"><span>{view.status === "PAUSED" ? "ننتظر المضيف" : view.status === "LOBBY" ? "استعدوا للعب" : `الدور على ${view.teams.find((item) => item.id === view.turnTeamId)?.name}`}</span><h1>{view.status === "LOBBY" ? "جهزوا فرقكم" : "اختاروا السؤال التالي"}</h1></section>}
-    <div className="display-scores">{view.teams.map((item) => <div key={item.id} className={`display-team ${item.id === activeTeamId && view.status !== "COMPLETED" ? "display-team--active" : ""}`} style={{ "--quddam-team": item.color } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{item.id === activeTeamId && view.status !== "COMPLETED" && <small className="display-team-status">دورهم ‹</small>}</div><AnimatedScore value={item.score} /></div>)}</div>
+    <div className="display-scores">{view.teams.map((item) => { const isTurn = canShowTurn && item.id === activeTeamId; return <div key={item.id} className={`display-team ${isTurn ? "display-team--active" : ""}`} style={{ "--quddam-team": teamColor(item.position) } as CSSProperties}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{isTurn && <small className="display-team-status">دورهم</small>}</div><AnimatedScore value={item.score} /></div>; })}</div>
     <div className="display-grid" aria-label="لوحة الأسئلة">{view.categories.map((category) => <div className="display-column" key={category.id}><h2>{category.title}</h2>{[200, 400, 600].map((value) => {
       const cell = view.cells.find((item) => item.categoryId === category.id && item.value === value);
       return <div className={`display-cell ${cell?.completed ? "done" : ""}`} key={value}>{cell?.completed ? "✓" : number(value)}</div>;

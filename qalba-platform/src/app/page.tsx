@@ -1,4 +1,5 @@
 import { TeamMarker } from "@/components/team-marker";
+import { HeaderSurfaceSync } from "@/components/header-surface-sync";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand";
 import { GameEmblem } from "@/components/game-emblem";
@@ -8,7 +9,8 @@ const arabicIndex = (index: number) => new Intl.NumberFormat("ar-SA-u-nu-arab").
 
 export default function Home() {
   return <>
-    <section className="quddam-sun-hero">
+    <HeaderSurfaceSync />
+    <section className="quddam-sun-hero" data-hero-theme={process.env.NEXT_PUBLIC_QUDDAM_SUN_HERO === "1" ? "sun" : "night"}>
       <svg className="sun-chevron-pattern" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
         <defs><pattern id="sun-hero-chevron" width="56" height="56" patternUnits="userSpaceOnUse"><path d="M36 8L16 28L36 48" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" /></pattern></defs>
         <rect width="100%" height="100%" fill="url(#sun-hero-chevron)" />
@@ -21,24 +23,37 @@ export default function Home() {
           <div className="hero-actions"><Link className="btn btn-on-sun btn-game" href="/games">يلا قدّام <span aria-hidden="true">←</span></Link><Link className="btn btn-on-sun-outline" href="#games">تصفّح الألعاب</Link></div>
           <div className="hero-notes"><span>١٠ ألعاب مكتملة</span><span>جوال + شاشة</span><span>المضيف يدير اللعب</span></div>
         </div>
-        <div className="quddam-preview" role="img" aria-label="معاينة توضيحية للعبة: فريق البرق ٦٠٠ نقطة ضد فريق الموج ٤٠٠ نقطة">
+        <div className="quddam-preview" aria-label="معاينة توضيحية للتلفزيون والجوال، وليست مباراة مباشرة">
           <div className="preview-heading"><span className="pill">معاينة التحدّي</span><BrandMark /></div>
-          <div className="preview-scoreboard">
-            <div className="preview-team team-a"><span><TeamMarker position={0} />فريق البرق</span><strong>٦٠٠</strong></div>
-            <span className="preview-vs">ضد</span>
-            <div className="preview-team team-b"><span><TeamMarker position={1} />فريق الموج</span><strong>٤٠٠</strong></div>
+          <div className="preview-device-pair">
+            <div className="preview-tv" aria-label="معاينة شاشة التلفزيون">
+              <span className="preview-device-caption">التلفزيون</span>
+              <div className="preview-scoreboard">
+                <div className="preview-team team-a"><span><TeamMarker position={0} />فريق البرق</span><strong>٦٠٠</strong></div>
+                <span className="preview-vs">ضد</span>
+                <div className="preview-team team-b"><span><TeamMarker position={1} />فريق الموج</span><strong>٤٠٠</strong></div>
+              </div>
+              <div className="preview-question"><span>المعلومات العامة · ٤٠٠</span><strong>سؤال واحد يغيّر ترتيب الفرق.</strong><div className="preview-answer"><span>جاهزين؟</span><span aria-hidden="true">←</span></div></div>
+            </div>
+            <div className="preview-phone" aria-label="معاينة تصويت الجوال">
+              <span className="preview-phone-speaker" aria-hidden="true"></span>
+              <span className="preview-device-caption">الجوال · تصويت</span>
+              <strong>صوّت لفريقك</strong>
+              <div className="preview-phone-option preview-phone-option--a"><TeamMarker position={0} />البرق</div>
+              <div className="preview-phone-option preview-phone-option--b"><TeamMarker position={1} />الموج</div>
+              <small>معاينة فقط</small>
+            </div>
           </div>
-          <div className="preview-question"><span>المعلومات العامة · ٤٠٠</span><strong>سؤال واحد يغيّر ترتيب الفرق.</strong><div className="preview-answer"><span>جاهزين؟</span><span aria-hidden="true">←</span></div></div>
-          <div className="preview-bottom"><GameEmblem name="lightning"/><span>معرفة. سرعة. وحجة تقنع الجماعة.</span></div>
+          <div className="preview-bottom"><span>معرفة. سرعة. وحجة تقنع الجماعة.</span></div>
         </div>
       </div>
     </section>
     <section id="games" className="quddam-game-section section"><div className="shell">
       <div className="section-head"><div><span className="eyebrow">مكتبة التحديات</span><h2>اختاروا جوّكم</h2></div><p>أسئلة، تمويه، ترتيب ومرافعات. لكل جمعة لعبة.</p></div>
-      <div className="quddam-home-games">{featuredGames.map((game, i) => <article className="quddam-home-game" key={game.slug}><Link href="/games" className="quddam-home-game-link" aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
+      <div className="quddam-home-games">{featuredGames.map((game, i) => <article className="quddam-home-game" key={game.slug} data-game={game.slug} data-color={i % 4}><Link href="/games" className="quddam-home-game-link" aria-label={`تعرّف على لعبة ${game.title}: ${game.description}`}>
         <span className={`quddam-game-number quddam-game-number--${i % 4}`} aria-hidden="true">{arabicIndex(i)}</span>
         <span className="quddam-home-game-copy"><strong>{game.title}</strong><small>{game.description}</small></span>
-        <GameEmblem name={game.icon} />
+        <span className="game-icon-chip"><GameEmblem name={game.icon} /></span>
       </Link></article>)}</div>
       <div className="home-games-action"><Link className="btn btn-primary" href="/games">تصفّح مكتبة الألعاب <span aria-hidden="true">←</span></Link></div>
     </div></section>

@@ -1,0 +1,233 @@
+/* Phase 3 · Game Show polish. Presentation only; game state stays in its existing modules. */
+
+/* Swap the *existing* sticky header once the Sun hero scrolls out of view. */
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header {
+  background:var(--color-primary); color:var(--color-text-inverse); border-color:var(--neutral-600);
+}
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav,
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost,
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { color:var(--color-text-inverse); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav a:hover { color:var(--color-accent-gold); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-primary {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
+}
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-primary:hover { background:var(--color-accent-gold-hover); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost { border-color:var(--color-text-inverse); background:transparent; }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost:hover { background:var(--neutral-700); color:var(--color-accent-gold); }
+body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { border-color:var(--neutral-400); }
+
+/* Brand mark is always a Sun tile, Night left chevron, and two Spark squares. */
+.quddam-mark-tile { fill:var(--color-accent-gold); stroke:var(--color-primary); stroke-width:1.5px; }
+.quddam-mark-chevron { fill:var(--color-primary); }
+.quddam-mark-spark { fill:var(--color-secondary); }
+
+/* Marketing and library use a strict Forest/Cream card surface.
+   Only the number badge and icon chip cycle: Sun, Spark, Wave, Cream. */
+.quddam-home-game,.quddam-games .game-card { --card-chip:var(--color-accent-gold); }
+.quddam-home-game[data-color="1"],.quddam-games .game-card[data-color="1"] { --card-chip:var(--color-secondary); }
+.quddam-home-game[data-color="2"],.quddam-games .game-card[data-color="2"] { --card-chip:var(--color-accent-turquoise); }
+.quddam-home-game[data-color="3"],.quddam-games .game-card[data-color="3"] { --card-chip:var(--color-bg); }
+.quddam-home-game,.quddam-games .game-card {
+  background:var(--color-primary-surface); color:var(--color-bg);
+  border:1px solid var(--neutral-600); border-radius:24px;
+  transition:background var(--motion-normal),color var(--motion-normal),border-color var(--motion-normal),transform var(--motion-normal);
+}
+.quddam-home-game { position:relative; overflow:hidden; }
+.quddam-home-game::before,.quddam-games .game-card::before { content:none; }
+.quddam-home-game-link { position:relative; isolation:isolate; }
+.quddam-home-game-copy { padding-block-end:40px; }
+.quddam-home-game-copy strong,.quddam-games .game-card .game-card-copy :is(h2,h3) { color:var(--color-bg); }
+.quddam-home-game-copy small,.quddam-games .game-card p,.quddam-games .game-card .game-facts { color:var(--color-bg); }
+.quddam-home-game .quddam-game-number,.quddam-games .game-card .game-index {
+  display:grid; place-items:center; width:36px; height:36px;
+  border-radius:50%; border:2px solid var(--color-primary);
+  background:var(--card-chip); color:var(--color-primary);
+  opacity:1; font:900 1rem/1 var(--font-arabic);
+}
+.quddam-home-game .game-icon-chip,.quddam-games .game-card .game-icon-chip {
+  display:grid; place-items:center; flex:none; width:56px; height:56px;
+  border-radius:14px; border:2px solid var(--color-primary);
+  background:var(--card-chip); color:var(--color-primary);
+}
+.quddam-home-game .game-icon-chip {
+  position:absolute; inset-inline-end:var(--space-4); inset-block-end:var(--space-3);
+  width:48px; height:48px;
+}
+.quddam-home-game .game-icon-chip .game-emblem,
+.quddam-games .game-card .game-icon-chip .game-emblem {
+  width:34px; height:34px; padding:0; border:0; border-radius:0;
+  background:transparent; color:var(--color-primary);
+}
+.quddam-games .game-card { position:relative; overflow:hidden; }
+.quddam-games .game-card>* { position:relative; z-index:1; }
+.quddam-games .game-card .game-availability,.quddam-games .game-card .game-availability--off { color:var(--color-bg); }
+.quddam-games .game-card .btn-secondary {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
+}
+.quddam-games .game-card .btn-secondary:hover { background:var(--color-accent-gold-hover); color:var(--color-primary); }
+.quddam-home-game:is(:hover,:focus-within),.quddam-games .game-card:is(:hover,:focus-within) {
+  background:var(--color-accent-gold); color:var(--color-primary);
+  border-color:var(--color-primary);
+}
+.quddam-home-game:is(:hover,:focus-within) .quddam-home-game-copy :is(strong,small),
+.quddam-games .game-card:is(:hover,:focus-within) :is(.game-card-copy h2,.game-card-copy h3,.game-card-copy p,.game-facts,.game-availability) { color:var(--color-primary); }
+.quddam-games .game-card:is(:hover,:focus-within) .btn-secondary,
+.quddam-games .game-card:is(:hover,:focus-within) .btn-secondary:hover {
+  background:var(--color-primary); color:var(--color-accent-gold); border-color:var(--color-primary);
+}
+.quddam-home-game:focus-within,.quddam-games .game-card:focus-within {
+  outline:3px solid var(--color-accent-turquoise); outline-offset:3px;
+}
+
+/* Live result feedback never changes scores; it only decorates the existing SSE message. */
+.game-show-feedback {
+  align-self:center; display:flex; align-items:center; gap:16px; max-width:100%;
+  border-radius:var(--radius-lg); padding:12px 22px; background:var(--color-primary-surface);
+  color:var(--color-text-inverse); border:3px solid var(--color-accent-gold);
+  font-size:clamp(1.25rem,2.1vw,2rem); font-weight:900; box-shadow:var(--shadow-lg);
+  animation:game-show-pop var(--motion-emphasis) var(--ease-standard) both;
+}
+.game-show-feedback>span { display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:50%; background:var(--color-accent-gold); color:var(--color-primary); font:400 32px/1 var(--font-display); }
+.game-show-feedback--correct { border-color:var(--color-accent-turquoise); }
+.game-show-feedback--correct>span { background:var(--color-accent-turquoise); }
+.game-show-feedback--wrong { border-color:var(--color-secondary); }
+.game-show-feedback--wrong>span { background:var(--color-secondary); }
+.game-show-feedback--edit { border-color:var(--color-accent-gold); }
+.game-show-feedback--edit>span { background:var(--color-accent-gold); }
+@keyframes game-show-pop { from { opacity:.4; transform:scale(.96) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+/* Accessible TV finale, fed by the actual winners rather than a fake preview. */
+.quddam-board-tv .display-victory,.lightning-tv .lightning-final {
+  position:relative; isolation:isolate; overflow:hidden;
+  background:radial-gradient(circle at 50% -10%,var(--neutral-600) 0%,var(--color-primary-surface) 44%,var(--color-primary) 100%);
+  color:var(--color-text-inverse); border:3px solid var(--color-accent-gold); border-radius:36px;
+  box-shadow:0 0 0 8px color-mix(in srgb,var(--color-accent-gold) 11%,transparent),var(--shadow-celebrate);
+}
+.victory-spotlight { position:relative; display:grid; justify-items:center; align-content:center; gap:10px; width:100%; min-height:210px; padding:22px; text-align:center; }
+.victory-label { border:2px solid var(--color-accent-gold); border-radius:var(--radius-pill); color:var(--color-accent-gold); padding:4px 22px; font-size:clamp(1.25rem,1.8vw,1.7rem); font-weight:900; }
+.victory-trophy { font-size:clamp(3rem,5vw,5rem); line-height:1; color:var(--color-accent-gold); text-shadow:0 0 30px color-mix(in srgb,var(--color-accent-gold) 45%,transparent); }
+.victory-spotlight :is(h1,h2) { font:400 clamp(3rem,6.5vw,7rem)/1.22 var(--font-display); color:var(--color-accent-gold); margin:0; overflow-wrap:anywhere; }
+.victory-tie { font-size:clamp(1.5rem,2.2vw,2rem); color:var(--color-text-inverse); margin:0; }
+.victory-signature { color:var(--neutral-200); font-size:clamp(1.1rem,1.5vw,1.5rem); font-weight:900; }
+.victory-spark { position:absolute; color:var(--color-accent-gold); font-size:clamp(2rem,4vw,4rem); pointer-events:none; animation:winner-spark 700ms var(--ease-standard) both; }
+.victory-spark--one { inset-block-start:12%; inset-inline-start:7%; }
+.victory-spark--two { inset-block-start:24%; inset-inline-end:8%; color:var(--color-secondary); }
+.victory-spark--three { inset-block-end:8%; inset-inline-start:16%; color:var(--color-accent-turquoise); }
+.quddam-board-tv .display-victory>p { color:var(--neutral-200); margin:0 0 20px; }
+.quddam-board-tv .display-victory::before { content:none; }
+
+/* A real Game Show TV treatment for Lightning; keep its entire stage and host controls intact. */
+.lightning-tv { max-width:var(--layout-tv); color:var(--color-text-inverse); }
+.lightning-tv .quddam-lightning-top { border-block-end:3px solid var(--neutral-600); margin-bottom:12px; }
+.lightning-tv .quddam-lightning-top h1 { color:var(--color-accent-gold); }
+.lightning-tv .lightning-scoreboard .panel {
+  background:var(--color-primary-surface); border:2px solid var(--lightning-team);
+  border-radius:24px; min-width:0;
+}
+.lightning-tv .lightning-scoreboard strong { font:400 clamp(3.25rem,6vw,6.5rem)/1.1 var(--font-display); color:var(--color-text-inverse); }
+.lightning-tv .lightning-scoreboard .panel.lightning-active { border:5px solid var(--lightning-team); outline:0; opacity:1; }
+.lightning-tv .lightning-turn-chip { display:inline-block; width:max-content; padding:4px 14px; border-radius:var(--radius-pill); background:var(--color-accent-gold); color:var(--color-primary); font:900 clamp(1.1rem,1.6vw,1.5rem)/1.4 var(--font-arabic); margin-block-start:var(--space-2); }
+.lightning-tv .lightning-scoreboard .panel:not(.lightning-active) { border:2px solid var(--lightning-team); opacity:.6; outline:0; box-shadow:none; }
+.lightning-tv .lightning-round-head { padding:8px 0; color:var(--color-text-inverse); font-weight:900; font-size:clamp(1.5rem,2vw,2rem); }
+.lightning-tv .lightning-round-head .timer { color:var(--color-secondary); font-family:var(--font-display); }
+.lightning-tv .lightning-status { border:0; border-radius:16px; background:var(--color-primary-surface); color:var(--color-text-inverse); text-align:center; }
+.lightning-tv .lightning-question {
+  border:0; border-radius:36px; background:var(--color-bg); color:var(--color-primary); text-align:center;
+  padding:clamp(24px,3vw,46px);
+}
+.lightning-tv .lightning-question .eyebrow { display:inline-block; border-radius:var(--radius-pill); padding:4px 22px; background:var(--color-primary); color:var(--color-accent-gold); font-size:clamp(1.25rem,1.8vw,1.8rem); }
+.lightning-tv .lightning-question h2 { font:400 clamp(2.5rem,6.5vw,7rem)/1.3 var(--font-display); color:var(--color-primary); overflow-wrap:anywhere; }
+.lightning-tv .lightning-result { border:3px solid var(--color-accent-turquoise); border-radius:24px; color:var(--color-text-inverse); background:var(--color-primary-surface); }
+.lightning-tv .lightning-final .victory-spotlight h2 { margin:0; }
+.lightning-tv .lightning-final>p { font-size:clamp(1.25rem,1.8vw,1.75rem); color:var(--color-text-inverse); }
+
+/* Phone: clear selection targets and safe-area room without covering controls. */
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone) {
+  padding-block-end:max(32px,env(safe-area-inset-bottom));
+}
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone)
+:is(button,.btn,input[type="radio"]+label,input[type="checkbox"]+label) { min-height:52px; touch-action:manipulation; }
+:is(.lightning-phone,.social-player,.ordering-phone,.court-phone,.bluff-phone,.forbidden-phone) :is(button,.btn):focus-visible { outline:4px solid var(--color-accent-gold); outline-offset:3px; }
+@media(max-width:600px) {
+  .quddam-home-game-copy strong { font-size:clamp(1.8rem,8vw,2.25rem); }
+  .quddam-board-tv .display-scores { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .quddam-board-tv .display-team { min-width:0; flex-direction:column; align-items:flex-start; gap:12px; }
+  .quddam-board-tv .display-team>div>span { font-size:1.2rem; overflow-wrap:anywhere; }
+  .quddam-board-tv .display-team strong.score-number { align-self:flex-end; }
+  .lightning-tv .lightning-question { padding:18px; border-radius:24px; }
+  .lightning-tv .lightning-question h2 { font-size:clamp(2.2rem,7vw,4rem); }
+  .victory-spotlight { padding:20px 12px; }
+  .victory-spark { opacity:.45; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .game-show-feedback,.victory-spark { animation:none; }
+  .quddam-home-game,.quddam-games .game-card { transition:none; }
+}
+
+/* Final pass: team identity and comparison flags. */
+.court-phone .court-vote .court-vote-team {
+  background:var(--vote-team); color:var(--color-primary); border:2px solid var(--color-primary);
+  display:flex; justify-content:flex-start; gap:14px; width:100%; font-weight:900; text-align:start;
+  min-height:60px;
+}
+.court-phone .court-vote .court-vote-team:hover,.court-phone .court-vote .court-vote-team:focus-visible {
+  background:var(--vote-team); color:var(--color-primary); outline:3px solid var(--color-primary); outline-offset:2px;
+}
+.court-phone .court-vote .court-vote-team:disabled { opacity:.65; }
+.court-vote-icon { display:grid; place-items:center; width:36px; height:36px; flex:none; border-radius:10px; background:var(--color-primary); }
+.court-vote-icon .team-marker { width:24px; height:24px; margin:0; }
+
+/* The skyline is an isolated bottom row: never an image behind winner text. */
+.victory-skyline { display:block; width:100%; height:42px; flex:none; color:var(--color-accent-gold); opacity:.2; margin-block-start:12px; pointer-events:none; }
+.victory-spark--four { inset-block-end:14%; inset-inline-end:9%; color:var(--color-bg); }
+.victory-team-identity { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+.victory-team-identity>span { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--neutral-600); border-radius:var(--radius-pill); padding:8px 14px; color:var(--color-bg); background:var(--color-primary); font-size:clamp(1.1rem,1.5vw,1.5rem); font-weight:900; }
+.victory-team-identity .team-marker { width:28px; height:28px; margin:0; }
+
+/* The hero alone switches themes. Both versions keep the gameplay mockup on Night.
+   Default = Night; ?hero=sun or NEXT_PUBLIC_QUDDAM_SUN_HERO=1 enables Sun. */
+.quddam-sun-hero[data-hero-theme="sun"] { background:var(--color-accent-gold); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] { background:var(--color-primary); color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .sun-chevron-pattern { color:var(--color-accent-turquoise); opacity:.11; }
+.quddam-sun-hero[data-hero-theme="night"] :is(.eyebrow,.hero-copy,.hero-copy h1,.hero-copy p,.hero-notes) { color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .hero-headline-highlight { background:var(--color-accent-gold); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] .hero-notes span::before { background:var(--color-accent-turquoise); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun {
+  background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
+}
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun:hover { background:var(--color-accent-gold-hover); color:var(--color-primary); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun-outline { background:transparent; color:var(--color-bg); border-color:var(--color-bg); }
+.quddam-sun-hero[data-hero-theme="night"] .btn-on-sun-outline:hover { background:var(--color-bg); color:var(--color-primary); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header { background:var(--color-primary); color:var(--color-bg); border-color:var(--neutral-600); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header :is(.nav,.btn-ghost,.account-menu summary) { color:var(--color-bg); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .btn-primary { background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .btn-ghost { border-color:var(--color-bg); }
+body:has(.quddam-sun-hero[data-hero-theme="night"]) .header .account-menu summary { border-color:var(--neutral-400); }
+
+.quddam-sun-hero .quddam-preview {
+  background:var(--color-primary); color:var(--color-bg); border:2px solid var(--neutral-600);
+}
+.preview-device-pair { display:grid; grid-template-columns:minmax(0,1fr) 130px; gap:14px; align-items:stretch; margin-block-start:16px; }
+.preview-tv { min-width:0; }
+.preview-device-caption { display:block; font-size:.75rem; font-weight:900; color:var(--color-accent-gold); }
+.preview-tv .preview-scoreboard { gap:8px; margin-block:12px; }
+.preview-tv .preview-team { min-width:0; padding:8px; border-block-start-color:var(--team-a); }
+.preview-tv .preview-team.team-b { border-block-start-color:var(--team-b); }
+.preview-tv .preview-team strong { font-size:clamp(1.5rem,2.9vw,2.5rem); }
+.preview-tv .preview-team span { display:inline-flex; align-items:center; gap:2px; flex-wrap:wrap; justify-content:center; }
+.preview-tv .preview-question { padding:16px; }
+.preview-tv .preview-question>strong { font-size:clamp(1.15rem,1.8vw,1.7rem); margin-block:10px; }
+.preview-phone {
+  display:flex; flex-direction:column; justify-content:center; align-items:stretch; text-align:center;
+  gap:8px; border:4px solid var(--neutral-400); border-radius:24px; background:var(--color-primary);
+  color:var(--color-bg); padding:12px 7px; min-width:0;
+}
+.preview-phone-speaker { display:block; background:var(--neutral-400); border-radius:var(--radius-pill); width:30px; height:4px; margin:0 auto 8px; }
+.preview-phone>strong { font-size:.85rem; }
+.preview-phone>small { color:var(--color-bg); }
+.preview-phone-option { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:3px; min-height:42px; border-radius:9px; font-size:.85rem; font-weight:900; color:var(--color-primary); }
+.preview-phone-option--a { background:var(--team-a); }
+.preview-phone-option--b { background:var(--team-b); }
+.preview-phone-option .team-marker { width:20px; height:20px; margin:0; background:var(--color-primary); border-radius:5px; padding:3px; box-sizing:content-box; }
+@media(max-width:1100px) { .preview-device-pair { grid-template-columns:minmax(0,1fr); } .preview-phone { width:min(220px,100%); justify-self:center; } }
+@media(max-width:650px) { .preview-tv .preview-team strong { font-size:1.8rem; } }
