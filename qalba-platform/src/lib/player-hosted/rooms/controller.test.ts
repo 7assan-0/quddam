@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RoomController, type RoomView } from "./controller";
 import { ApiError, readGuest, rememberGuest, type SignalingClient } from "./client";
 import { SignalingStore, type Credentials, type SignalReply } from "./signaling";
-import { acceptBuzz, CHANNEL, hostAction, initialState } from "./protocol";
+import { acceptBuzz, CHANNEL, hostAction, initialState, MAX_GUESTS, MAX_PLAYERS } from "./protocol";
 
 // Lifecycle doubles only. Native Chrome acceptance is recorded separately.
 class Channel {
@@ -64,6 +64,24 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => { for (const controller of sessions.splice(0)) controller.dispose(); vi.useRealTimers(); });
 
 describe("automatic room lifecycle, authority and multi-guest isolation", () => {
+  it("opens eight distinct host RTC links and broadcasts an eighth-guest win to all of them", async () => {
+    const f = await hostFixture(MAX_GUESTS);
+    expect(f.guests.map(g => g.slot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(f.peers).toHaveLength(MAX_GUESTS);
+    expect(f.view().players.filter(p => p.connected)).toHaveLength(MAX_GUESTS);
+    f.controller.action("open");
+    f.peers[7].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
+    f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
+    expect(f.view().state.winner).toBe(8);
+    f.controller.action("award");
+    expect(f.view().state.scores).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 1]);
+    for (const peer of f.peers) {
+      const snapshot = JSON.parse(peer.channel.sent.at(-1)!);
+      expect(snapshot).toMatchObject({ protocol: 3, winner: 8, version: 3 });
+      expect(snapshot.scores).toHaveLength(MAX_PLAYERS);
+      expect(snapshot.scores[8]).toBe(1);
+    }
+  });
   it("automatically offers to multiple guests and binds buzz identity to its channel", async () => {
     const f = await hostFixture();
     expect(f.peers).toHaveLength(2); expect(f.view().players.filter(p => p.connected)).toHaveLength(2);
@@ -72,14 +90,14 @@ describe("automatic room lifecycle, authority and multi-guest isolation", () => 
     f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 })); f.controller.action("buzz");
     expect(f.view().state.winner).toBe(2);
     f.controller.action("award"); f.controller.action("award");
-    expect(f.view().state.scores).toEqual([0, 0, 1, 0]);
-    expect(JSON.parse(f.peers[0].channel.sent.at(-1)!).scores).toEqual([0, 0, 1, 0]);
+    expect(f.view().state.scores).toEqual([0, 0, 1, 0, 0, 0, 0, 0, 0]);
+    expect(JSON.parse(f.peers[0].channel.sent.at(-1)!).scores).toEqual([0, 0, 1, 0, 0, 0, 0, 0, 0]);
     f.controller.action("open"); f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
     expect(f.view().state).toMatchObject({ round: 2, phase: "open", winner: null, version: 4 });
   });
   it("rejects score/host/identity injection and isolates one disconnected guest", async () => {
     const f = await hostFixture(); f.controller.action("open");
-    for (const raw of [{ type: "AWARD" }, { type: "OPEN" }, { type: "BUZZ", round: 1, slot: 0 }, { scores: [9, 9, 9, 9] }])
+    for (const raw of [{ type: "AWARD" }, { type: "OPEN" }, { type: "BUZZ", round: 1, slot: 0 }, { scores: Array(MAX_PLAYERS).fill(9) }])
       f.peers[0].channel.message(JSON.stringify(raw));
     expect(f.view().state.phase).toBe("open");
     const late = f.peers[0].channel.onmessage!; f.peers[0].disconnect();
@@ -94,7 +112,7 @@ describe("automatic room lifecycle, authority and multi-guest isolation", () => 
     f.peer.channel.message(JSON.stringify(open)); f.controller.buzz(); f.controller.buzz();
     expect(f.peer.channel.sent).toEqual([JSON.stringify({ type: "BUZZ", round: 1 })]);
     const result = hostAction(acceptBuzz(open, 2, 1), "award"); f.peer.channel.message(JSON.stringify(result));
-    f.peer.channel.message(JSON.stringify({ ...result, scores: [1, 0, 0, 0] }));
+    f.peer.channel.message(JSON.stringify({ ...result, scores: [1, 0, 0, 0, 0, 0, 0, 0, 0] }));
     f.peer.channel.message(JSON.stringify(open)); expect(f.view().state).toEqual(result);
   });
   it("activates once when channel-open arrives before peer-connected", async () => {
