@@ -8,8 +8,6 @@ body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav,
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-ghost,
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .account-menu summary { color:var(--color-text-inverse); }
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .nav a:hover { color:var(--color-accent-gold); }
-body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .quddam-mark { color:var(--color-accent-gold); }
-body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .quddam-mark-cut { fill:var(--color-primary); }
 body[data-hero-visible="false"]:has(.quddam-sun-hero) .header .btn-primary {
   background:var(--color-accent-gold); color:var(--color-primary); border-color:var(--color-accent-gold);
 }
