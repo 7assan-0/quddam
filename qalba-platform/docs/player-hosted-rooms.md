@@ -30,7 +30,7 @@ npm.cmd run build
 
 | Layer | Responsibility |
 | --- | --- |
-| `rooms/protocol.ts` | Pure four-slot buzzer rules, versioned snapshots, strict BUZZ parser; no React, HTTP or RTC dependencies |
+| `rooms/protocol.ts` | Pure nine-slot buzzer rules, versioned snapshots, strict BUZZ parser; no React, HTTP or RTC dependencies |
 | `rooms/signaling.ts` + isolated API route | Ephemeral rendezvous and leases; exchanges offers/answers only, never scores or game commands |
 | `rooms/client.ts` | Abortable same-origin HTTP client; guest-only optional sessionStorage |
 | `rooms/controller.ts` | One host-to-each-guest RTC star, explicit lifecycle, game authority at host, state broadcast |
@@ -38,7 +38,7 @@ npm.cmd run build
 
 The server generates a cryptographically random 128-bit room invite (32 hex characters) and separate 256-bit host/guest capabilities. A room invite admits guests and is a bearer invitation: share it only with trusted participants. It cannot authorize host operations. Capabilities go in bounded POST bodies, never links, cookies, screenshots, console logs or checked-in evidence. Host capability is memory-only and never persisted. Guest-only sessionStorage permits a refreshed tab to resume its assigned slot. Deleting/denying storage loses that continuity; it never promotes a guest. This is capability authorization, not verified user identity or end-to-end authentication against a compromised signaling server.
 
-There are nine fixed slots: host A and guests B/C/D/E/F/G/H/I (eight guests). Slots are not recycled during a room, preserving score identity. Leaving does not free a new guest slot; the existing guest can resume with its private capability. There is no host migration, late host takeover, persistence or fairness guarantee against a dishonest host. First arrival at the host wins; network latency affects buzzer fairness. All guests can see all four scores.
+There are nine fixed slots: host A and guests B/C/D/E/F/G/H/I (eight guests). Slots are not recycled during a room, preserving score identity. Leaving does not free a new guest slot; the existing guest can resume with its private capability. There is no host migration, late host takeover, persistence or fairness guarantee against a dishonest host. First arrival at the host wins; network latency affects buzzer fairness. All guests can see all nine scores.
 
 Every guest channel is mapped to a slot by the host's authenticated roster. Incoming guest data can only be an exact current-round BUZZ, with no claimed identity, score or host action. The host's local controller is the sole authority for open/award/skip. One winner/award is enforced in pure rules. Snapshots reject malformed values, impossible state ranges, equal/old versions, decreasing rounds and decreasing scores. A new RTC generation cannot roll state back. Existing PoC safeguards remain in place.
 
