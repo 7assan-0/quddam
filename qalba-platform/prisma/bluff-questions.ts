@@ -170,6 +170,6 @@ const alternatives:Record<string,string[]>={
  "food-1":["مياسم الزهرة"],"food-2":["الأوركيد"],
  "travel-2":["فيزا"],"travel-4":["بطاقة صعود الطائرة"],"travel-8":["ترانزيت","الترانزيت"],
  "cinema-1":["Toy Story","توي ستوري"],"cinema-3":["Buzz Lightyear"],"cinema-6":["مونتاج"],"cinema-12":["فيلم وثائقي"],
- "oddities-1":["3","٣"],"oddities-4":["النحام","الفلامينغو"],"oddities-9":["حريش البحر","الناروال"],
+ "oddities-1":["3","٣"],"oddities-4":["النحام","الفلامينغو"],"oddities-9":["ناروال"],
 };
 export const bluffSamples=Object.entries(bank).flatMap(([category,lines])=>lines.trim().split("\n").map((line,index)=>{const [question,correctAnswer]=line.split("|");return {id:`bluff-seed-${category}-${index+1}`,category,question,correctAnswer,alternativeCorrectAnswers:alternatives[`${category}-${index+1}`]??[],difficulty:index<4?"EASY" as const:index<9?"MEDIUM" as const:"HARD" as const,explanation:null as string|null};}));
