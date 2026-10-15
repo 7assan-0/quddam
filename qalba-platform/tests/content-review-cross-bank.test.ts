@@ -77,6 +77,32 @@ describe("review-only staged content cross-bank duplicate guard", () => {
     }
   });
 
+  it("keeps nine distinct replacements for confirmed same-fact repeats within staged Board", () => {
+    const byId = new Map(board.map((item) => [item.id, item.question]));
+    const checks = [
+      ["1233", "أول موقع سعودي أُدرج في قائمة التراث العالمي"],
+      ["1236", "مهرجان التمور السنوي الشهير بمنطقة القصيم"],
+      ["1270", "الموقع الصخري في منطقة نجران"],
+      ["1242", "المطار الدولي الذي يخدم المدينة المنورة"],
+      ["990", "مدينة أوكلاند"],
+      ["316", "تحول بخار الماء إلى قطرات ماء سائلة"],
+      ["787", "Stardew Valley"],
+      ["402", "مركز الملك عبدالعزيز الثقافي العالمي"],
+      ["1234", "الفن الجداري التقليدي من عسير"],
+    ] as const;
+    for (const [id, distinctive] of checks) expect(byId.get(id)).toContain(distinctive);
+    expect(new Set(checks.map(([id]) => byId.get(id))).size).toBe(checks.length);
+  });
+
+  it("keeps Black Sea and Minecraft duplicate-fact replacements distinct across games", () => {
+    const blackSea = lightning.find((item) => item.id === "lightning-v600-geography-12");
+    const minecraft = lightning.find((item) => item.id === "lightning-v600-games-07");
+    expect(blackSea?.question).toContain("بحر مرمرة ببحر إيجه");
+    expect(minecraft?.question).toContain("لعبة الطبخ التعاونية");
+    expect(blackSea?.question).not.toContain("أوكرانيا");
+    expect(minecraft?.question).not.toContain("كتل مكعبة");
+  });
+
   it("blocks the known catalyst semantic overlap with the Letter review bank", () => {
     const lightningItem = lightning.find((item) => item.id === "lightning-v600-science-36");
     const letterItem = letters.find((item) => item.id === "letter-mh-047");
