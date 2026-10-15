@@ -4,6 +4,8 @@ This directory contains editorial CSV snapshots only. **They are NOT imported by
 
 See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the mandatory acceptance standards, [SEVEN_GAMES_PRELIMINARY_AUDIT.md](SEVEN_GAMES_PRELIMINARY_AUDIT.md) for the initial seven-game inventory, and [SEVEN_GAMES_REMEDIATION_PROGRESS.md](SEVEN_GAMES_REMEDIATION_PROGRESS.md) for the actual follow-up changes and blockers. None of these documents is release approval.
 
+Current Court ledger: `Court_180_Individual_Editorial_Gate_V2.csv` reflects removal of the universal ungrounded prior-agreement fact across 180 original cases. `Court_180_Individual_Editorial_Gate.csv` remains the first-pass historical evidence, not the current gate. Both are review-only and **NO-GO** for human editorial/playtest acceptance.
+
 ## Attached reviewed drafts
 
 - `Board_1296_Remediated.csv` — 1,296 proposed board questions
