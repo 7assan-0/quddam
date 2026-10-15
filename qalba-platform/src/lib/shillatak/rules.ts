@@ -68,7 +68,8 @@ export function completedSnapshot(night: {
       reject("نتيجة سهرة غير معتمدة", 409, "INVALID_NIGHT_RECEIPT");
     const receipt = slot.resultReceipt as { schemaVersion?: number; game?: string; sourceSessionId?: string;
       digest?: string; placements?: NightPlacement[] };
-    if (receipt.schemaVersion !== 1 || receipt.game !== slot.gameSlug ||
+    if (!receipt || typeof receipt !== "object" || Array.isArray(receipt) ||
+      receipt.schemaVersion !== 1 || receipt.game !== slot.gameSlug ||
       receipt.sourceSessionId !== slot.sourceSessionId || receipt.digest !== slot.resultDigest ||
       JSON.stringify(receipt.placements) !== JSON.stringify(result.placements))
       reject("إيصال اللعبة لا يطابق نتيجة السهرة", 409, "INVALID_NIGHT_RECEIPT");
