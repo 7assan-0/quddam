@@ -88,7 +88,7 @@ async function main() {
     for (const sample of orderingSamples.filter(q=>q.categorySlug===slug)) {
       validateOrderingQuestion({...sample,category:title});
       const {id,categorySlug: _categorySlug,items,...data}=sample; void _categorySlug;
-      await prisma.orderingQuestion.upsert({where:{id},update:{},create:{...data,id,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,status:duplicateOrderingIds.has(id)?"ARCHIVED":"PUBLISHED",items:{create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}}});
+      await prisma.orderingQuestion.upsert({where:{id},update:{...data,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,status:duplicateOrderingIds.has(id)?"ARCHIVED":"PUBLISHED",items:{deleteMany:{},create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}},create:{...data,id,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,status:duplicateOrderingIds.has(id)?"ARCHIVED":"PUBLISHED",items:{create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}}});
     }
   }
   for (const [slug,title] of lightningCategories) {
@@ -188,7 +188,7 @@ async function main() {
   }
   for (const [slug,title] of courtCategories) {
     const category = await prisma.category.upsert({where:{slug:"court-"+slug},update:{},create:{slug:"court-"+slug,title,sortOrder:700+courtCategories.findIndex(c=>c[0]===slug)}});
-    for (const [i,c] of courtSamples.entries()) if(c.category===slug) { validateCase({...c,category:title}); const {facts,category: ignored,...data}=c; void ignored; await prisma.courtCase.upsert({where:{id:`court-seed-${i+1}`},update:{},create:{id:`court-seed-${i+1}`,...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,status:"PUBLISHED",facts:{create:facts.map((text,position)=>({text,position}))}}}); }
+    for (const [i,c] of courtSamples.entries()) if(c.category===slug) { validateCase({...c,category:title}); const {facts,category: ignored,...data}=c; void ignored; await prisma.courtCase.upsert({where:{id:`court-seed-${i+1}`},update:{...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,status:"PUBLISHED",facts:{deleteMany:{},create:facts.map((text,position)=>({text,position}))}},create:{id:`court-seed-${i+1}`,...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,status:"PUBLISHED",facts:{create:facts.map((text,position)=>({text,position}))}}}); }
   }
   console.log(`Court: ${courtSamples.length} original fictional cases.`);
   console.log(`Forbidden Word: ${forbiddenSamples.length} original cards across ${forbiddenCategories.length} categories.`);
