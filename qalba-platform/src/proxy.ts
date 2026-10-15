@@ -17,6 +17,12 @@ export async function proxy(request: NextRequest) {
   const next = () => {
     const response = NextResponse.next({ request: { headers } });
     response.headers.set("Content-Security-Policy-Report-Only", policy);
+    if (request.nextUrl.pathname.startsWith("/night/invite/")) {
+      // The invite token is a bearer secret in the path: never send it as a referrer.
+      response.headers.set("Referrer-Policy", "no-referrer");
+      response.headers.set("Cache-Control", "private, no-store");
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
     return response;
   };
   // Reject before layout streaming can turn a disabled page into an HTTP 200.

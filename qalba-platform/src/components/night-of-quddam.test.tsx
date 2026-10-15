@@ -42,6 +42,19 @@ describe("Night owner interface preserves completion and authority boundaries", 
     expect(html).not.toContain('data-testid="night-end"');
   });
 
+  it("shows verified highlights and a private share card only after complete results", () => {
+    const complete = renderToStaticMarkup(<NightOfQuddam initial={fixture("completed", 3)}/>);
+    expect(complete).toContain('data-testid="night-highlights"');
+    expect(complete).toContain('data-testid="night-share-card"');
+    expect(complete).toContain("/api/night/night-1/share-card");
+    const incomplete = renderToStaticMarkup(<NightOfQuddam initial={fixture("ended", 1)}/>);
+    expect(incomplete).toContain('data-testid="night-highlights"');
+    expect(incomplete).not.toContain('data-testid="night-share-card"');
+    expect(incomplete).not.toContain("بطل الليلة: الأفق");
+    const preparing = renderToStaticMarkup(<NightOfQuddam initial={fixture("preparing", 0)}/>);
+    expect(preparing).toContain('data-testid="night-invitation-setup"');
+    expect(preparing).not.toContain('data-testid="night-share-card"');
+  });
   it("shows an imported transition and keeps score entry out of the Night interface", () => {
     const html = renderToStaticMarkup(<NightOfQuddam initial={fixture("playing", 1)}/>);
     expect(html).toContain('data-testid="night-transition"');
