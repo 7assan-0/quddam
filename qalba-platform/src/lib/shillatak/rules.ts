@@ -41,6 +41,12 @@ type VerifiedSlot = { position: number; gameSlug: string; sourceSessionId: strin
 export type ShillaSnapshot = { schemaVersion: 1; nightId: string;
   teams: { shillaTeamId: string; name: string; points: number; champion: boolean }[];
   gameCount: number; sourceDigests: string[] };
+/** Canonical array-based digest survives PostgreSQL JSONB key reordering. */
+export function snapshotDigest(snapshot: ShillaSnapshot) {
+  return jsonDigest([snapshot.schemaVersion, snapshot.nightId, snapshot.gameCount,
+    snapshot.sourceDigests, snapshot.teams.map(team =>
+      [team.shillaTeamId, team.name, team.points, team.champion])]);
+}
 /**
  * Re-derive cumulative scores from frozen, imported Night receipts. No untrusted browser
  * points and no RSVP alias attribution. The existing Night service originally verified
