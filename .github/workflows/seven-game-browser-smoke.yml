@@ -1,0 +1,63 @@
+name: Seven-game isolated browser smoke
+
+# Draft PR verification only. PGlite is an ephemeral, local, synthetic test DB.
+# No production, Staging, third-party Cloud, deployment, payment or live account action.
+on:
+  pull_request:
+    branches:
+      - design/phase-3-game-show
+    types: [opened, synchronize, reopened]
+    paths:
+      - "qalba-platform/**"
+      - ".github/workflows/seven-game-browser-smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seven-game-browser-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Seven original seeded games / seven native Chromium full-flow cases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      CI: "true"
+      E2E_SEVEN_GAME_SMOKE: "1"
+      E2E_REPORT_DIR: "playwright-report/seven-game-smoke"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - name: Check out exact PR head (read only; no retained credentials)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Pin exact source identity
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+      - name: Set up Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate isolated Prisma client
+        run: npm run db:generate
+      - name: Install Chromium for real Playwright browser cases
+        run: npx playwright install --with-deps chromium
+      - name: Run one source-bound full-flow Chromium case for each of seven games
+        run: node scripts/e2e-with-db.mjs
+      - name: Upload native per-case and aggregate reports (including failures)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.3.4
+        with:
+          name: seven-game-browser-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: qalba-platform/playwright-report/seven-game-smoke/
+          if-no-files-found: warn
+          retention-days: 7
