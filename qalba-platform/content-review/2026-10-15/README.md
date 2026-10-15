@@ -2,6 +2,8 @@
 
 This directory contains editorial CSV snapshots only. **They are NOT imported by prisma/seed.ts, the application, or a live database.** Do not imply that merging this PR publishes the revised question banks.
 
+See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the seven mandatory editorial and runtime acceptance standards. These standards are not a release approval.
+
 ## Attached reviewed drafts
 
 - `Board_1296_Remediated.csv` — 1,296 proposed board questions
@@ -9,6 +11,7 @@ This directory contains editorial CSV snapshots only. **They are NOT imported by
 - `Letter_224_V3_Canonical_Unmodified.csv` — historical unmodified V3 snapshot; do **not** use for approval because nine invalid alternative answers were identified.
 - `Letter_224_V4_Aliases_Corrected_Review_Pending.csv` — proposed replacement review snapshot: 224 questions across 28 letters, six medium and two hard per letter; nine invalid alternative answers removed. **Still pending independent factual, alias and semantic review.** Do not import alongside the old letter seed.
 - `Survey_26_Remediated.csv`, `Forbidden_52_Remediated.csv`, `Bluff_13_Remediated_Sourced_Review_Pending.csv`, `Ranked_15_Remediated.csv`, `Ordering_15_Remediated.csv`, `Court_15_Remediated.csv` — proposed additional/replacement content, **not automatic production seed changes**.
+- `Lightning_600_Remediated.csv` contains a review-only replacement for a verbatim Board #907 duplication (Lightning science #31 now tests viscosity, preliminary NIST reference recorded); semantic QA/playtesting is still pending.
 - `Issue_Ledger_After_Remediation.csv` — the original 63-item ledger (60 patched locally and three originally source-blocked); these labels describe the supplied offline pack, **not 63 runtime-verified fixes**.
 - `Before_After_Diff_Items.csv` — 60 editorial before/after comparisons.
 
