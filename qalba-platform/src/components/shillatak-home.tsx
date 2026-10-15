@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 type Entry = { id: string; name: string; status: string; role: string; members: number; nights: number };
 export function ShillatakHome({ initial }: { initial: Entry[] }) {
   const [groups, setGroups] = useState(initial);
   const [name, setName] = useState(""), [teamA, setTeamA] = useState(""), [teamB, setTeamB] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  async function create(event: React.FormEvent) {
+  async function create(event: FormEvent) {
     event.preventDefault(); if (busy) return;
     setBusy(true); setError("");
     try {
