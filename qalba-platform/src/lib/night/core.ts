@@ -44,9 +44,9 @@ function safeId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
 }
 function cleanName(value: unknown): string {
-  if (typeof value !== "string" || /[\\p{Cc}\\p{Cf}]/u.test(value))
+  if (typeof value !== "string" || /[\p{Cc}\p{Cf}]/u.test(value))
     return reject("Invalid team name", "INVALID_TEAM");
-  const name = value.normalize("NFC").trim().replace(/\\s+/gu, " ");
+  const name = value.normalize("NFC").trim().replace(/\s+/gu, " ");
   if (!name || name.length > 60) reject("Invalid team name", "INVALID_TEAM");
   return name;
 }
