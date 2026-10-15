@@ -12,6 +12,7 @@ function completed(tie = false) {
     if (i) state = advanceNight(state);
     const placements = tie && i === 2
       ? [{ teamIds: ["n-a", "n-b"] }]
+      : tie && i === 1 ? [{ teamIds: ["n-b"] }, { teamIds: ["n-a"] }]
       : [{ teamIds: ["n-a"] }, { teamIds: ["n-b"] }];
     state = acceptVerifiedResult(state, { game: games[i], sourceSessionId: `source-${i}`, placements });
     slots.push({ position: i, gameSlug: games[i], sourceSessionId: `source-${i}`,
@@ -65,8 +66,8 @@ describe("Shillatak pure privacy and immutable result bridge", () => {
     expect(tied.teams.every(t => t.champion)).toBe(true);
     const board = shillaLeaderboard(stable, [first, tied]);
     expect(board).toEqual([
-      { id: "s-a", name: "البرق", wins: 2, points: 18, played: 2, rank: 1 },
-      { id: "s-b", name: "الموج", wins: 1, points: 15, played: 2, rank: 2 },
+      { id: "s-a", name: "البرق", wins: 2, points: 17, played: 2, rank: 1 },
+      { id: "s-b", name: "الموج", wins: 1, points: 14, played: 2, rank: 2 },
     ]);
     expect(JSON.stringify(board)).not.toContain("userId");
   });
