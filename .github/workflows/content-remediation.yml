@@ -21,6 +21,9 @@ jobs:
     name: Source content and application checks
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      # A non-secret placeholder for Prisma config parsing; no database is provisioned or contacted.
+      DATABASE_URL: postgresql://quddam:quddam@127.0.0.1:5432/quddam_ci
     defaults:
       run:
         working-directory: qalba-platform
