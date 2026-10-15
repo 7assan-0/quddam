@@ -44,7 +44,7 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
   }
   return <section className="panel" data-testid="night-invitation-setup" style={{ marginBlock: "1rem" }}>
     <h2>دعوة السهرة · قبل بدء اللعب</h2>
-    <p>حدد الموعد وشارك رابط الحضور يدويًا. هذه دعوة تخطيط وتصويت فقط؛ لا تفتح غرفة اللعب ولا تبدأ عدّاد الساعة.</p>
+    <p>حدد الموعد وشارك رابط الحضور يدويًا. هذه دعوة تخطيط وتصويت فقط؛ لا تفتح غرفة اللعب ولا تبدأ عدّاد الساعة. التصويت استشاري ولا يعيد ترتيب ألعاب السهرة المحفوظة تلقائيًا.</p>
     {summary?.exists ? <>
       <p>موعد السهرة: <strong>{new Intl.DateTimeFormat("ar-SA", { dateStyle: "full", timeStyle: "short",
         timeZone: summary.timezone ?? timezone }).format(new Date(summary.scheduledAt!))}</strong></p>
