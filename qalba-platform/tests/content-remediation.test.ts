@@ -4,11 +4,27 @@ import { orderingCategories } from "../prisma/ordering-questions";
 import { courtCategories } from "../prisma/court-cases";
 import { describe, expect, it } from "vitest";
 import { orderingSamples } from "../prisma/ordering-questions";
-import { duplicateOrderingIds } from "../prisma/content-remediations";
+import { duplicateOrderingIds, bluffSemanticHoldIds } from "../prisma/content-remediations";
+import { bluffSamples } from "../prisma/bluff-questions";
+import { sourceBanks } from "../src/lib/content/source";
 import { courtSamples } from "../prisma/court-cases";
 import { LETTER_WEIGHTS } from "../src/lib/games/letter-network/module";
 
 describe("content remediation guardrails", () => {
+  it("holds only the 33 specifically triaged Bluff semantic duplicates without removing source IDs", () => {
+    expect(bluffSamples).toHaveLength(156);
+    expect(bluffSemanticHoldIds.size).toBe(33);
+    const actualIds = new Set(bluffSamples.map(q => q.id));
+    for (const id of bluffSemanticHoldIds) expect(actualIds.has(id)).toBe(true);
+    for (const id of ["bluff-seed-saudi-8", "bluff-seed-games-1", "bluff-seed-technology-4", "bluff-seed-oddities-9"])
+      expect(bluffSemanticHoldIds.has(id)).toBe(false);
+    const rows = sourceBanks().bluff;
+    expect(rows).toHaveLength(156);
+    expect(rows.filter(row => row.status === "ARCHIVED")).toHaveLength(33);
+    expect(rows.filter(row => row.status === "PUBLISHED")).toHaveLength(123);
+    expect(rows.every(row => (row.status === "ARCHIVED") === bluffSemanticHoldIds.has(row.id))).toBe(true);
+  });
+
   it("retains 180 ordering challenges and archives the ten known duplicates", () => {
     expect(orderingSamples).toHaveLength(180);
     expect(duplicateOrderingIds.size).toBe(10);
