@@ -4,10 +4,10 @@
 
 ## Bluff / صدّقني: all 169 items have explicit item-level status
 
-- Canonical refreshed review sheet: `Bluff_169_Item_Review_Gate_V2.csv`. It enumerates **156 original source questions + 13 staged candidate questions**, preserving each primary answer, alternatives, review state, source when available, heuristic overlap candidates and NO-GO state.
+- Canonical refreshed review sheet: `Bluff_169_Item_Review_Gate_V3.csv`. It enumerates **156 original source questions + 13 staged candidate questions**, preserving each primary answer, alternatives, review state, source when available, heuristic overlap candidates and NO-GO state.
 - **13/13 staged question primary facts** were compared against accessible subject-specific public material on 2026-10-15. Primary-reference corroboration is not certification of all answers/aliases, semantic independence or live-game fairness. Source links are retained per item; corrections made to Mohs (USGS specific scale page), the Arabic grammar lesson (working Al Jazeera route), and IATA (official 3-letter directory). The staged Libero source was updated to current FIVB rules. The staged Spyro question now says he is the playable protagonist.
 - Two newly replaced original primary facts have source links: the chess stalemate definition at https://support.chess.com/en/articles/8557490-what-is-stalemate and CSS `font-size` at https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-size.
-- **The other 154 original item rows do not yet carry individually verified, recorded reference links.** Do not imply that they passed complete item-by-item independent source or answer/alias approval. Original narwhal `حريش البحر` false alias removed; its revised `ناروال` transliteration still requires independent sign-off.
+- **Six original rows now have item-specific corroborating reference links** (two earlier source fixes, plus NIST on kilo/mode, NASA on the northern March equinox, and Smithsonian on octopus hearts). **The other 150 original item rows do not yet carry individually verified, recorded reference links.** Do not imply that they passed complete item-by-item independent source or answer/alias approval. Original narwhal `حريش البحر` false alias removed; its revised `ناروال` transliteration still requires independent sign-off.
 - Specific semantic replacements: original `bluff-seed-games-1` changed from the duplicated knight movement fact to stalemate/draw; original `bluff-seed-technology-4` changed from a duplicated CSS-language definition to the CSS font-size property; staged `bluff-supplement-technology-01` changed from repeated SMTP to DNS mail-exchanger (`MX`), backed by https://www.rfc-editor.org/rfc/rfc5321.html (sections 3.6 and 5). These are targeted content changes, not automatic approval to use staged data.
 - Two original source changes are applied by a narrowly scoped explicit `prisma/seed.ts` upsert alongside the known narwhal alias fix. The disposable double seed and source tests must verify changes at the **latest SHA**.
 
@@ -15,7 +15,7 @@
 
 - Refreshed V2 sheet marks **34 heuristic same-answer and overlapping-topic cross-bank links** from the current Bluff sources against staged Board (1,296), Lightning (600) and Letter V4 (224). The number is a candidate count, **NOT 34 independently proven duplicates**. The heuristic misses synonyms, different primary answers that represent the same fact, and other game formats.
 - Earlier exact normalized string regression checks Board, Lightning, Letter V4 and both Bluff banks. Semantic replacement decisions require reviewing what the question actually tests. Merely sharing the answer is insufficient evidence of duplication.
-- Historical `Bluff_169_Item_Review_Gate.csv` is superseded by V2 for audit; do not rely on its old source text/candidate count.
+- Historical `Bluff_169_Item_Review_Gate.csv` and V2 are superseded by V3 for current source status; preserve them as historical audit trails.
 
 ## Court / المحكمة
 
@@ -37,4 +37,4 @@
 
 ## Remaining hard blockers
 
-Independent editorial/citation and alias review of all unverified factual items (especially 154 original Bluff items and previously identified 227 Board reference-sensitive facts); full semantic triage across all ten game formats; 180 Court case acceptance; 13 hard-card human playtests; review of 110 new Social words and session-history behavior; approved staged CSV import mapping; browser evidence at exact final SHA; separate owner release approval. **NO-GO, Draft and unmerged.**
+Independent editorial/citation and alias review of all unverified factual items (especially 150 original Bluff items and previously identified 227 Board reference-sensitive facts); full semantic triage across all ten game formats; 180 Court case acceptance; 13 hard-card human playtests; review of 110 new Social words and session-history behavior; approved staged CSV import mapping; browser evidence at exact final SHA; separate owner release approval. **NO-GO, Draft and unmerged.**
