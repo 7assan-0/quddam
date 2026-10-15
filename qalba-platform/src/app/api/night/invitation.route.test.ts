@@ -32,7 +32,7 @@ beforeEach(() => {
   m.create.mockResolvedValue({ path: `/night/invite/${"a".repeat(64)}`, scheduledAt: "2026-11-01T15:00:00.000Z",
     timezone: "Asia/Riyadh" });
   m.owner.mockResolvedValue({ exists: false });
-  m.publicGet.mockResolvedValue({ id: "invite-1", cookieName: "quddam_night_rsvp_invite-1",
+  m.publicGet.mockResolvedValue({ id: "invite-1", expiresAt: new Date("2026-11-02T15:00:00.000Z"), cookieName: "quddam_night_rsvp_invite-1",
     view: { open: true, games: [{ game: "top-list", votes: 0 }], coming: 0, declined: 0, mine: null } });
   m.respond.mockResolvedValue({ cookieName: "quddam_night_rsvp_invite-1", cookieValue: "b".repeat(64),
     expiresAt: new Date("2026-11-02T15:00:00.000Z"),
@@ -69,6 +69,7 @@ describe("planning-only Night HTTP boundaries", () => {
     expect(await read.json()).toEqual({ invitation: { open: true, games: [{ game: "top-list", votes: 0 }],
       coming: 0, declined: 0, mine: null } });
     expect(read.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(read.headers.get("set-cookie")).toContain("HttpOnly"); // Capability pre-issued on GET.
     expect((await guestPost(request(guestPath, "POST", vote, "https://other.invalid"), guestContext)).status).toBe(403);
     expect(m.respond).not.toHaveBeenCalled();
   });
