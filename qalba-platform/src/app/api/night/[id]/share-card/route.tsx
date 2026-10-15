@@ -33,10 +33,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
           <div style={{ fontSize: 21, color: "#C7D8D0" }}>النتيجة النهائية بعد {recap.played} ألعاب مكتملة</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {recap.ranking.map((team, index) =>
+          {recap.ranking.map(team =>
             <div key={team.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
               background: "#153E32", borderRadius: 12, padding: "13px 22px", fontSize: 27 }}>
-              <span>{index + 1 + recap.ranking.slice(0, index).filter(other => other.points > team.points).length - index}. {team.name}</span>
+              <span>{1 + recap.ranking.filter(other => other.points > team.points).length}. {team.name}</span>
               <span style={{ color: "#FFD21F" }}>{team.points} نقاط</span>
             </div>)}
         </div>
