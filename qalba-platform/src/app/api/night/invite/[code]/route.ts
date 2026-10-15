@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { randomBytes } from "node:crypto";
 import { requireSameOrigin } from "@/lib/http";
 import { nightEnabled } from "@/lib/night/catalog";
 import { rsvpInputSchema } from "@/lib/night/invitation";
@@ -11,9 +12,16 @@ export async function GET(request: NextRequest, { params }: Context) {
   try {
     const { code } = await params;
     const first = await getPublicInvitation(code);
-    const capability = request.cookies.get(first.cookieName)?.value;
+    const supplied = request.cookies.get(first.cookieName)?.value;
+    const capability = supplied && /^[a-f0-9]{64}$/i.test(supplied) ? supplied.toLowerCase() : null;
     const result = capability ? await getPublicInvitation(code, capability) : first;
-    return NextResponse.json({ invitation: result.view }, { headers: nightPrivateHeaders });
+    const response = NextResponse.json({ invitation: result.view }, { headers: nightPrivateHeaders });
+    // A pre-issued unpersisted capability survives a lost first POST response.
+    if (!capability && first.view.open) response.cookies.set(first.cookieName, randomBytes(32).toString("hex"), {
+      httpOnly: true, secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", path: "/", expires: first.expiresAt,
+    });
+    return response;
   } catch (error) { return invitationErrorResponse(error); }
 }
 export async function POST(request: NextRequest, { params }: Context) {
