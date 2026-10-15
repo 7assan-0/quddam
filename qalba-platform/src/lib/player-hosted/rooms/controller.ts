@@ -22,6 +22,7 @@ export class RoomController {
   private links = new Map<number, Link>();
   private lifetime = new AbortController();
   private timer?: ReturnType<typeof setTimeout>;
+  private expiryTimer?: ReturnType<typeof setTimeout>;
   private stopped = false;
   private disposed = false;
   private errors = 0;
@@ -34,11 +35,26 @@ export class RoomController {
     private pollMs = 1_000) {}
 
   private publish(patch: Partial<RoomView> = {}) {
-    if (this.disposed) return;
+    if (this.disposed || (this.stopped && patch.phase !== "closed")) return;
     this.view = { ...this.view, ...patch }; this.notify(this.view);
   }
   private auth() { return { code: this.credentials!.code, token: this.credentials!.token, epoch: this.credentials!.epoch }; }
-  private live(link: Link) { return !this.stopped && !link.failed && this.links.get(link.slot) === link; }
+  private active() {
+    if (this.stopped) return false;
+    if (this.credentials && Date.now() >= this.credentials.expires) {
+      this.end("انتهت مدة الغرفة بعد 60 دقيقة من إنشائها. اطلب غرفة جديدة."); return false;
+    }
+    return true;
+  }
+  private scheduleExpiry() {
+    if (!this.active() || !this.credentials) return;
+    this.expiryTimer = setTimeout(() => {
+      this.expiryTimer = undefined;
+      // Recheck the fixed deadline if the local clock moved backwards.
+      this.scheduleExpiry();
+    }, Math.min(this.credentials.expires - Date.now(), 2_147_483_647));
+  }
+  private live(link: Link) { return this.active() && !link.failed && this.links.get(link.slot) === link; }
   private playable(link: Link) {
     return this.live(link) && link.connected && link.peer.connectionState === "connected" && link.channel?.readyState === "open";
   }
@@ -52,8 +68,9 @@ export class RoomController {
     link.peer.onconnectionstatechange = link.peer.ondatachannel = null; link.peer.close();
   }
   private refresh() {
-    if (this.stopped) return;
+    if (!this.active()) return;
     const players = [...this.links.values()].map(link => ({ slot: link.slot, connected: this.playable(link) }));
+    if (!this.active()) return;
     const connected = players.some(player => player.connected);
     const failed = this.view.role === "guest" && [...this.links.values()].some(link => link.failed);
     const phase = connected ? "connected" : failed ? "failed" : this.links.size ? "connecting" : "waiting";
@@ -72,16 +89,17 @@ export class RoomController {
     } catch { this.failLink(link); return false; }
   }
   private change(next: GameState) {
-    if (next === this.view.state) return;
+    if (!this.active() || next === this.view.state) return;
     this.publish({ state: next });
     for (const link of this.links.values()) this.send(link, JSON.stringify(next));
   }
   private activate(link: Link) {
     if (!this.live(link) || link.connected || link.channel?.readyState !== "open" || link.peer.connectionState !== "connected") return;
     clearTimeout(link.deadline); link.connected = true; this.refresh();
+    if (!this.live(link)) return;
     if (this.view.role === "host") {
-      this.send(link, JSON.stringify(this.view.state));
-      void this.signal({ op: "connected", ...this.auth(), peer: link.slot, generation: link.generation }, link);
+      if (this.send(link, JSON.stringify(this.view.state)) && this.live(link))
+        void this.signal({ op: "connected", ...this.auth(), peer: link.slot, generation: link.generation }, link);
     }
   }
   private attach(link: Link, channel: RTCDataChannel) {
@@ -97,12 +115,13 @@ export class RoomController {
       const now = Date.now();
       if (now - link.window >= 1_000) { link.window = now; link.packets = 0; }
       if (++link.packets > 30 || typeof event.data !== "string" || event.data.length > 1024) { this.failLink(link); return; }
+      if (!this.live(link)) return;
       if (this.view.role === "host") {
         const intent = parseIntent(event.data);
         if (intent) this.change(acceptBuzz(this.view.state, link.slot, intent.round));
       } else {
         const next = parseSnapshot(event.data);
-        if (next && newer(this.view.state, next, this.lastVersion)) {
+        if (next && newer(this.view.state, next, this.lastVersion) && this.live(link)) {
           this.lastVersion = next.version; this.publish({ state: next });
         }
       }
@@ -128,14 +147,17 @@ export class RoomController {
   }
   private async signal(input: SignalInput, link: Link) {
     if (!this.live(link)) return;
-    try { await this.api(input, link.abort.signal); }
+    try { await this.api(input, link.abort.signal); if (!this.live(link)) return; }
     catch { if (this.live(link)) this.failLink(link); }
   }
   private async offer(remote: SignalPeer) {
+    if (!this.active()) return;
     let link: Link | undefined;
     try {
       link = this.makeLink(remote); this.refresh();
+      if (!this.live(link)) return;
       this.attach(link, link.peer.createDataChannel(CHANNEL, { ordered: true }));
+      if (!this.live(link)) return;
       const offer = await link.peer.createOffer();
       if (!this.live(link)) return;
       await link.peer.setLocalDescription(offer);
@@ -147,10 +169,12 @@ export class RoomController {
     } catch { if (link) this.failLink(link); else this.end("تعذر تجهيز الاتصال على هذا المتصفح."); }
   }
   private async answer(remote: SignalPeer) {
+    if (!this.active()) return;
     let link: Link | undefined;
     try {
       const description = parseSessionDescription(JSON.stringify(remote.description), "offer");
       link = this.makeLink(remote); this.refresh();
+      if (!this.live(link)) return;
       await link.peer.setRemoteDescription(description);
       if (!this.live(link)) return;
       const answer = await link.peer.createAnswer();
@@ -164,13 +188,16 @@ export class RoomController {
     } catch { if (link) this.failLink(link); else this.end("تعذر تجهيز الاتصال على هذا المتصفح."); }
   }
   private async applyAnswer(link: Link, remote: SignalPeer) {
+    if (!this.live(link)) return;
     link.applying = true;
     try {
       const description = parseSessionDescription(JSON.stringify(remote.description), "answer");
       await link.peer.setRemoteDescription(description);
+      if (!this.live(link)) return;
     } catch { this.failLink(link); }
   }
   private sync(peers: SignalPeer[]) {
+    if (!this.active()) return;
     for (const remote of peers) {
       const link = this.links.get(remote.slot);
       if (link && remote.generation < link.generation) continue;
@@ -183,23 +210,24 @@ export class RoomController {
     this.refresh();
   }
   private async poll() {
-    if (this.stopped || !this.credentials) return;
+    if (!this.active() || !this.credentials) return;
     try {
       const reply = await this.api({ op: "poll", ...this.auth() }, this.lifetime.signal);
-      if (this.stopped) return;
+      if (!this.active()) return;
       this.errors = 0; this.sync(reply.peers ?? []);
     } catch (error) {
-      if (this.stopped) return;
+      if (!this.active()) return;
       if ((error instanceof ApiError && [403, 410].includes(error.status)) || ++this.errors >= 3) {
         this.end(error instanceof ApiError ? error.message : "فُقد الاتصال بالغرفة؛ أُغلقت الجلسة بأمان."); return;
       }
       this.publish({ status: "انقطع الاتصال بالغرفة مؤقتًا؛ جارٍ التحقق…" });
     }
-    if (!this.stopped) this.timer = setTimeout(() => void this.poll(), this.pollMs * Math.max(1, this.errors));
+    if (this.active()) this.timer = setTimeout(() => void this.poll(), this.pollMs * Math.max(1, this.errors));
   }
   async start(mode: "host" | "guest", code = "", saved?: Credentials) {
     if (this.view.phase !== "idle" || this.stopped) return;
     this.publish({ phase: mode === "host" ? "creating" : "joining", status: "جارٍ تجهيز الغرفة…" });
+    if (!this.active()) return;
     try {
       const reply = await this.api(mode === "host" ? { op: "create" } : saved?.role === "guest" && saved.code === code
         ? { op: "resume", code, token: saved.token, epoch: saved.epoch } : { op: "join", code }, this.lifetime.signal);
@@ -208,24 +236,34 @@ export class RoomController {
         if (credentials) void this.api({ op: "leave", code: credentials.code, token: credentials.token, epoch: credentials.epoch }, undefined, true).catch(() => {});
         return;
       }
-      if (!credentials || credentials.role !== mode || (mode === "guest" && credentials.slot === 0)) throw new Error("invalid role");
+      if (!credentials || credentials.role !== mode || (mode === "guest" && credentials.slot === 0) ||
+        !Number.isFinite(credentials.expires) || credentials.expires <= Date.now()) throw new Error("invalid credentials");
       this.credentials = credentials;
+      this.scheduleExpiry();
+      if (!this.active()) return;
       this.publish({ role: mode, code: credentials.code, slot: credentials.slot, expires: credentials.expires,
         retries: mode === "guest" ? credentials.epoch - 1 : 0, phase: "waiting" });
-      void this.poll(); return credentials;
+      if (!this.active()) return;
+      void this.poll(); return this.active() ? credentials : undefined;
     } catch (error) {
       if (!this.stopped) this.end(error instanceof ApiError ? error.message : "تعذر إنشاء الاتصال بالغرفة.");
     }
   }
   async retry() {
-    if (this.stopped || this.retrying || this.view.role !== "guest" || this.view.phase !== "failed" || this.view.retries >= 3) return;
+    if (!this.active() || this.retrying || this.view.role !== "guest" || this.view.phase !== "failed" || this.view.retries >= 3) return;
     this.retrying = true;
-    this.publish({ retries: this.view.retries + 1, phase: "connecting", status: "جارٍ إعادة الاتصال…" });
     try {
+      this.publish({ retries: this.view.retries + 1, phase: "connecting", status: "جارٍ إعادة الاتصال…" });
+      if (!this.active()) return;
       const reply = await this.api({ op: "retry", ...this.auth() }, this.lifetime.signal);
-      if (this.stopped) return;
+      if (!this.active()) return;
+      const credentials = reply.credentials;
+      if (!credentials || credentials.role !== "guest" || credentials.code !== this.credentials!.code ||
+        credentials.slot !== this.credentials!.slot || credentials.token !== this.credentials!.token ||
+        credentials.epoch !== this.credentials!.epoch + 1 || !Number.isFinite(credentials.expires) ||
+        credentials.expires !== this.credentials!.expires) throw new Error("invalid retry credentials");
       for (const link of this.links.values()) this.closeLink(link);
-      this.credentials = reply.credentials!;
+      this.credentials = credentials;
       this.links.clear(); this.refresh();
       return this.credentials;
     } catch (error) {
@@ -233,12 +271,12 @@ export class RoomController {
     } finally { this.retrying = false; }
   }
   action(action: HostAction) {
-    if (this.stopped || this.view.role !== "host" || ![...this.links.values()].some(link => this.playable(link))) return;
+    if (!this.active() || this.view.role !== "host" || ![...this.links.values()].some(link => this.playable(link))) return;
     this.change(hostAction(this.view.state, action));
   }
   /** Every participant has a buzzer. Host A is a real player in slot 0, not a spectator. */
   buzz() {
-    if (this.stopped || this.view.state.phase !== "open" || this.lastBuzzRound === this.view.state.round) return;
+    if (!this.active() || this.view.state.phase !== "open" || this.lastBuzzRound === this.view.state.round) return;
     if (this.view.role === "host") {
       // A host may only play while the room has a live guest, like opening a round.
       if (![...this.links.values()].some(link => this.playable(link))) return;
@@ -255,7 +293,8 @@ export class RoomController {
   }
   private end(status: string) {
     if (this.stopped) return;
-    this.stopped = true; clearTimeout(this.timer); this.lifetime.abort();
+    this.stopped = true; clearTimeout(this.timer); clearTimeout(this.expiryTimer); this.lifetime.abort();
+    this.timer = this.expiryTimer = undefined;
     for (const link of this.links.values()) this.closeLink(link);
     this.links.clear(); this.credentials = undefined;
     this.publish({ phase: "closed", code: "", players: [], status });

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RoomController, type RoomView } from "./controller";
 import { ApiError, readGuest, rememberGuest, type SignalingClient } from "./client";
-import { SignalingStore, type Credentials, type SignalReply } from "./signaling";
+import { ROOM_TTL, SignalingStore, type Credentials, type SignalReply } from "./signaling";
 import { acceptBuzz, CHANNEL, hostAction, initialState, MAX_GUESTS, MAX_PLAYERS } from "./protocol";
 
 // Lifecycle doubles only. Native Chrome acceptance is recorded separately.
@@ -62,6 +62,212 @@ async function guestFixture() {
 }
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { for (const controller of sessions.splice(0)) controller.dispose(); vi.useRealTimers(); });
+
+describe("absolute room expiry on live RTC connections", () => {
+  it("still accepts host and guest gameplay at 59:59.999 from creation", async () => {
+    const f = await hostFixture(1);
+    vi.setSystemTime(f.host.expires - 1);
+    f.controller.action("open"); f.controller.buzz(); f.controller.action("award");
+    expect(f.view().state).toMatchObject({ round: 1, phase: "result", scores: [1, 0, 0, 0, 0, 0, 0, 0, 0] });
+    f.controller.action("open");
+    f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 2 }));
+    expect(f.view().state).toMatchObject({ round: 2, phase: "locked", winner: 1 });
+    expect(f.view().phase).toBe("connected");
+  });
+  it.each(["open", "buzz", "award", "guest BUZZ"] as const)("rejects %s exactly at 60:00 even before a throttled timer or poll runs", async operation => {
+    const f = await hostFixture(1);
+    if (operation !== "open") f.controller.action("open");
+    if (operation === "award") f.controller.buzz();
+    const before = f.view().state;
+    vi.setSystemTime(f.host.expires);
+    if (operation === "guest BUZZ") f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
+    else if (operation === "buzz") f.controller.buzz();
+    else f.controller.action(operation);
+    expect(f.view().state).toBe(before);
+    expect(f.view().phase).toBe("closed");
+    expect(f.peers[0].connectionState).toBe("closed");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("rejects guest buzz and incoming snapshots exactly at expiry", async () => {
+    const f = await guestFixture(), open = hostAction(initialState(), "open");
+    vi.setSystemTime(f.guest.expires - 1);
+    f.peer.channel.message(JSON.stringify(open));
+    expect(f.view().state).toEqual(open);
+    vi.setSystemTime(f.guest.expires);
+    f.controller.buzz();
+    f.peer.channel.message(JSON.stringify(acceptBuzz(open, 1, 1)));
+    expect(f.peer.channel.sent).toHaveLength(0);
+    expect(f.view().state).toEqual(open);
+    expect(f.view().phase).toBe("closed");
+  });
+  it("rejects an inbound snapshot at expiry without any local action", async () => {
+    const f = await guestFixture(), before = f.view().state;
+    vi.setSystemTime(f.guest.expires);
+    f.peer.channel.message(JSON.stringify(hostAction(initialState(), "open")));
+    expect(f.view().state).toBe(before);
+    expect(f.view().phase).toBe("closed");
+  });
+  it("keeps the terminal view when expiry occurs while refreshing player links", async () => {
+    const f = await hostFixture(1);
+    const clock = vi.spyOn(Date, "now").mockReturnValueOnce(f.host.expires - 1).mockReturnValue(f.host.expires);
+    try {
+      (f.controller as unknown as { refresh(): void }).refresh();
+      expect(f.view().phase).toBe("closed");
+      expect(f.peers[0].connectionState).toBe("closed");
+    } finally { clock.mockRestore(); }
+  });
+  it("does not acknowledge activation if expiry occurs during refresh", async () => {
+    const f = setup(), host = (await f.controller.start("host"))!;
+    f.store.execute({ op: "join", code: host.code });
+    await vi.advanceTimersByTimeAsync(1_000);
+    const peer = f.peers[0]; peer.connectionState = "connected";
+    const clock = vi.spyOn(Date, "now").mockReturnValueOnce(host.expires - 1).mockReturnValue(host.expires);
+    try {
+      expect(() => peer.channel.open()).not.toThrow();
+      expect(f.view().phase).toBe("closed");
+    } finally { clock.mockRestore(); }
+  });
+  it("does not acknowledge activation if sending the initial snapshot expires the room", async () => {
+    const f = setup(), host = (await f.controller.start("host"))!;
+    f.store.execute({ op: "join", code: host.code });
+    await vi.advanceTimersByTimeAsync(1_000);
+    const peer = f.peers[0]; peer.connectionState = "connected";
+    const clock = vi.spyOn(Date, "now").mockReturnValue(host.expires - 1);
+    const controller = f.controller as unknown as { send(link: unknown, raw: string): boolean };
+    const originalSend = controller.send.bind(controller);
+    const send = vi.spyOn(controller, "send").mockImplementation((link, raw) => {
+      clock.mockReturnValue(host.expires); return originalSend(link, raw);
+    });
+    try {
+      expect(() => peer.channel.open()).not.toThrow();
+      expect(f.view().phase).toBe("closed");
+    } finally { send.mockRestore(); clock.mockRestore(); }
+  });
+  it("rejects a guest snapshot if expiry occurs during its message handler", async () => {
+    const f = await guestFixture(), before = f.view().state;
+    const clock = vi.spyOn(Date, "now").mockReturnValueOnce(f.guest.expires - 1).mockReturnValue(f.guest.expires);
+    try {
+      f.peer.channel.message(JSON.stringify(hostAction(initialState(), "open")));
+      expect(f.view().state === before).toBe(true);
+      expect(f.view().phase).toBe("closed");
+    } finally { clock.mockRestore(); }
+  });
+  it("closes at the fixed deadline while a poll is stalled and ignores its late reply", async () => {
+    const store = new SignalingStore();
+    let stall = false, resolvePoll!: (reply: SignalReply) => void;
+    const f = setup(async input => input.op === "poll" && stall
+      ? new Promise(resolve => { resolvePoll = resolve; }) : store.execute(input));
+    const host = (await f.controller.start("host"))!;
+    store.execute({ op: "join", code: host.code });
+    await vi.advanceTimersByTimeAsync(1_000); f.peers[0].connect();
+    stall = true;
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.advanceTimersByTimeAsync(ROOM_TTL - 2_001);
+    expect(f.view().phase).toBe("connected");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(f.view().phase).toBe("closed");
+    expect(f.peers[0].connectionState).toBe("closed");
+    const notifications = f.views.length;
+    resolvePoll({ peers: [{ slot: 1, active: true, generation: 2 }] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.peers).toHaveLength(1);
+    expect(f.views).toHaveLength(notifications);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("rejects a retry at the deadline instead of extending the room", async () => {
+    const f = await guestFixture(); f.peer.disconnect();
+    vi.setSystemTime(f.guest.expires);
+    expect(await f.controller.retry()).toBeUndefined();
+    expect(f.view().phase).toBe("closed");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it.each(["later deadline", "earlier deadline", "role", "slot", "code"] as const)("rejects retry credentials that change the original %s", async changed => {
+    const store = new SignalingStore();
+    const f = setup(async input => {
+      const reply = store.execute(input);
+      if (input.op !== "retry" || !reply.credentials) return reply;
+      const credentials = { ...reply.credentials };
+      if (changed === "later deadline") credentials.expires += 60_000;
+      if (changed === "earlier deadline") credentials.expires -= 60_000;
+      if (changed === "role") credentials.role = "host";
+      if (changed === "slot") credentials.slot = 2;
+      if (changed === "code") credentials.code = "F".repeat(32);
+      return { credentials };
+    });
+    const host = store.execute({ op: "create" }).credentials!;
+    await f.controller.start("guest", host.code);
+    store.execute({ op: "signal", ...auth(host), peer: 1, generation: 1,
+      description: { type: "offer", sdp: "v=0\r\n" + "a".repeat(30) } });
+    await vi.advanceTimersByTimeAsync(1_000);
+    f.peers[0].incoming(); f.peers[0].connect(); f.peers[0].disconnect();
+    expect((await f.controller.retry()) === undefined).toBe(true);
+    expect(f.view().phase).toBe("closed");
+    expect(f.view().role).toBe("guest");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("discards peer setup completing after the deadline", async () => {
+    const peer = new Peer();
+    let resolveOffer!: (offer: { type: "offer"; sdp: string }) => void;
+    peer.createOffer = vi.fn(() => new Promise(resolve => { resolveOffer = resolve; }));
+    const f = setup(undefined, peer), host = (await f.controller.start("host"))!;
+    f.store.execute({ op: "join", code: host.code });
+    await vi.advanceTimersByTimeAsync(1_000);
+    vi.setSystemTime(host.expires);
+    resolveOffer({ type: "offer", sdp: "v=0\r\n" + "a".repeat(30) });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(peer.setLocalDescription.mock.calls.length).toBe(0);
+    expect(peer.connectionState).toBe("closed");
+    expect(f.view().phase).toBe("closed");
+  });
+  it("rejects a start response that arrives after its original deadline", async () => {
+    const store = new SignalingStore(), credentials = store.execute({ op: "create" }).credentials!;
+    let resolveStart!: (reply: SignalReply) => void, polls = 0;
+    const f = setup(async input => {
+      if (input.op === "create") return new Promise(resolve => { resolveStart = resolve; });
+      if (input.op === "poll") polls++;
+      return {};
+    });
+    const starting = f.controller.start("host");
+    vi.setSystemTime(credentials.expires);
+    resolveStart({ credentials });
+    expect((await starting) === undefined).toBe(true);
+    expect(f.view().phase).toBe("closed");
+    expect(polls).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("does not reopen if expiry is reached while adopting start credentials", async () => {
+    const store = new SignalingStore(), credentials = store.execute({ op: "create" }).credentials!;
+    let restoreClock = () => {};
+    const f = setup(async () => {
+      const clock = vi.spyOn(Date, "now").mockReturnValueOnce(credentials.expires - 1).mockReturnValue(credentials.expires);
+      restoreClock = () => clock.mockRestore();
+      return { credentials };
+    });
+    try {
+      expect((await f.controller.start("host")) === undefined).toBe(true);
+      expect(f.view().phase).toBe("closed");
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { restoreClock(); }
+  });
+  it.each([NaN, Infinity, -Infinity, 0])("rejects an invalid or expired credentials deadline (%s)", async expires => {
+    const store = new SignalingStore();
+    const f = setup(async input => {
+      const reply = store.execute(input);
+      return reply.credentials ? { credentials: { ...reply.credentials, expires } } : reply;
+    });
+    expect((await f.controller.start("host")) === undefined).toBe(true);
+    expect(f.view().phase).toBe("closed");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("does not publish after disposal or retain its deadline timer", async () => {
+    const f = await hostFixture(1);
+    f.controller.dispose();
+    const notifications = f.views.length;
+    expect(vi.getTimerCount()).toBe(0);
+    await vi.advanceTimersByTimeAsync(ROOM_TTL);
+    expect(f.views).toHaveLength(notifications);
+  });
+});
 
 describe("automatic room lifecycle, authority and multi-guest isolation", () => {
   it("lets host A play with the same current-round first-buzz and single-score rules", async () => {
