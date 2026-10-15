@@ -29,6 +29,9 @@ jobs:
       E2E_REPORT_DIR: "playwright-report/seven-game-smoke"
       NODE_OPTIONS: "--max-old-space-size=4096"
       EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # Prisma config requires this variable at client-generation time; no connection is made here.
+      # The E2E harness separately overrides it with a disposable in-process PGlite URL.
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:5432/prisma_config_placeholder
     defaults:
       run:
         working-directory: qalba-platform
