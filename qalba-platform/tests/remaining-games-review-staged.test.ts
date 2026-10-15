@@ -48,7 +48,7 @@ describe("remaining seven launch games: review-only structural guards", () => {
   const ranked = bank("Ranked_15_Remediated.csv");
   const ordering = bank("Ordering_15_Remediated.csv");
   const court = bank("Court_15_Remediated.csv");
-  const bluffLedger = bank("Bluff_169_Item_Review_Gate_V2.csv");
+  const bluffLedger = bank("Bluff_169_Item_Review_Gate_V3.csv");
   const courtLedger = bank("Court_180_Individual_Editorial_Gate_V2.csv");
   const hardPlaytestGate = bank("Forbidden_13_Hard_Playtest_Gate.csv");
 
@@ -65,6 +65,16 @@ describe("remaining seven launch games: review-only structural guards", () => {
     expect(bluffLedger.filter((item) => item.bank === "ORIGINAL_SOURCE")).toHaveLength(156);
     expect(bluffLedger.filter((item) => item.bank === "STAGED_REVIEW")).toHaveLength(13);
     expect(bluffLedger.every((item) => item.publication_state === "NO_GO_NOT_APPROVED")).toBe(true);
+    const originalBluffAudit = bluffLedger.filter((item) => item.bank === "ORIGINAL_SOURCE");
+    expect(originalBluffAudit.filter((item) => item.reference_url)).toHaveLength(6);
+    expect(originalBluffAudit.filter((item) => !item.reference_url)).toHaveLength(150);
+    for (const id of ["bluff-seed-general-3", "bluff-seed-general-4", "bluff-seed-general-9", "bluff-seed-oddities-1"]) {
+      const item = originalBluffAudit.find((row) => row.id === id)!;
+      expect(item.reference_url).toMatch(/^https:\/\//);
+      expect(item.factual_reference_state).toContain("HUMAN_SIGNOFF_PENDING");
+      expect(item.publication_state).toBe("NO_GO_NOT_APPROVED");
+    }
+
     expect(courtLedger).toHaveLength(180);
     expect(courtLedger.every((item) => item.publication_state === "NO_GO")).toBe(true);
     expect(courtLedger.every((item) => item.prior_unsupported_blanket_fact === "REMOVED_NOT_ASSERTED_BY_SCENARIO")).toBe(true);
