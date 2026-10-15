@@ -48,6 +48,9 @@ describe("remaining seven launch games: review-only structural guards", () => {
   const ranked = bank("Ranked_15_Remediated.csv");
   const ordering = bank("Ordering_15_Remediated.csv");
   const court = bank("Court_15_Remediated.csv");
+  const bluffLedger = bank("Bluff_169_Item_Review_Gate_V2.csv");
+  const courtLedger = bank("Court_180_Individual_Editorial_Gate.csv");
+  const hardPlaytestGate = bank("Forbidden_13_Hard_Playtest_Gate.csv");
 
   it("preserves all six editorial supplemental pack counts", () => {
     expect([survey.length, forbidden.length, bluff.length, ranked.length, ordering.length, court.length]).toEqual([26, 52, 13, 15, 15, 15]);
@@ -55,6 +58,18 @@ describe("remaining seven launch games: review-only structural guards", () => {
     for (const list of [survey, forbidden, hardForbidden, bluff, ranked, ordering, court]) {
       expect(new Set(list.map((item) => item.id)).size).toBe(list.length);
     }
+  });
+  it("requires item-by-item editorial gate and no premature publication approval", () => {
+    expect(bluffLedger).toHaveLength(169);
+    expect(new Set(bluffLedger.map((item) => item.id)).size).toBe(169);
+    expect(bluffLedger.filter((item) => item.bank === "ORIGINAL_SOURCE")).toHaveLength(156);
+    expect(bluffLedger.filter((item) => item.bank === "STAGED_REVIEW")).toHaveLength(13);
+    expect(bluffLedger.every((item) => item.publication_state === "NO_GO_NOT_APPROVED")).toBe(true);
+    expect(courtLedger).toHaveLength(180);
+    expect(courtLedger.every((item) => item.publication_state === "NO_GO")).toBe(true);
+    expect(hardPlaytestGate).toHaveLength(13);
+    expect(hardPlaytestGate.every((item) => item.publication_state === "NO_GO" && item.real_team_playtest === "HUMAN_TEAM_PLAYTEST_REQUIRED")).toBe(true);
+    expect(hardPlaytestGate.every((item) => item.initial_forbidden_string_collision === "NONE_EXACT_SUBSTRING")).toBe(true);
   });
   it("keeps curated survey scoring structural and six distinct answers per candidate", () => {
     for (const item of survey) {
