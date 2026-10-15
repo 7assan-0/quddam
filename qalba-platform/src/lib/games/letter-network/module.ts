@@ -2,7 +2,7 @@ import { randomInt } from "node:crypto";
 export const SIZE = 5;
 export const ANSWER_MS = 30_000;
 export const STEAL_MS = 15_000;
-export const LETTER_WEIGHTS: Record<string, number> = { ا:6, ب:5, ج:3, د:3, ر:4, س:5, ك:4, م:6, ن:5, و:3, ت:3, ح:2, ش:3, ص:1, ط:1, ع:4, ف:3, ق:3, ل:4, ه:3, ي:3 };
+export const LETTER_WEIGHTS: Record<string, number> = { ا:6, ب:5, ج:3, د:3, ر:4, س:5, ك:4, م:6, ن:5, و:3, ت:3, ح:2, ش:3, ص:1, ط:1, ع:4, ف:3, ق:3, ل:4, ه:3, ي:3, ث:1, خ:2, ذ:1, ز:2, ض:1, ظ:1, غ:2 };
 export type Phase = "LOBBY" | "READY" | "CELL_SELECTED" | "QUESTION_ACTIVE" | "STEAL" | "PAUSED" | "RESULTS" | "COMPLETED" | "ABANDONED";
 export type TeamPosition = 0 | 1;
 export type Cell = { cellId:string; row:number; col:number; letter:string; state:"AVAILABLE" | "ACTIVE" | "CAPTURED_TEAM_A" | "CAPTURED_TEAM_B"; ownerTeamId:string|null; questionId:string|null; completedAt:string|null };
