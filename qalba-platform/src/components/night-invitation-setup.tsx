@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Summary = { exists: boolean; scheduledAt?: string; timezone?: string;
-  coming?: number; declined?: number };
+  coming?: number; declined?: number; votes?: { game: string; title: string; count: number }[] };
 export function NightInvitationSetup({ nightId }: { nightId: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [scheduled, setScheduled] = useState("");
@@ -36,7 +36,8 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       // Intentionally only held in this browser tab; the database stores its hash.
       setLink(new URL(data.invitation.path, location.origin).href);
       setSummary({ exists: true, scheduledAt: data.invitation.scheduledAt,
-        timezone: data.invitation.timezone, coming: 0, declined: 0 });
+        timezone: data.invitation.timezone, coming: 0, declined: 0,
+        votes: [{ game: "top-list", title: "توب 100", count: 0 }, { game: "ordering-challenge", title: "رتّبها", count: 0 }, { game: "survey-show", title: "قالوا الناس", count: 0 }] });
       setNotice("تم إنشاء رابط الدعوة. انسخه الآن واحتفظ به؛ لا يمكن استرجاع نص الرابط من قاعدة البيانات.");
     } catch { setNotice("تعذر إنشاء الدعوة. لا تعاود الطلب قبل تحديث حالة الدعوة."); }
     finally { setBusy(false); }
@@ -48,6 +49,14 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       <p>موعد السهرة: <strong>{new Intl.DateTimeFormat("ar-SA", { dateStyle: "full", timeStyle: "short",
         timeZone: summary.timezone ?? timezone }).format(new Date(summary.scheduledAt!))}</strong></p>
       <p>قالوا جاي: {summary.coming ?? 0} · اعتذروا: {summary.declined ?? 0}</p>
+      <h3>نتائج التصويت</h3>
+      <ul>{summary.votes?.map(v => <li key={v.game}>{v.title}: {v.count} صوت</li>)}</ul>
+      <button className="btn btn-outline" type="button" onClick={() => {
+        void fetch(`/api/night/${nightId}/invitation`, { credentials: "same-origin", cache: "no-store" })
+          .then(async response => { if (!response.ok) throw new Error(); return response.json(); })
+          .then(data => { setSummary(data.invitation); setNotice("تم تحديث الحضور والتصويت."); })
+          .catch(() => setNotice("تعذر تحديث الدعوة حاليًا."));
+      }}>تحديث الحضور والتصويت</button>
       {link ? <><label htmlFor="night-invite-link">رابط الدعوة — انسخه قبل مغادرة الصفحة</label>
         <input id="night-invite-link" className="form-input" dir="ltr" readOnly value={link} style={{ width: "100%" }} />
         <button className="btn btn-secondary" type="button" onClick={() => {
