@@ -1,0 +1,45 @@
+name: Content remediation validation
+
+on:
+  pull_request:
+    branches:
+      - design/phase-3-game-show
+    types: [opened, synchronize, reopened]
+    paths:
+      - "qalba-platform/**"
+      - ".github/workflows/content-remediation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-remediation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Source content and application checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qalba-platform/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client (no database connection)
+        run: npm run db:generate
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Unit and source validation tests
+        run: npm test
+      - name: Production build
+        run: npm run build
