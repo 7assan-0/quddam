@@ -72,6 +72,13 @@ describe("review-only staged content cross-bank duplicate guard", () => {
     }
   });
 
+  it("blocks the known catalyst semantic overlap with the Letter review bank", () => {
+    const lightningItem = lightning.find((item) => item.id === "lightning-v600-science-36");
+    const letterItem = letters.find((item) => item.id === "letter-mh-047");
+    expect(lightningItem?.question).toBe("في معادلة أرينيوس لسرعة التفاعل الكيميائي ما اسم المقدار الذي يرمز له بـ Ea؟");
+    expect(letterItem?.question).toBe("ما اسم المادة التي تسرّع التفاعل الكيميائي من دون أن تُستهلك فيه؟");
+  });
+
   it("replaces the known verbatim electrical-insulator duplication in the Lightning review bank", () => {
     const replacement = lightning.find((item) => item.id === "lightning-v600-science-31");
     expect(replacement?.question).toBe("ما اسم خاصية السائل التي تعبّر عن مقاومته للانسياب؟");
