@@ -68,7 +68,7 @@ export async function getPublicInvitation(code: string, capability?: string, now
   const invite = await db().nightInvitation.findUnique({ where: { tokenHash: codeHash(code) }, include });
   if (!invite) throw new InviteInputError("الدعوة غير موجودة", 404);
   return { id: invite.id, view: project(invite, now, capability),
-    cookieName: attendeeCookieName(invite.id) };
+    cookieName: attendeeCookieName(invite.id), expiresAt: invite.expiresAt };
 }
 export async function respondToInvitation(code: string, input: RsvpInput, capability?: string, now?: Date) {
   enabled();
@@ -76,8 +76,9 @@ export async function respondToInvitation(code: string, input: RsvpInput, capabi
   const named = normalizeAttendeeName(input.name);
   const invite = await db().nightInvitation.findUnique({ where: { tokenHash }, select: { id: true, nightId: true } });
   if (!invite) throw new InviteInputError("الدعوة غير موجودة", 404);
-  const newCapability = randomBytes(32).toString("hex");
   const suppliedHash = capability && /^[a-f0-9]{64}$/i.test(capability) ? digestCapability(capability.toLowerCase()) : null;
+  // The anonymous capability may be issued on GET, so a lost first POST reply can be retried.
+  const newCapability = suppliedHash ? capability!.toLowerCase() : randomBytes(32).toString("hex");
   try {
     return await db().$transaction(async tx => {
       // Match the Night command lock order: no acceptance after the organizer starts play.
