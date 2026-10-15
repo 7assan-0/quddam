@@ -64,6 +64,39 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => { for (const controller of sessions.splice(0)) controller.dispose(); vi.useRealTimers(); });
 
 describe("automatic room lifecycle, authority and multi-guest isolation", () => {
+  it("lets host A play with the same current-round first-buzz and single-score rules", async () => {
+    const f = await hostFixture(MAX_GUESTS);
+    f.controller.buzz(); // No round open: cannot claim a point.
+    expect(f.view().state).toEqual(initialState());
+    f.controller.action("open");
+    f.controller.buzz(); // The host's player action, not a room-admin command.
+    expect(f.view().state).toMatchObject({ round: 1, phase: "locked", winner: 0, version: 2 });
+    f.peers[7].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
+    f.controller.buzz(); // Repeating the host press must not create another transition.
+    expect(f.view().state.version).toBe(2);
+    f.controller.action("award");
+    f.controller.action("award");
+    expect(f.view().state.scores).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    for (const peer of f.peers) {
+      expect(JSON.parse(peer.channel.sent.at(-1)!)).toMatchObject({
+        phase: "result", winner: 0, version: 3, scores: [1, 0, 0, 0, 0, 0, 0, 0, 0],
+      });
+    }
+    f.controller.action("open");
+    f.peers[7].channel.message(JSON.stringify({ type: "BUZZ", round: 2 }));
+    f.controller.buzz(); // Host cannot overtake an already accepted guest BUZZ.
+    expect(f.view().state).toMatchObject({ round: 2, winner: 8, phase: "locked", version: 5 });
+    f.controller.action("award");
+    expect(f.view().state.scores).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 1]);
+  });
+  it("never lets the host buzz with no live guest connection", async () => {
+    const f = await hostFixture(1);
+    f.controller.action("open");
+    f.peers[0].disconnect();
+    const before = f.view().state;
+    f.controller.buzz();
+    expect(f.view().state).toBe(before);
+  });
   it("opens eight distinct host RTC links and broadcasts an eighth-guest win to all of them", async () => {
     const f = await hostFixture(MAX_GUESTS);
     expect(f.guests.map(g => g.slot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -87,7 +120,7 @@ describe("automatic room lifecycle, authority and multi-guest isolation", () => 
     expect(f.peers).toHaveLength(2); expect(f.view().players.filter(p => p.connected)).toHaveLength(2);
     f.controller.action("open");
     f.peers[1].channel.message(JSON.stringify({ type: "BUZZ", round: 1 }));
-    f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 })); f.controller.action("buzz");
+    f.peers[0].channel.message(JSON.stringify({ type: "BUZZ", round: 1 })); f.controller.buzz();
     expect(f.view().state.winner).toBe(2);
     f.controller.action("award"); f.controller.action("award");
     expect(f.view().state.scores).toEqual([0, 0, 1, 0, 0, 0, 0, 0, 0]);
