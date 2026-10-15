@@ -1,0 +1,51 @@
+Sanitized test-output extract. Source frames and payloads omitted.
+
+ RUN  v4.0.4 /workspace/quddam-auto-rooms-review/qalba-platform
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > still accepts host and guest gameplay at 59:59.999 from creation 11ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects open exactly at 60:00 even before a throttled timer or poll runs 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects buzz exactly at 60:00 even before a throttled timer or poll runs 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects award exactly at 60:00 even before a throttled timer or poll runs 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest BUZZ exactly at 60:00 even before a throttled timer or poll runs 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest buzz and incoming snapshots exactly at expiry 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an inbound snapshot at expiry without any local action 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > keeps the terminal view when expiry occurs while refreshing player links 6ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not acknowledge activation if expiry occurs during refresh 3ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not acknowledge activation if sending the initial snapshot expires the room 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects a guest snapshot if expiry occurs during its message handler 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > closes at the fixed deadline while a poll is stalled and ignores its late reply 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects a retry at the deadline instead of extending the room 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects retry credentials that change the original later deadline 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects retry credentials that change the original earlier deadline 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects retry credentials that change the original role 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects retry credentials that change the original slot 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects retry credentials that change the original code 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > discards peer setup completing after the deadline 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects a start response that arrives after its original deadline 0ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not reopen if expiry is reached while adopting start credentials 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (NaN) 0ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (Infinity) 0ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (-Infinity) 0ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (0) 0ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not publish after disposal or retain its deadline timer 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > lets host A play with the same current-round first-buzz and single-score rules 3ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > never lets the host buzz with no live guest connection 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > opens eight distinct host RTC links and broadcasts an eighth-guest win to all of them 5ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > automatically offers to multiple guests and binds buzz identity to its channel 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > rejects score/host/identity injection and isolates one disconnected guest 3ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > never lets guest APIs execute host actions; deduplicates buzz and state versions 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > activates once when channel-open arrives before peer-connected 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > allows a bounded explicit guest retry with a new generation and no host promotion 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > resumes as a guest with the server retry budget and accepts a pre-connected snapshot 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > closes on host departure, disposes timers/handlers and ignores late messages 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > cleans up ICE waits on reset and cleans a late-created server room 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > terminates after three signaling errors without an unbounded retry loop 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > fails ICE timeouts, rejects extra channels and closes flooding/backpressured guests 4ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > persists only guest capabilities and refuses injected host credentials on refresh 1ms
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > keeps the terminal view when expiry occurs while refreshing player links
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not acknowledge activation if expiry occurs during refresh
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not acknowledge activation if sending the initial snapshot expires the room
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects a guest snapshot if expiry occurs during its message handler
+ Test Files  1 failed (1)
+      Tests  4 failed | 36 passed (40)
+   Start at  02:39:56
+   Duration  569ms (transform 126ms, setup 0ms, collect 190ms, tests 72ms, environment 0ms, prepare 4ms)

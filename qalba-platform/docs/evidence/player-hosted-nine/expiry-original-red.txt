@@ -1,0 +1,48 @@
+Sanitized test-output extract. Source frames and payloads omitted.
+
+ RUN  v4.0.4 /workspace/quddam-auto-rooms-review/qalba-platform
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > still accepts host and guest gameplay at 59:59.999 from creation 10ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects open exactly at 60:00 even before a throttled timer or poll runs 10ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects buzz exactly at 60:00 even before a throttled timer or poll runs 2ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects award exactly at 60:00 even before a throttled timer or poll runs 2ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest BUZZ exactly at 60:00 even before a throttled timer or poll runs 3ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest buzz and incoming snapshots exactly at expiry 3ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an inbound snapshot at expiry without any local action 2ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > closes at the fixed deadline while a poll is stalled and ignores its late reply 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects a retry at the deadline instead of extending the room 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > discards peer setup completing after the deadline 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (NaN) 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (Infinity) 1ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (-Infinity) 0ms
+ × src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (0) 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > does not publish after disposal or retain its deadline timer 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > lets host A play with the same current-round first-buzz and single-score rules 3ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > never lets the host buzz with no live guest connection 2ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > opens eight distinct host RTC links and broadcasts an eighth-guest win to all of them 3ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > automatically offers to multiple guests and binds buzz identity to its channel 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > rejects score/host/identity injection and isolates one disconnected guest 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > never lets guest APIs execute host actions; deduplicates buzz and state versions 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > activates once when channel-open arrives before peer-connected 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > allows a bounded explicit guest retry with a new generation and no host promotion 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > resumes as a guest with the server retry budget and accepts a pre-connected snapshot 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > closes on host departure, disposes timers/handlers and ignores late messages 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > cleans up ICE waits on reset and cleans a late-created server room 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > terminates after three signaling errors without an unbounded retry loop 1ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > fails ICE timeouts, rejects extra channels and closes flooding/backpressured guests 4ms
+ ✓ src/lib/player-hosted/rooms/controller.test.ts > automatic room lifecycle, authority and multi-guest isolation > persists only guest capabilities and refuses injected host credentials on refresh 2ms
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects open exactly at 60:00 even before a throttled timer or poll runs
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects buzz exactly at 60:00 even before a throttled timer or poll runs
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest BUZZ exactly at 60:00 even before a throttled timer or poll runs
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects award exactly at 60:00 even before a throttled timer or poll runs
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects guest buzz and incoming snapshots exactly at expiry
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an inbound snapshot at expiry without any local action
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > closes at the fixed deadline while a poll is stalled and ignores its late reply
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > discards peer setup completing after the deadline
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (NaN)
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (Infinity)
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (-Infinity)
+ FAIL  src/lib/player-hosted/rooms/controller.test.ts > absolute room expiry on live RTC connections > rejects an invalid or expired credentials deadline (0)
+ Test Files  1 failed (1)
+      Tests  12 failed | 17 passed (29)
+   Start at  02:33:42
+   Duration  513ms (transform 120ms, setup 0ms, collect 179ms, tests 64ms, environment 0ms, prepare 4ms)

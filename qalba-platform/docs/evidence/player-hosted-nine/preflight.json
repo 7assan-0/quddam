@@ -1,0 +1,2646 @@
+{
+  "evidenceClass": "local working-tree preflight, not a committed-head approval",
+  "startedAt": "2026-10-15T02:41:09.470Z",
+  "finishedAt": "2026-10-15T02:41:46.272Z",
+  "predecessorHead": "81ba0385dacf9fcc336bde4032af2f579c26da03",
+  "dirtyTracked": [
+    "qalba-platform/src/lib/player-hosted/rooms/controller.test.ts",
+    "qalba-platform/src/lib/player-hosted/rooms/controller.ts"
+  ],
+  "runtimeFiles": [
+    {
+      "path": "qalba-platform/src/components/player-hosted-rooms.tsx",
+      "mode": "100644",
+      "sha256": "d31fce75b0795bd43abb6f9c3b9a50e157bf24156c5f943a9a3bec912388c4cc"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/client.ts",
+      "mode": "100644",
+      "sha256": "36c72245d0a96f192bfd234f504d786f6c84955d24323be486f0da030e530ad3"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/controller.test.ts",
+      "mode": "100644",
+      "sha256": "a87055d6c72bd830e8bd3ca70fa4b4ce8f0cf03e9f837eb68439e951d16dea63"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/controller.ts",
+      "mode": "100644",
+      "sha256": "bf25f2908e882d99a97b5ad85d23d8e15d4145a808c002afea0782e8a11b0584"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/protocol.test.ts",
+      "mode": "100644",
+      "sha256": "cc292df8d0110d57f2e6226f9df0cff9e609e5b77c1731936c56fb79d6827d7a"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/protocol.ts",
+      "mode": "100644",
+      "sha256": "089005ae900f77f6ec11fc7043a4e5b18fc5960dd2501aeb724176a0d9e213b9"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/signaling.test.ts",
+      "mode": "100644",
+      "sha256": "b025fce2b6855dc01b644e933d0fb9d5c6f45ffaf55d592ce92ea0e8debcdaa8"
+    },
+    {
+      "path": "qalba-platform/src/lib/player-hosted/rooms/signaling.ts",
+      "mode": "100644",
+      "sha256": "f41e1e87dc49f8cf97fa93cbcff09ba5d8d93705488443dd223c186bb1bcda96"
+    }
+  ],
+  "harness": {
+    "path": "qalba-platform/scripts/player-hosted-nine-chrome.mjs",
+    "sha256": "876632a5471a9cd84c8323ca7486627dda9374bcf136a267f7d88f4e0f2869f2"
+  },
+  "browser": {
+    "distribution": "Google Chrome for Testing",
+    "executableVersion": "155.0.8059.79",
+    "playwrightVersion": "1.56.1",
+    "actualBrowserVersion": "155.0.8059.79",
+    "headless": true,
+    "sandboxDisabledForContainer": true
+  },
+  "nativeRtc": true,
+  "passed": true,
+  "assertionsPassed": 51,
+  "checkpoints": [
+    {
+      "name": "nine_native_players_connected",
+      "at": "2026-10-15T02:41:31.183Z",
+      "players": [
+        {
+          "player": "acceptance-A",
+          "slot": 0,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 8,
+            "connectedPeerCount": 8,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 8,
+            "openDataChannelCount": 8,
+            "messagesSent": 8,
+            "messagesReceived": 0,
+            "bytesSent": 776,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-H",
+          "slot": 7,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "host_A_awarded_once_despite_repeats",
+      "at": "2026-10-15T02:41:35.102Z",
+      "players": [
+        {
+          "player": "acceptance-A",
+          "slot": 0,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 8,
+            "connectedPeerCount": 8,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 8,
+            "openDataChannelCount": 8,
+            "messagesSent": 32,
+            "messagesReceived": 3,
+            "bytesSent": 3016,
+            "bytesReceived": 75,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 3,
+            "messagesReceived": 4,
+            "bytesSent": 75,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 3,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-H",
+          "slot": 7,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 1,
+          "phase": "result",
+          "version": 3,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 0,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 4,
+            "bytesSent": 0,
+            "bytesReceived": 377,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "late_host_and_duplicate_guest_cannot_override_B",
+      "at": "2026-10-15T02:41:35.700Z",
+      "players": [
+        {
+          "player": "acceptance-A",
+          "slot": 0,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 8,
+            "connectedPeerCount": 8,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 8,
+            "openDataChannelCount": 8,
+            "messagesSent": 48,
+            "messagesReceived": 7,
+            "bytesSent": 4512,
+            "bytesReceived": 175,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 7,
+            "messagesReceived": 6,
+            "bytesSent": 175,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 6,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-H",
+          "slot": 7,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 2,
+          "phase": "locked",
+          "version": 5,
+          "scores": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": 1,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 6,
+            "bytesSent": 0,
+            "bytesReceived": 564,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "all_nine_players_each_scored_once",
+      "at": "2026-10-15T02:41:38.419Z",
+      "players": [
+        {
+          "player": "acceptance-A",
+          "slot": 0,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 8,
+            "connectedPeerCount": 8,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 8,
+            "openDataChannelCount": 8,
+            "messagesSent": 224,
+            "messagesReceived": 17,
+            "bytesSent": 21080,
+            "bytesReceived": 421,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 10,
+            "messagesReceived": 28,
+            "bytesSent": 246,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 6,
+            "rejectedProbePacketsSent": 3,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-H",
+          "slot": 7,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "reloaded_I_retains_slot_score_and_no_admin",
+      "at": "2026-10-15T02:41:40.185Z",
+      "players": [
+        {
+          "player": "acceptance-A",
+          "slot": 0,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 9,
+            "connectedPeerCount": 8,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 8,
+            "openDataChannelCount": 8,
+            "messagesSent": 197,
+            "messagesReceived": 16,
+            "bytesSent": 18539,
+            "bytesReceived": 396,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "connected",
+              "closed",
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 10,
+            "messagesReceived": 28,
+            "bytesSent": 246,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 6,
+            "rejectedProbePacketsSent": 3,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-H",
+          "slot": 7,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 28,
+            "bytesSent": 25,
+            "bytesReceived": 2635,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 9,
+          "phase": "result",
+          "version": 27,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": 7,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 94,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "host_close_disables_all_remaining_guests",
+      "at": "2026-10-15T02:41:40.468Z",
+      "players": [
+        {
+          "player": "acceptance-B",
+          "slot": 1,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 6,
+            "rejectedProbePacketsSent": 3,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-C",
+          "slot": 2,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-D",
+          "slot": 3,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-E",
+          "slot": 4,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-F",
+          "slot": 5,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-G",
+          "slot": 6,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        },
+        {
+          "player": "acceptance-I",
+          "slot": 8,
+          "round": 10,
+          "phase": "open",
+          "version": 28,
+          "scores": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "winner": null,
+          "connected": false,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 0,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 0,
+            "openDataChannelCount": 0,
+            "messagesSent": 0,
+            "messagesReceived": 0,
+            "bytesSent": 0,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "closed"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "fresh_room_zero_scores_no_previous_winner",
+      "at": "2026-10-15T02:41:43.372Z",
+      "players": [
+        {
+          "player": "fresh-A",
+          "slot": 0,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": true,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 1,
+            "messagesReceived": 0,
+            "bytesSent": 97,
+            "bytesReceived": 0,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        },
+        {
+          "player": "fresh-B",
+          "slot": 1,
+          "round": 0,
+          "phase": "waiting",
+          "version": 0,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null,
+          "connected": true,
+          "closed": false,
+          "buzzDisabled": true,
+          "hasAdministration": false,
+          "capacityRejected": false,
+          "native": {
+            "constructorIsNative": true,
+            "peerCount": 1,
+            "connectedPeerCount": 1,
+            "iceServerCount": 0,
+            "nativeInstances": true,
+            "dataChannelCount": 1,
+            "openDataChannelCount": 1,
+            "messagesSent": 0,
+            "messagesReceived": 1,
+            "bytesSent": 0,
+            "bytesReceived": 97,
+            "duplicatePacketsSent": 0,
+            "rejectedProbePacketsSent": 0,
+            "states": [
+              "connected"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "measurements": [
+    {
+      "name": "nine_connected",
+      "at": "2026-10-15T02:41:31.194Z",
+      "monotonicSeconds": 22.124180071999998,
+      "scope": "host page CDP target; ProcessTime is the renderer process reported for this target, possibly shared; not full browser or machine CPU",
+      "values": {
+        "Documents": 6,
+        "Nodes": 413,
+        "TaskDuration": 1.2e-05,
+        "ThreadTime": 5.5e-05,
+        "ProcessTime": 0.91,
+        "JSHeapUsedSize": 10348960,
+        "JSHeapTotalSize": 11309056
+      }
+    },
+    {
+      "name": "nine_connected_idle_three_seconds",
+      "at": "2026-10-15T02:41:34.196Z",
+      "monotonicSeconds": 25.126332795,
+      "scope": "host page CDP target; ProcessTime is the renderer process reported for this target, possibly shared; not full browser or machine CPU",
+      "values": {
+        "Documents": 6,
+        "Nodes": 413,
+        "TaskDuration": 0.022501,
+        "ThreadTime": 0.025758,
+        "ProcessTime": 0.96,
+        "JSHeapUsedSize": 10738832,
+        "JSHeapTotalSize": 11833344
+      },
+      "intervalSeconds": 3.002152723000002,
+      "ThreadTimeDeltaSeconds": 0.025703,
+      "ThreadTimeCpuPercentOfOneCore": 0.8561523137409018,
+      "ProcessTimeDeltaSeconds": 0.04999999999999993,
+      "ProcessTimeCpuPercentOfOneCore": 1.6654715670172755
+    },
+    {
+      "name": "nine_rounds_gameplay_and_guest_I_reconnection",
+      "at": "2026-10-15T02:41:40.273Z",
+      "monotonicSeconds": 31.203257817,
+      "scope": "host page CDP target; ProcessTime is the renderer process reported for this target, possibly shared; not full browser or machine CPU",
+      "values": {
+        "Documents": 6,
+        "Nodes": 431,
+        "TaskDuration": 0.492472,
+        "ThreadTime": 0.525653,
+        "ProcessTime": 1.8,
+        "JSHeapUsedSize": 12328312,
+        "JSHeapTotalSize": 17113088
+      },
+      "intervalSeconds": 6.076925022000001,
+      "ThreadTimeDeltaSeconds": 0.49989500000000003,
+      "ThreadTimeCpuPercentOfOneCore": 8.22611762018215,
+      "ProcessTimeDeltaSeconds": 0.8400000000000001,
+      "ProcessTimeCpuPercentOfOneCore": 13.822780385787025
+    }
+  ],
+  "browserClockBoundary": {
+    "passed": true,
+    "scope": "synthetic browser clock at server-issued expiry minus 1ms and expiry; server clock unchanged; not a real-hour soak",
+    "nativeRtc": true
+  },
+  "realTimeSoak": {
+    "run": false,
+    "fullHourRoomLifecycle": false
+  },
+  "consoleCounts": [
+    {
+      "player": "acceptance-A",
+      "error": 0,
+      "warning": 0,
+      "log": 3,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-B",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-C",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-D",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-E",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-F",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-G",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-H",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "acceptance-I",
+      "error": 0,
+      "warning": 0,
+      "log": 2,
+      "info": 2,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 1
+    },
+    {
+      "player": "overflow-guest",
+      "error": 1,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "fresh-A",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "fresh-B",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    },
+    {
+      "player": "clock-A",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 1
+    },
+    {
+      "player": "clock-B",
+      "error": 0,
+      "warning": 0,
+      "log": 1,
+      "info": 1,
+      "debug": 0,
+      "other": 0,
+      "pageError": 0,
+      "requestFailed": 0
+    }
+  ],
+  "sourceVerification": {
+    "trackedInventoryUnchanged": true,
+    "sourceHeadUnchanged": true,
+    "relevantApplicationFilesUnchanged": true,
+    "changedRelevantPaths": [],
+    "generatedNextEnvEquivalent": true,
+    "harnessUnchanged": true
+  },
+  "finalHeadEvidence": "See source-bound follow-up comment on PR #9; this preflight does not verify the predecessor commit or a future head."
+}

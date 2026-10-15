@@ -1,0 +1,35 @@
+{
+  "utc": "2026-10-14T23:02:51.799Z",
+  "results": [
+    {
+      "name": "Cross-origin blocked",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "name": "Missing Origin blocked",
+      "status": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "name": "Strict body schema rejects host role injection",
+      "status": 400,
+      "expected": 400,
+      "pass": true
+    },
+    {
+      "name": "Actual oversized body rejected",
+      "status": 413,
+      "expected": 413,
+      "pass": true
+    },
+    {
+      "name": "Unknown invite cannot be joined",
+      "status": 410,
+      "expected": 410,
+      "pass": true
+    }
+  ]
+}
