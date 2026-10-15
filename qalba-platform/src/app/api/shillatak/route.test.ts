@@ -1,11 +1,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 const m = vi.hoisted(() => ({ user: vi.fn(), list: vi.fn(), create: vi.fn(), view: vi.fn(),
-  invite: vi.fn(), attach: vi.fn(), archive: vi.fn(), leave: vi.fn(), preview: vi.fn(), accept: vi.fn() }));
+  invite: vi.fn(), attach: vi.fn(), archive: vi.fn(), leave: vi.fn(), revoke: vi.fn(), preview: vi.fn(), accept: vi.fn() }));
 vi.mock("@/lib/auth/session", () => ({ currentUser: m.user }));
 vi.mock("@/lib/shillatak/service", () => ({
   listMyShillas: m.list, createShilla: m.create, getShillaView: m.view, createShillaInvite: m.invite,
-  attachShillaNight: m.attach, archiveShilla: m.archive, leaveShilla: m.leave,
+  attachShillaNight: m.attach, archiveShilla: m.archive, leaveShilla: m.leave, revokeShillaInvite: m.revoke,
   previewShillaInvite: m.preview, acceptShillaInvite: m.accept,
 }));
 import { GET as list, POST as create } from "./route";
@@ -28,6 +28,7 @@ beforeEach(() => {
   m.list.mockResolvedValue([]); m.create.mockResolvedValue({ id }); m.view.mockResolvedValue({ id });
   m.invite.mockResolvedValue({ path: `/shillatak/join/${code}` }); m.attach.mockResolvedValue({ id });
   m.archive.mockResolvedValue({ id, status: "archived" }); m.leave.mockResolvedValue({ left: true });
+  m.revoke.mockResolvedValue({ id, activeInvites: [] });
   m.preview.mockResolvedValue({ name: "أصدقاؤنا", open: true, alreadyMember: false });
   m.accept.mockResolvedValue({ shillaId: id });
 });
@@ -86,5 +87,8 @@ describe("Shillatak owner/member-only HTTP boundaries", () => {
     expect((await action(req(`/api/shillatak/${id}`, "POST", { op: "LEAVE" }), groupCtx)).status).toBe(200);
     expect(m.archive).toHaveBeenCalledWith("owner", id);
     expect(m.leave).toHaveBeenCalledWith("owner", id);
+    const inviteId = "00000000-0000-4000-8000-000000000003";
+    expect((await action(req(`/api/shillatak/${id}`, "POST", { op: "REVOKE", inviteId }), groupCtx)).status).toBe(200);
+    expect(m.revoke).toHaveBeenCalledWith("owner", id, inviteId);
   });
 });
