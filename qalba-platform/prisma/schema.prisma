@@ -1282,7 +1282,6 @@ model ShillaInvite {
   tokenHash String @unique @db.Char(64)
   expiresAt DateTime
   consumedAt DateTime?
-  consumedById String?
   createdAt DateTime @default(now())
   shilla Shilla @relation(fields: [shillaId], references: [id], onDelete: Restrict)
   @@index([shillaId, expiresAt])
