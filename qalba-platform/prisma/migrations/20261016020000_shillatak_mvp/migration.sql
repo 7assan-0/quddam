@@ -31,11 +31,10 @@ CREATE UNIQUE INDEX "ShillaTeam_shillaId_position_key" ON "ShillaTeam"("shillaId
 CREATE UNIQUE INDEX "ShillaTeam_shillaId_nameKey_key" ON "ShillaTeam"("shillaId","nameKey");
 CREATE TABLE "ShillaInvite" (
  "id" TEXT NOT NULL, "shillaId" TEXT NOT NULL, "tokenHash" CHAR(64) NOT NULL,
- "expiresAt" TIMESTAMP(3) NOT NULL, "consumedAt" TIMESTAMP(3), "consumedById" TEXT,
+ "expiresAt" TIMESTAMP(3) NOT NULL, "consumedAt" TIMESTAMP(3),
  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
  CONSTRAINT "ShillaInvite_pkey" PRIMARY KEY ("id"),
- CONSTRAINT "ShillaInvite_shillaId_fkey" FOREIGN KEY ("shillaId") REFERENCES "Shilla"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
- CONSTRAINT "ShillaInvite_consumed_check" CHECK (("consumedAt" IS NULL AND "consumedById" IS NULL) OR ("consumedAt" IS NOT NULL AND "consumedById" IS NOT NULL))
+ CONSTRAINT "ShillaInvite_shillaId_fkey" FOREIGN KEY ("shillaId") REFERENCES "Shilla"("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 CREATE UNIQUE INDEX "ShillaInvite_tokenHash_key" ON "ShillaInvite"("tokenHash");
 CREATE INDEX "ShillaInvite_shillaId_expiresAt_idx" ON "ShillaInvite"("shillaId","expiresAt");
