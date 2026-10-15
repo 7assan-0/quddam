@@ -14,14 +14,14 @@ const stateSchema = z.object({
 }).strict();
 function slotScore() { return z.number().int().min(0).max(MAX_ROUNDS); }
 export type GameState = z.infer<typeof stateSchema>;
-export type HostAction = "open" | "buzz" | "award" | "skip";
+/** Administration only. Playing as host uses the same acceptBuzz path as any slot. */
+export type HostAction = "open" | "award" | "skip";
 export const initialState = (): GameState => ({ protocol: 3, version: 0, round: 0,
   phase: "waiting", winner: null, scores: [0, 0, 0, 0, 0, 0, 0, 0, 0] });
 
 export function hostAction(state: GameState, action: HostAction): GameState {
   if (action === "open" && ["waiting", "result"].includes(state.phase) && state.round < MAX_ROUNDS)
     return { ...state, version: state.version + 1, round: state.round + 1, phase: "open", winner: null };
-  if (action === "buzz") return acceptBuzz(state, 0, state.round);
   if (action === "award" && state.phase === "locked" && state.winner !== null) {
     const scores = [...state.scores] as GameState["scores"];
     scores[state.winner]++;
