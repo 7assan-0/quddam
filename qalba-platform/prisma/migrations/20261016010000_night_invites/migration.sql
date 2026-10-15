@@ -25,7 +25,8 @@ CREATE TABLE "NightInviteGuest" (
  "updatedAt" TIMESTAMP(3) NOT NULL,
  CONSTRAINT "NightInviteGuest_pkey" PRIMARY KEY ("id"),
  CONSTRAINT "NightInviteGuest_inviteId_fkey" FOREIGN KEY ("inviteId") REFERENCES "NightInvitation"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
- CONSTRAINT "NightInviteGuest_rsvp_check" CHECK ("rsvp" IN ('YES','NO'))
+ CONSTRAINT "NightInviteGuest_rsvp_check" CHECK ("rsvp" IN ('YES','NO')),
+ CONSTRAINT "NightInviteGuest_ballot_check" CHECK (("rsvp" = 'YES' OR "gameVote" IS NULL) AND ("gameVote" IS NULL OR "gameVote" IN ('top-list','ordering-challenge','survey-show')))
 );
 CREATE UNIQUE INDEX "NightInviteGuest_capabilityHash_key" ON "NightInviteGuest"("capabilityHash");
 CREATE UNIQUE INDEX "NightInviteGuest_inviteId_nameKey_key" ON "NightInviteGuest"("inviteId","nameKey");
