@@ -79,7 +79,10 @@ export async function getShillaView(userId: string, id: string) {
   const group = await db().shilla.findUnique({ where: { id }, include: detailInclude });
   if (!group) deny();
   const view = present(group, userId);
-  if (group.ownerId !== userId || group.status !== "active") return { ...view, eligibleNights: [] };
+  if (group.ownerId !== userId || group.status !== "active") return { ...view, eligibleNights: [], activeInvites: [] };
+  const activeInvites = await db().shillaInvite.findMany({ where: { shillaId: id, consumedAt: null,
+      revokedAt: null, expiresAt: { gt: new Date() } },
+    select: { id: true, expiresAt: true }, orderBy: { createdAt: "desc" }, take: SHILLA_MAX_ACTIVE_INVITES });
   const pending = await db().nightSession.findMany({
     where: { ownerId: userId, phase: "completed", shillaRecord: null },
     orderBy: { createdAt: "desc" }, take: 20,
@@ -94,7 +97,7 @@ export async function getShillaView(userId: string, id: string) {
           normalizedName(team.name).nameKey === expected[index]);
     } catch { return false; }
   }).map(night => ({ id: night.id, createdAt: night.createdAt.toISOString() }));
-  return { ...view, eligibleNights };
+  return { ...view, eligibleNights, activeInvites: activeInvites.map(invite => ({ id: invite.id, expiresAt: invite.expiresAt.toISOString() })) };
 }
 export async function createShillaInvite(userId: string, id: string) {
   requireEnabled(); groupId(id);
@@ -146,6 +149,19 @@ export async function acceptShillaInvite(userId: string, code: string) {
     return group.id;
   });
   return { shillaId: joinedId };
+}
+export async function revokeShillaInvite(userId: string, id: string, inviteId: string) {
+  requireEnabled(); groupId(id); groupId(inviteId);
+  await db().$transaction(async tx => {
+    await tx.$queryRawUnsafe('SELECT "id" FROM "Shilla" WHERE "id"=$1 FOR UPDATE', id);
+    const group = await tx.shilla.findUnique({ where: { id } });
+    if (!group || group.ownerId !== userId) deny();
+    const invite = await tx.shillaInvite.findUnique({ where: { id: inviteId } });
+    if (!invite || invite.shillaId !== id) deny("الدعوة غير موجودة");
+    if (invite.consumedAt) deny("الدعوة استُخدمت مسبقًا", 409, "INVITE_CONSUMED");
+    if (!invite.revokedAt) await tx.shillaInvite.update({ where: { id: invite.id }, data: { revokedAt: new Date() } });
+  });
+  return getShillaView(userId, id);
 }
 export async function attachShillaNight(userId: string, shillaId: string, nightId: string) {
   requireEnabled(); groupId(shillaId); groupId(nightId);
