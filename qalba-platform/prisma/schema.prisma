@@ -84,6 +84,8 @@ model User {
   externalAccounts  ExternalAccount[]
   hostedGames       GameSession[] @relation("Host")
   nightSessions     NightSession[]
+  shillasOwned      Shilla[] @relation("ShillaOwner")
+  shillaMemberships ShillaMembership[]
   players           Player[]
   history           QuestionHistory[]
   reports           QuestionReport[]
@@ -1176,6 +1178,7 @@ model NightSession {
   games NightGame[]
   commands NightCommand[]
   invitation NightInvitation?
+  shillaRecord ShillaNight?
   @@unique([ownerId, createKey])
   @@index([ownerId, createdAt])
 }
@@ -1235,4 +1238,64 @@ model NightInviteGuest {
   invitation NightInvitation @relation(fields: [inviteId], references: [id], onDelete: Restrict)
   @@unique([inviteId, nameKey])
   @@index([inviteId, rsvp])
+}
+
+/** Private opt-in group. Members are verified site accounts, not RSVP aliases. */
+model Shilla {
+  id String @id @default(cuid())
+  ownerId String
+  name String @db.VarChar(60)
+  status String @default("active") @db.VarChar(16)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner User @relation("ShillaOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members ShillaMembership[]
+  teams ShillaTeam[]
+  invites ShillaInvite[]
+  nights ShillaNight[]
+  @@index([ownerId, createdAt])
+}
+model ShillaMembership {
+  id String @id @default(cuid())
+  shillaId String
+  userId String
+  role String @db.VarChar(16)
+  joinedAt DateTime @default(now())
+  shilla Shilla @relation(fields: [shillaId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@unique([shillaId, userId])
+  @@index([userId, joinedAt])
+}
+model ShillaTeam {
+  id String @id @default(cuid())
+  shillaId String
+  position Int
+  name String @db.VarChar(60)
+  nameKey String @db.VarChar(120)
+  shilla Shilla @relation(fields: [shillaId], references: [id], onDelete: Restrict)
+  @@unique([shillaId, position])
+  @@unique([shillaId, nameKey])
+}
+model ShillaInvite {
+  id String @id @default(cuid())
+  shillaId String
+  tokenHash String @unique @db.Char(64)
+  expiresAt DateTime
+  consumedAt DateTime?
+  consumedById String?
+  createdAt DateTime @default(now())
+  shilla Shilla @relation(fields: [shillaId], references: [id], onDelete: Restrict)
+  @@index([shillaId, expiresAt])
+}
+/** Immutable completed Night snapshot; one Night cannot count in multiple groups. */
+model ShillaNight {
+  id String @id @default(cuid())
+  shillaId String
+  nightId String @unique
+  snapshot Json
+  sourceDigest String @db.Char(64)
+  createdAt DateTime @default(now())
+  shilla Shilla @relation(fields: [shillaId], references: [id], onDelete: Restrict)
+  night NightSession @relation(fields: [nightId], references: [id], onDelete: Restrict)
+  @@index([shillaId, createdAt])
 }
