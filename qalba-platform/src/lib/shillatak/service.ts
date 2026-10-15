@@ -39,7 +39,7 @@ function present(group: Detail, userId: string) {
     const snapshot = safeSnapshot(record.snapshot, record.nightId);
     if (snapshot.teams.some((team, i) => team.shillaTeamId !== group.teams[i]?.id))
       deny("تعذر التحقق من هوية فريق السهرة", 409, "INVALID_HISTORY");
-    return { id: record.id, nightId: record.nightId, recordedAt: record.createdAt.toISOString(),
+    return { id: record.id, recordedAt: record.createdAt.toISOString(),
       teams: snapshot.teams.map(({ shillaTeamId, name, points, champion }) => ({
         id: shillaTeamId, name, points, champion,
       })) };
