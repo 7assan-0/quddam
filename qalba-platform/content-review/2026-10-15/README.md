@@ -34,3 +34,12 @@ The nine incorrect alternatives removed in V4 were associated with question IDs 
 NO-GO until: independent editorial/factual and semantic duplicate review; explicit import mapping for the revised CSVs; isolated PostgreSQL seed twice plus archived-row checks; typecheck/lint/build/tests; browser session for all games; manual approval of migration, merge, and deployment.
 
 Never apply this review CSV directory directly to a production database. No secrets or database connection strings are stored in it.
+
+## Latest item-by-item acceptance gate (2026-10-15)
+
+See [EDITORIAL_AND_GAMEPLAY_GATE_STATUS.md](EDITORIAL_AND_GAMEPLAY_GATE_STATUS.md) for the exact factual/semantic/gameplay findings and NO-GO status. It references these current inventories:
+- `Bluff_169_Item_Review_Gate_V2.csv`: all 156 original + 13 staged candidate items, references/aliases/semantic flags and explicitly pending editorial sign-off. Supersedes earlier `Bluff_169_Item_Review_Gate.csv` as current review state.
+- `Court_180_Individual_Editorial_Gate.csv`: 180 distinct scenarios but 180 repeated background-fact formulations still require human editorial and jury playtesting.
+- `Forbidden_13_Hard_Candidates_Review_Pending.csv` and `Forbidden_13_Hard_Playtest_Gate.csv`: 13 provisional hard cards and individualized clue/risk review. No actual human playtest claimed.
+
+Two original Bluff semantic duplicates were replaced with independently referenced chess-stalemate and CSS font-size facts, and one staged SMTP duplicate was replaced with RFC-backed DNS MX. Source-code changes remain on this Draft PR only, and review-only CSVs are **not imported**.
