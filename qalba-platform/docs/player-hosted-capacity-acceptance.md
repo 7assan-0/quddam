@@ -2,7 +2,7 @@
 
 **Status: code and tests updated; verification NOT RUN for this amendment.** Earlier local Chrome results from commit `83fad608` cover host + three guests / 30 minutes only and must not be recycled as evidence for the nine-player variant.
 
-Owner-approved target: host A + guests B through I (eight guests), one-hour absolute room lifetime measured from creation. Implementation remains opt-in, localhost-only, single-process signaling, no public deployment or extra service spending. PR #9 stays draft and stacked on unmerged PR #8.
+Owner-approved target: **playing host A** + guests B through I (eight guests), one-hour absolute room lifetime measured from creation. The host occupies the fixed ninth-player slot 0, has their own player-facing buzzer and score, and retains a separately labeled administration panel; no extra guest slot is consumed. Implementation remains opt-in, localhost-only, single-process signaling, no public deployment or extra service spending. PR #9 stays draft and stacked on unmerged PR #8.
 
 ## Changes to inspect
 
@@ -31,7 +31,7 @@ Use synthetic/local environment only; `db:generate` requires no database migrati
 1. Enable the **same local-only** feature flag and exact loopback origin documented in `player-hosted-rooms.md` on a trusted localhost browser. No wildcard listener, firewall/trust changes or public origin.
 2. Open a host and **eight** guest tabs. Join using the link/code without manual SDP. Verify all eight guest slots B–I connect and receive the same initial nine-score snapshot.
 3. Attempt guest nine (tenth participant); verify a room-full rejection without allocating a slot, leaking capabilities or disrupting other peers.
-4. In separate rounds, test host A, early guest B and last guest I winning; only one accepted buzz/host award per round, all connected players synchronize the nine scores and monotonically increasing version. Inject malformed/stale/duplicate packets in automated tests; browser test is not described as fuzzing unless actually performed.
+4. In separate rounds, test host A **pressing the same player-buzzer control and receiving a point**, early guest B and last guest I winning. Verify host-vs-guest first-arrival lock in both orders, denied duplicate/stale host and guest presses, host's own score displayed correctly on all peers, one accepted buzz/host award per round and monotonically increasing versions. Confirm the host's player controls and administrative controls are visually separated, and no guest receives any admin control. Inject malformed/stale/duplicate packets in automated tests; browser test is not described as fuzzing unless actually performed.
 5. Refresh guest I; verify it resumes as I, with no host privileges and no score rollback. Close a different guest; confirm other connections survive. Reset the host during an open round; all guests become terminal and cannot buzz or become host.
 6. For the absolute expiry, unit-test the boundary at 59:59.999 and exactly 60:00 under a controlled clock; then, if feasible, independently verify a **real 60-minute** continuous local session with heartbeat traffic. A fake-clock test alone is not a measured hour of browser/network stability.
 7. Record browser/OS versions, CPU and memory during eight simultaneous peer connections, packet/send failures, and sanitized evidence without room codes, tokens, SDP or ICE metadata. Where actual browser constraints block a test, state NOT RUN or BLOCKED.
@@ -39,4 +39,4 @@ Use synthetic/local environment only; `db:generate` requires no database migrati
 
 ## Sign-off / rollback
 
-Only update the PR to PASS after the scoped unit/type/lint/build checks **and** a real host + eight guests browser run. Even then, classify LAN, cross-network NAT/TURN, one-hour real-world reliability and deployment separately. If the amendment fails, preserve a clear failure report; do not merge PR #8/#9 or deploy. Rollback is stopping local tabs/Node, disabling the lab flag, and reverting the amendment on the experimental branch after preserving unrelated work. No OCI, payment, email or production data is part of this change.
+Only update the PR to PASS after the scoped unit/type/lint/build checks **and** a real host + eight guests browser run that includes **host A playing and winning**, not merely hosting. Even then, classify LAN, cross-network NAT/TURN, one-hour real-world reliability and deployment separately. If the amendment fails, preserve a clear failure report; do not merge PR #8/#9 or deploy. Rollback is stopping local tabs/Node, disabling the lab flag, and reverting the amendment on the experimental branch after preserving unrelated work. No OCI, payment, email or production data is part of this change.
