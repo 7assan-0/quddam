@@ -108,9 +108,9 @@ describe("remaining seven launch games: review-only structural guards", () => {
   it("records the current Out-of-the-loop baseline without claiming it is sufficient for publication", () => {
     const entries = Object.entries(socialWords);
     expect(entries).toHaveLength(11);
-    expect(entries.every(([,words]) => words.length === 5)).toBe(true);
+    expect(entries.every(([,words]) => words.length === 15)).toBe(true);
     const words = entries.flatMap(([,words]) => words);
-    expect(words).toHaveLength(55);
+    expect(words).toHaveLength(165);
     expect(new Set(words.map(norm)).size).toBe(55);
   });
 });
