@@ -49,7 +49,7 @@ describe("remaining seven launch games: review-only structural guards", () => {
   const ordering = bank("Ordering_15_Remediated.csv");
   const court = bank("Court_15_Remediated.csv");
   const bluffLedger = bank("Bluff_169_Item_Review_Gate_V2.csv");
-  const courtLedger = bank("Court_180_Individual_Editorial_Gate.csv");
+  const courtLedger = bank("Court_180_Individual_Editorial_Gate_V2.csv");
   const hardPlaytestGate = bank("Forbidden_13_Hard_Playtest_Gate.csv");
 
   it("preserves all six editorial supplemental pack counts", () => {
@@ -67,6 +67,9 @@ describe("remaining seven launch games: review-only structural guards", () => {
     expect(bluffLedger.every((item) => item.publication_state === "NO_GO_NOT_APPROVED")).toBe(true);
     expect(courtLedger).toHaveLength(180);
     expect(courtLedger.every((item) => item.publication_state === "NO_GO")).toBe(true);
+    expect(courtLedger.every((item) => item.prior_unsupported_blanket_fact === "REMOVED_NOT_ASSERTED_BY_SCENARIO")).toBe(true);
+    expect(new Set(courtLedger.map((item) => item.fact_case_action)).size).toBe(180);
+    expect(courtLedger.every((item) => item.fact_case_action.startsWith("الفعل المختلف عليه في هذا السيناريو: "))).toBe(true);
     expect(hardPlaytestGate).toHaveLength(13);
     expect(hardPlaytestGate.every((item) => item.publication_state === "NO_GO" && item.real_team_playtest === "HUMAN_TEAM_PLAYTEST_REQUIRED")).toBe(true);
     expect(hardPlaytestGate.every((item) => item.initial_forbidden_string_collision === "NONE_EXACT_SUBSTRING")).toBe(true);
