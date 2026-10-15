@@ -99,6 +99,21 @@ describe("remaining seven launch games: review-only structural guards", () => {
     expect(() => validateFake("حريش البحر", item, [], [])).not.toThrow();
     expect(() => validateFake("ناروال", item, [], [])).toThrow();
   });
+  it("uses two distinct, sourced Bluff replacements instead of repeated chess/CSS definitions", () => {
+    const chess = bluffSamples.find((q) => q.id === "bluff-seed-games-1")!;
+    const css = bluffSamples.find((q) => q.id === "bluff-seed-technology-4")!;
+    expect(chess.question).toContain("لا يملك اللاعب نقلة قانونية");
+    expect(chess.correctAnswer).toBe("بات");
+    expect(chess.alternativeCorrectAnswers).not.toContain("الفرس");
+    expect(css.question).toContain("حجم الخط");
+    expect(css.correctAnswer).toBe("font-size");
+    expect(css.alternativeCorrectAnswers).not.toContain("أوراق الأنماط المتتالية");
+    expect(validateBluffQuestion(chess)).toBe(true);
+    expect(validateBluffQuestion(css)).toBe(true);
+    const mx = bluff.find((q) => q.id === "bluff-supplement-technology-01")!;
+    expect(mx.correctAnswer).toBe("MX");
+    expect(mx.question).toContain("سجل DNS");
+  });
   it("keeps ten individually distinct answers and ten positions per curated Ranked list", () => {
     for (const item of ranked) {
       expect(item.kind).toBe("CURATED");
