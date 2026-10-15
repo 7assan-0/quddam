@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invitationLocalInstant } from "@/lib/night/invitation-time";
 
 type Summary = { exists: boolean; scheduledAt?: string; timezone?: string;
@@ -11,6 +11,8 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
   const [timezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Riyadh");
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshInFlight = useRef(false);
   const [notice, setNotice] = useState("");
   useEffect(() => {
     let active = true;
@@ -42,6 +44,19 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
     } catch { setNotice("تعذر إنشاء الدعوة. لا تعاود الطلب قبل تحديث حالة الدعوة."); }
     finally { setBusy(false); }
   }
+  async function refresh() {
+    // Serialize manual snapshots: an older slow response must not overwrite a
+    // newer attendance/vote result from another simultaneous refresh.
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true; setRefreshing(true);
+    try {
+      const response = await fetch(`/api/night/${nightId}/invitation`, { credentials: "same-origin", cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setSummary(data.invitation); setNotice("تم تحديث الحضور والتصويت.");
+    } catch { setNotice("تعذر تحديث الدعوة حاليًا."); }
+    finally { refreshInFlight.current = false; setRefreshing(false); }
+  }
   return <section className="panel" data-testid="night-invitation-setup" style={{ marginBlock: "1rem" }}>
     <h2>دعوة السهرة · قبل بدء اللعب</h2>
     <p>حدد الموعد وشارك رابط الحضور يدويًا. هذه دعوة تخطيط وتصويت فقط؛ لا تفتح غرفة اللعب ولا تبدأ عدّاد الساعة. التصويت استشاري ولا يعيد ترتيب ألعاب السهرة المحفوظة تلقائيًا.</p>
@@ -51,12 +66,8 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       <p>قالوا جاي: {summary.coming ?? 0} · اعتذروا: {summary.declined ?? 0}</p>
       <h3>نتائج التصويت</h3>
       <ul>{summary.votes?.map(v => <li key={v.game}>{v.title}: {v.count} صوت</li>)}</ul>
-      <button className="btn btn-outline" type="button" onClick={() => {
-        void fetch(`/api/night/${nightId}/invitation`, { credentials: "same-origin", cache: "no-store" })
-          .then(async response => { if (!response.ok) throw new Error(); return response.json(); })
-          .then(data => { setSummary(data.invitation); setNotice("تم تحديث الحضور والتصويت."); })
-          .catch(() => setNotice("تعذر تحديث الدعوة حاليًا."));
-      }}>تحديث الحضور والتصويت</button>
+      <button className="btn btn-outline" type="button" disabled={refreshing} aria-busy={refreshing}
+        onClick={() => void refresh()}>تحديث الحضور والتصويت</button>
       {link ? <><label htmlFor="night-invite-link">رابط الدعوة — انسخه قبل مغادرة الصفحة</label>
         <input id="night-invite-link" className="form-input" dir="ltr" readOnly value={link} style={{ width: "100%" }} />
         <button className="btn btn-secondary" type="button" onClick={() => {
