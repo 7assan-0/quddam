@@ -77,7 +77,7 @@ export function completedSnapshot(night: {
       replay = acceptVerifiedResult(replay, { game: result.game, sourceSessionId: result.sourceSessionId,
         placements: receipt.placements! });
     } catch { reject("تعذر التحقق من ترتيب نتائج السهرة", 409, "INVALID_NIGHT_RECEIPT"); }
-    if (JSON.stringify(replay.results[i].points) !== JSON.stringify(result.points))
+    if (state.teams.some(team => replay.results[i].points[team.id] !== result.points[team.id]))
       reject("نقاط النتيجة غير متطابقة", 409, "INVALID_NIGHT_RECEIPT");
     sourceDigests.push(slot.resultDigest);
   }
