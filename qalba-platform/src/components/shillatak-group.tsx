@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import type { getShillaView } from "@/lib/shillatak/service";
 type View = Awaited<ReturnType<typeof getShillaView>>;
 type Action = { op: "INVITE" } | { op: "ATTACH"; nightId: string } |
-  { op: "ARCHIVE" } | { op: "LEAVE" };
+  { op: "ARCHIVE" } | { op: "LEAVE" } | { op: "REVOKE"; inviteId: string };
 export function ShillatakGroup({ initial }: { initial: View }) {
   const router = useRouter();
   const [group, setGroup] = useState(initial), [inviteLink, setInviteLink] = useState("");
@@ -28,7 +28,8 @@ export function ShillatakGroup({ initial }: { initial: View }) {
       else {
         setGroup(data.shilla);
         setConfirmArchive(false);
-        setNotice(action.op === "ATTACH" ? "أُضيفت نتيجة السهرة المكتملة إلى لوحة الشرف." : "أُرشفت الشلّة ومنعت الدعوات والربط الجديد.");
+        setNotice(action.op === "ATTACH" ? "أُضيفت نتيجة السهرة المكتملة إلى لوحة الشرف." :
+          action.op === "REVOKE" ? "أُلغيت الدعوة، ولم يعد رابطها صالحًا للانضمام." : "أُرشفت الشلّة ومنعت الدعوات والربط الجديد.");
       }
     } catch { setError("تعذر التأكد من نتيجة الأمر. حدّث بيانات الشلّة قبل إعادة الطلب؛ رابط الدعوة قد يكون أُنشئ بالفعل."); }
     finally { inFlight.current = false; setBusy(false); }
@@ -82,6 +83,12 @@ export function ShillatakGroup({ initial }: { initial: View }) {
         <input className="form-input" id="shilla-new-link" dir="ltr" readOnly value={inviteLink} style={{ width: "100%" }}/>
         <button className="btn btn-secondary" onClick={() => void navigator.clipboard.writeText(inviteLink)
           .then(() => setNotice("تم نسخ رابط العضوية"), () => setError("انسخ الرابط يدويًا من الحقل."))}>نسخ الرابط</button></div>}
+      <h3>الدعوات النشطة</h3>
+      {group.activeInvites.length === 0 && <p>لا توجد روابط عضوية نشطة.</p>}
+      {group.activeInvites.map(invite => <div className="history-row" key={invite.id}>
+        <span>دعوة تنتهي {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invite.expiresAt))}</span>
+        <button className="btn btn-danger" disabled={busy} onClick={() => void command({ op: "REVOKE", inviteId: invite.id })}>إلغاء الدعوة</button>
+      </div>)}
       <h3>إضافة سهرة مكتملة إلى لوحة الشرف</h3>
       <p>نربط السهرة صراحةً إذا كنت مالكها، واكتملت ألعابها الثلاث، وطابق اسمَا الفريقين الفريقين الثابتين هنا. لا يُخصم رصيد عند الربط.</p>
       {group.eligibleNights.length === 0 && <p>لا توجد سهرات مؤهلة غير مرتبطة ضمن أحدث 20 سهرة.</p>}
