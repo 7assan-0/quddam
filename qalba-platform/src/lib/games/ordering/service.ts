@@ -22,10 +22,13 @@ async function authorize(tx: Prisma.TransactionClient, session: Session, s: Stat
  const a = await tx.orderingControllerAccess.findUnique({ where: { tokenHash: tokenHash(actor.token) } }); const index = a ? s.teamIds.indexOf(a.teamId) : -1;
  if (!a || !controllerAccessValid(a, session, s, now) || a.permission !== (index === 0 ? 'ORDER_TEAM_A' : 'ORDER_TEAM_B')) throw new OrderingError('انتهى وصول ترتيب الفريق', 403, 'CONTROLLER_ACCESS_DENIED'); return a;
 }
-export async function createOrderingSession(hostId: string, names: [string, string]) {
+export async function createOrderingSessionInTransaction(tx: Prisma.TransactionClient, hostId: string, names: [string, string]) {
  const clean = names.map(n => bounded(n, 60)); if (clean.some(n => n.length < 2) || clean[0] === clean[1]) throw new OrderingError('اختر اسمين مختلفين', 400);
- const game = await db().gameType.findUnique({ where: { slug: 'ordering-challenge' } }); if (!game?.enabled) throw new OrderingError('اللعبة غير متاحة', 404);
- const id = await db().$transaction(async tx => { const session = await tx.gameSession.create({ data: { hostId, gameTypeId: game.id, state: json(lobby()), config: { rounds: ROUND_COUNT, orderMs: 45000, pointsPerExactPosition: 2, perfectBonus: 2, rematchCredit: 'FREE_IN_SAME_SESSION' } } }); await tx.team.createMany({ data: clean.map((name, position) => ({ sessionId: session.id, name, position, color: TEAM_COLORS[position] })) }); await recordEvent(tx, 'GAME_CREATED', hostId, { sessionId: session.id, gameSlug: 'ordering-challenge' }); return session.id; }); return getOrderingView(id, { kind: 'HOST', id: hostId });
+ const game = await tx.gameType.findUnique({ where: { slug: 'ordering-challenge' } }); if (!game?.enabled) throw new OrderingError('اللعبة غير متاحة', 404);
+ const session = await tx.gameSession.create({ data: { hostId, gameTypeId: game.id, state: json(lobby()), config: { rounds: ROUND_COUNT, orderMs: 45000, pointsPerExactPosition: 2, perfectBonus: 2, rematchCredit: 'FREE_IN_SAME_SESSION' } } }); await tx.team.createMany({ data: clean.map((name, position) => ({ sessionId: session.id, name, position, color: TEAM_COLORS[position] })) }); await recordEvent(tx, 'GAME_CREATED', hostId, { sessionId: session.id, gameSlug: 'ordering-challenge' }); return session.id;
+}
+export async function createOrderingSession(hostId: string, names: [string, string]) {
+ const id = await db().$transaction(tx => createOrderingSessionInTransaction(tx, hostId, names)); return getOrderingView(id, { kind: 'HOST', id: hostId });
 }
 export function publicProjection(s: State, q: Question | null) {
  const phase = s.phase === 'PAUSED' ? s.pausedPhase : s.phase; const visible = q && !['LOBBY', 'READY', 'ROUND_INTRO', 'ABANDONED'].includes(phase!); const disclosed = q && isRevealed(s); const result = disclosed ? s.results.find(r => r.roundNumber === s.roundIndex + 1)! : null;

@@ -19,6 +19,11 @@ export async function proxy(request: NextRequest) {
     response.headers.set("Content-Security-Policy-Report-Only", policy);
     return response;
   };
+  // Reject before layout streaming can turn a disabled page into an HTTP 200.
+  const pathname = request.nextUrl.pathname;
+  if (process.env.ENABLE_NIGHT_OF_QUDDAM !== "true" && (pathname === "/night" || pathname.startsWith("/night/"))) {
+    return new NextResponse("الصفحة غير متاحة.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex, nofollow", "Content-Security-Policy-Report-Only": policy } });
+  }
   const match = /^\/lightning\/(buzzer|display)\/([^/]+)$/.exec(request.nextUrl.pathname);
   if (!match) return next();
   const tokens = request.nextUrl.searchParams.getAll("token");

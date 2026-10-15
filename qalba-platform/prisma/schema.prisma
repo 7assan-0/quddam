@@ -83,6 +83,7 @@ model User {
   passwordResets    PasswordReset[]
   externalAccounts  ExternalAccount[]
   hostedGames       GameSession[] @relation("Host")
+  nightSessions     NightSession[]
   players           Player[]
   history           QuestionHistory[]
   reports           QuestionReport[]
@@ -279,6 +280,7 @@ model GameSession {
   courtParticipants CourtParticipant[]
   courtRounds CourtRound[]
   buzzerAccess LightningBuzzerAccess[]
+  nightGame NightGame?
 }
 
 model Team {
@@ -1157,4 +1159,48 @@ model CourtRoundVote {
  round CourtRound @relation(fields:[roundId],references:[id],onDelete:Cascade)
  participant CourtParticipant @relation(fields:[participantId],references:[id])
  @@unique([roundId,participantId])
+}
+
+/// Experimental series composition; child engines retain normal credit/start policy.
+model NightSession {
+  id String @id @default(cuid())
+  ownerId String
+  createKey String @db.VarChar(80)
+  createHash String @db.Char(64)
+  phase String @db.VarChar(20)
+  state Json
+  stateVersion Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  games NightGame[]
+  commands NightCommand[]
+  @@unique([ownerId, createKey])
+  @@index([ownerId, createdAt])
+}
+model NightGame {
+  id String @id @default(cuid())
+  nightId String
+  position Int
+  gameSlug String @db.VarChar(60)
+  sourceSessionId String? @unique
+  teamMapping Json?
+  resultReceipt Json?
+  resultDigest String? @db.Char(64)
+  sourceVersion Int?
+  acceptedAt DateTime?
+  night NightSession @relation(fields: [nightId], references: [id], onDelete: Restrict)
+  source GameSession? @relation(fields: [sourceSessionId], references: [id], onDelete: Restrict)
+  @@unique([nightId, position])
+}
+model NightCommand {
+  id String @id @default(cuid())
+  nightId String
+  key String @db.VarChar(80)
+  type String @db.VarChar(20)
+  payloadHash String @db.Char(64)
+  stateVersion Int
+  createdAt DateTime @default(now())
+  night NightSession @relation(fields: [nightId], references: [id], onDelete: Restrict)
+  @@unique([nightId, key])
 }
