@@ -154,7 +154,6 @@ export function NightOfQuddam({ initial }: { initial: NightView }) {
 
     {view.results.length > 0 && <section className="panel" data-testid="night-results" aria-labelledby="night-results-title"><h2 id="night-results-title">نتائج المباريات المعتمدة</h2><div className="history-list">{view.results.map((result, index) => <article className="info-card" key={result.sourceSessionId} data-game={result.game}><h3>{index + 1}. {nightGameTitle(result.game)}</h3>{result.placements.map((placement, place) => <p key={place}>المركز {1 + result.placements.slice(0, place).reduce((sum, group) => sum + group.teamIds.length, 0)}: {placement.teamIds.map(id => view.teams.find(team => team.id === id)?.name ?? "فريق").join(" و ")}</p>)}<ul>{view.teams.map(team => <li key={team.id}>{team.name}: {result.points[team.id]} نقاط للسهرة</li>)}</ul></article>)}</div></section>}
 
-    {view.phase === "completed" && process.env.NEXT_PUBLIC_ENABLE_SHILLATAK === "true" && <section className="panel"><h2>احفظ بطولتكم بين السهرات</h2><p>اربط هذه السهرة المكتملة بشلّة تملكها وتطابق أسماء فريقَيها. التسجيل اختياري ومرة واحدة.</p><Link className="btn btn-secondary" href="/shillatak">اذهب إلى شلّتك</Link></section>}
     {recap && <section className="panel" data-testid="night-highlights" aria-labelledby="night-highlights-title" style={{ marginBlock: "1rem" }}>
       <span className="eyebrow">مبنية على النتائج المعتمدة فقط</span><h2 id="night-highlights-title">هايلايتس السهرة</h2>
       <ul>{recap.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
