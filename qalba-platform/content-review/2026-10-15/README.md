@@ -2,7 +2,7 @@
 
 This directory contains editorial CSV snapshots only. **They are NOT imported by prisma/seed.ts, the application, or a live database.** Do not imply that merging this PR publishes the revised question banks.
 
-See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the seven mandatory editorial and runtime acceptance standards. These standards are not a release approval.
+See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the seven mandatory editorial and runtime acceptance standards, and [SEVEN_GAMES_PRELIMINARY_AUDIT.md](SEVEN_GAMES_PRELIMINARY_AUDIT.md) for the source/staged inventory and remaining blockers of the other seven games. Neither document is release approval.
 
 ## Attached reviewed drafts
 
@@ -11,13 +11,15 @@ See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the seven manda
 - `Letter_224_V3_Canonical_Unmodified.csv` — historical unmodified V3 snapshot; do **not** use for approval because nine invalid alternative answers were identified.
 - `Letter_224_V4_Aliases_Corrected_Review_Pending.csv` — proposed replacement review snapshot: 224 questions across 28 letters, six medium and two hard per letter; nine invalid alternative answers removed. **Still pending independent factual, alias and semantic review.** Do not import alongside the old letter seed.
 - `Survey_26_Remediated.csv`, `Forbidden_52_Remediated.csv`, `Bluff_13_Remediated_Sourced_Review_Pending.csv`, `Ranked_15_Remediated.csv`, `Ordering_15_Remediated.csv`, `Court_15_Remediated.csv` — proposed additional/replacement content, **not automatic production seed changes**.
-- `Lightning_600_Remediated.csv` contains a review-only replacement for a verbatim Board #907 duplication (Lightning science #31 now tests viscosity, preliminary NIST reference recorded); semantic QA/playtesting is still pending.
+- `Lightning_600_Remediated.csv` contains review-only replacements for two verbatim cross-game duplicates: Board #907 vs Lightning science #31 (now viscosity; preliminary NIST reference), and original Bluff cinema #11 vs Lightning screen #03 (now clapperboard; reference/editorial acceptance still pending). Semantic QA/playtesting remains pending.
 - `Issue_Ledger_After_Remediation.csv` — the original 63-item ledger (60 patched locally and three originally source-blocked); these labels describe the supplied offline pack, **not 63 runtime-verified fixes**.
 - `Before_After_Diff_Items.csv` — 60 editorial before/after comparisons.
 
 ## V4 letter alias audit
 
 The nine incorrect alternatives removed in V4 were associated with question IDs `letter-mh-022`, `031`, `062`, `099`, `132`, `153`, `183`, `186`, `202`. They incorrectly accepted a different country, compound, currency, person, location, device, rock-unrelated term or currency as the target answer. V3 is retained solely as historical evidence. This is an editorial-only correction, not a deployed data migration or a completed verification of all 224 items.
+
+- `Ordering_15_Remediated.csv` also resolves a confirmed instruction/last-item contradiction at `ordering-supplement-geography-01`: fourth answer item now "بدء الرحلة", matching the instruction.
 
 ## Source-code changes in this draft PR
 
