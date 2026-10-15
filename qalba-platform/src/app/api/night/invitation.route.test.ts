@@ -90,4 +90,66 @@ describe("planning-only Night HTTP boundaries", () => {
       `quddam_night_rsvp_invite-1=${"b".repeat(64)}`), guestContext);
     expect(m.respond).toHaveBeenLastCalledWith("a".repeat(64), vote, "b".repeat(64));
   });
+  it("limits RSVP capabilities to this invitation API path instead of sending them to games", async () => {
+    const bootstrap = await guestGet(request(guestPath, "GET"), guestContext);
+    const saved = await guestPost(request(guestPath, "POST", vote), guestContext);
+    for (const response of [bootstrap, saved]) {
+      expect(response.cookies.get("quddam_night_rsvp_invite-1")?.path).toBe(guestPath);
+      expect(response.headers.get("set-cookie")).toContain("HttpOnly");
+      expect(response.headers.get("set-cookie")).toContain("SameSite=lax");
+    }
+  });
+  it("keeps a preissued capability across refresh and retry after a lost first POST reply", async () => {
+    const cookie = `quddam_night_rsvp_invite-1=${"b".repeat(64)}`;
+    const bootstrap = await guestGet(request(guestPath, "GET", undefined, undefined, cookie), guestContext);
+    expect(bootstrap.headers.get("set-cookie")).toBeNull();
+    expect(m.publicGet).toHaveBeenLastCalledWith("a".repeat(64), "b".repeat(64));
+    await guestPost(request(guestPath, "POST", vote, undefined, cookie), guestContext);
+    await guestPost(request(guestPath, "POST", vote, undefined, cookie), guestContext);
+    expect(m.respond.mock.calls).toEqual([
+      ["a".repeat(64), vote, "b".repeat(64)],
+      ["a".repeat(64), vote, "b".repeat(64)],
+    ]);
+  });
+  it("keeps an accepted uppercase bearer API path and its capability cookie path consistent", async () => {
+    const code = "A".repeat(64);
+    const path = `/api/night/invite/${code}`;
+    const context = { params: Promise.resolve({ code }) };
+    const response = await guestGet(request(path, "GET"), context);
+    expect(response.cookies.get("quddam_night_rsvp_invite-1")?.path).toBe(path);
+    expect(m.publicGet).toHaveBeenCalledWith(code);
+    await guestPost(request(path, "POST", vote, undefined, `quddam_night_rsvp_invite-1=${"B".repeat(64)}`), context);
+    expect(m.respond).toHaveBeenLastCalledWith(code, vote, "b".repeat(64));
+  });
+  it("marks participant capabilities Secure in production and never issues one for a closed invitation", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const response = await guestGet(request(guestPath, "GET"), guestContext);
+    expect(response.cookies.get("quddam_night_rsvp_invite-1")?.secure).toBe(true);
+    m.publicGet.mockResolvedValue({ cookieName: "quddam_night_rsvp_invite-1", view: { open: false } });
+    expect((await guestGet(request(guestPath, "GET"), guestContext)).headers.get("set-cookie")).toBeNull();
+  });
+  it("rejects an oversized or malformed POST before querying invitation storage", async () => {
+    const oversized = request(guestPath, "POST", { ...vote, name: "م".repeat(3_000) });
+    expect((await guestPost(oversized, guestContext)).status).toBe(413);
+    expect((await guestPost(request(guestPath, "POST", []), guestContext)).status).toBe(400);
+    expect(m.publicGet).not.toHaveBeenCalled();
+    expect(m.respond).not.toHaveBeenCalled();
+  });
+  it("rejects malformed bearer paths before any storage call", async () => {
+    const badContext = { params: Promise.resolve({ code: "not-a-capability" }) };
+    expect((await guestGet(request(guestPath, "GET"), badContext)).status).toBe(404);
+    expect((await guestPost(request(guestPath, "POST", vote), badContext)).status).toBe(404);
+    expect(m.publicGet).not.toHaveBeenCalled();
+    expect(m.respond).not.toHaveBeenCalled();
+  });
+  it("sanitizes unexpected database failures and keeps error responses private", async () => {
+    m.publicGet.mockRejectedValue(new Error("postgres://private:secret@private-db/name?token=private"));
+    const failed = await guestGet(request(guestPath, "GET"), guestContext);
+    expect(failed.status).toBe(500);
+    expect(failed.headers.get("cache-control")).toBe("private, no-store");
+    expect(failed.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(failed.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    expect(await failed.text()).not.toMatch(/postgres|secret|private-db|token=/);
+    expect(failed.headers.get("set-cookie")).toBeNull();
+  });
 });

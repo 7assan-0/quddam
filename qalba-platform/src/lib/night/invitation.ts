@@ -19,20 +19,30 @@ export const inviteCodePattern = /^[a-f0-9]{64}$/i;
 export const attendeeCookieName = (id: string) => `quddam_night_rsvp_${id}`;
 
 export function validateSchedule(input: z.infer<typeof inviteInputSchema>, now: Date) {
-  const when = new Date(input.scheduledAt);
+  const parsed = inviteInputSchema.safeParse(input);
+  if (!parsed.success) throw new InviteInputError("حقول موعد الدعوة غير صالحة", 400);
+  const when = new Date(parsed.data.scheduledAt);
   if (!Number.isFinite(when.getTime()) || when.getTime() < now.getTime() + 15 * 60_000 ||
       when.getTime() > now.getTime() + 90 * 86400_000)
     throw new InviteInputError("حدد موعدًا بين 15 دقيقة و90 يومًا من الآن", 400);
-  try { new Intl.DateTimeFormat("en", { timeZone: input.timezone }).format(now); }
+  // Intl also accepts numeric offsets such as +03:00. Scheduling retains a named
+  // IANA zone, including its future daylight-saving rules, rather than an offset.
+  if (!/^[A-Za-z][A-Za-z0-9._+-]*(?:\/[A-Za-z0-9._+-]+)*$/.test(parsed.data.timezone))
+    throw new InviteInputError("المنطقة الزمنية غير صالحة", 400);
+  try { new Intl.DateTimeFormat("en", { timeZone: parsed.data.timezone }).format(now); }
   catch { throw new InviteInputError("المنطقة الزمنية غير صالحة", 400); }
   return when;
 }
 export function normalizeAttendeeName(name: unknown) {
-  if (typeof name !== "string" || /[\p{Cc}\p{Cf}]/u.test(name))
+  if (typeof name !== "string" || /[\p{Cc}\p{Cf}\p{Cs}]/u.test(name))
     throw new InviteInputError("اسم الحاضر غير صالح", 400);
-  const cleaned = name.normalize("NFC").trim().replace(/\s+/gu, " ");
+  const cleaned = name.normalize("NFKC").trim().replace(/\s+/gu, " ");
   if (cleaned.length < 2 || cleaned.length > 60) throw new InviteInputError("اسم الحاضر بين حرفين و60 حرفًا", 400);
-  return { display: cleaned, key: cleaned.toLocaleLowerCase("ar") };
+  const key = cleaned.toLocaleLowerCase("ar");
+  // Unicode case folding may expand a character; reject before the database's
+  // bounded nameKey column can turn an invalid alias into an internal error.
+  if (key.length > 60) throw new InviteInputError("اسم الحاضر غير صالح", 400);
+  return { display: cleaned, key };
 }
 export function validVote(vote: RsvpInput["gameVote"], choices: readonly string[], rsvp: RsvpInput["rsvp"]) {
   if (rsvp === "NO" && vote !== null) throw new InviteInputError("التصويت للحاضرين فقط", 400);

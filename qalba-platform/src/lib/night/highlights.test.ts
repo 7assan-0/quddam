@@ -35,7 +35,11 @@ describe("Night recap is derived from accepted results, never simulated events",
   });
   it("never invents a champion for an incomplete night, and supports joint champions", () => {
     expect(deriveNightHighlights(fixture("ended"))).toMatchObject({ championNames: [], phase: "ended" });
-    const tied = fixture(); tied.winnerIds = ["a", "b"]; tied.ranking = teams.map(team => ({ ...team, points: 8 }));
+    const tied = fixture();
+    tied.results[1] = { ...tied.results[1], placements: [{ teamIds: ["b"] }, { teamIds: ["a"] }], points: { a: 2, b: 3 } };
+    tied.results[2] = { ...tied.results[2], placements: [{ teamIds: ["a", "b"] }], points: { a: 3, b: 3 } };
+    tied.totals = { a: 8, b: 8 }; tied.winnerIds = ["a", "b"];
+    tied.ranking = teams.map(team => ({ ...team, points: 8 }));
     expect(deriveNightHighlights(tied)?.championNames).toEqual(["البرق", "الموج"]);
   });
 });

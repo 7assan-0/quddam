@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { nightEnabled, nightGameTitle } from "./catalog";
 import { attendeeCookieName, digestCapability, invitationResponse, InviteInputError, inviteCodePattern,
-  MAX_INVITE_ATTENDEES, MAX_INVITE_MUTATIONS_PER_MINUTE, normalizeAttendeeName,
+  inviteInputSchema, MAX_INVITE_ATTENDEES, MAX_INVITE_MUTATIONS_PER_MINUTE, normalizeAttendeeName, rsvpInputSchema,
   validVote, validateSchedule, type RsvpInput } from "./invitation";
 
 function enabled() { if (!nightEnabled()) throw new InviteInputError("غير متاح", 404); }
@@ -28,10 +28,11 @@ function project(invite: {
   }, now);
 }
 export async function createInvitation(ownerId: string, nightId: string,
-  input: { scheduledAt: string; timezone: string }, now = new Date()) {
+  input: { scheduledAt: string; timezone: string }, now?: Date) {
   enabled();
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(nightId)) throw new InviteInputError("السهرة غير موجودة", 404);
-  const scheduledAt = validateSchedule(input, now);
+  const parsed = inviteInputSchema.safeParse(input);
+  if (!parsed.success) throw new InviteInputError("حقول موعد الدعوة غير صالحة", 400);
   const code = randomBytes(32).toString("hex");
   const result = await db().$transaction(async tx => {
     await tx.$queryRawUnsafe('SELECT "id" FROM "NightSession" WHERE "id"=$1 FOR UPDATE', nightId);
@@ -40,9 +41,13 @@ export async function createInvitation(ownerId: string, nightId: string,
     if (night.phase !== "preparing") throw new InviteInputError("أنشئ الدعوة قبل بدء اللعب", 409);
     if (await tx.nightInvitation.findUnique({ where: { nightId } }))
       throw new InviteInputError("لهذه السهرة دعوة بالفعل؛ احتفظ بالرابط بعد إنشائه", 409);
-    const expiresAt = new Date(Math.min(scheduledAt.getTime() + 86400_000, now.getTime() + 91 * 86400_000));
+    // The transaction may have waited on START or another invitation request.
+    // Validate the scheduling window against the clock after acquiring its lock.
+    const checkedAt = now ?? new Date();
+    const scheduledAt = validateSchedule(parsed.data, checkedAt);
+    const expiresAt = new Date(Math.min(scheduledAt.getTime() + 86400_000, checkedAt.getTime() + 91 * 86400_000));
     return tx.nightInvitation.create({ data: { id: randomUUID(), nightId, tokenHash: digestCapability(code),
-      scheduledAt, timezone: input.timezone, expiresAt } });
+      scheduledAt, timezone: parsed.data.timezone, expiresAt } });
   });
   // The un-hashed bearer link is revealed once to the authenticated organizer, never stored.
   return { path: `/night/invite/${code}`, scheduledAt: result.scheduledAt.toISOString(),
@@ -72,6 +77,7 @@ export async function getPublicInvitation(code: string, capability?: string, now
 }
 export async function respondToInvitation(code: string, input: RsvpInput, capability?: string, now?: Date) {
   enabled();
+  if (!rsvpInputSchema.safeParse(input).success) throw new InviteInputError("حقول الرد على الدعوة غير صالحة", 400);
   const tokenHash = codeHash(code);
   const named = normalizeAttendeeName(input.name);
   const invite = await db().nightInvitation.findUnique({ where: { tokenHash }, select: { id: true, nightId: true } });
@@ -91,12 +97,18 @@ export async function respondToInvitation(code: string, input: RsvpInput, capabi
       if (current.status !== "open" || current.expiresAt <= checkedAt || current.night.phase !== "preparing")
         throw new InviteInputError("انتهى استقبال الردود على هذه الدعوة", 409);
       validVote(input.gameVote, current.night.games.map(g => g.gameSlug), input.rsvp);
+      const existing = suppliedHash ? current.guests.find(g => g.capabilityHash === suppliedHash) : null;
+      if (existing && existing.name !== named.display) throw new InviteInputError("لا يمكن تغيير اسم هذا الرد", 409);
+      // A committed first response may have been lost on the network. An exact
+      // replay is a read-only confirmation, not another vote or mutation; all
+      // closure checks above still apply, including the exact expiry boundary.
+      if (existing && existing.rsvp === input.rsvp && existing.gameVote === input.gameVote)
+        return { view: project(current, checkedAt, capability), cookieName: attendeeCookieName(current.id),
+          cookieValue: capability!, expiresAt: current.expiresAt };
       const windowReset = checkedAt.getTime() - current.rateWindowAt.getTime() >= 60_000;
       const used = windowReset ? 0 : current.rateCount;
       if (used >= MAX_INVITE_MUTATIONS_PER_MINUTE) throw new InviteInputError("طلبات كثيرة؛ حاول لاحقًا", 429);
-      const existing = suppliedHash ? current.guests.find(g => g.capabilityHash === suppliedHash) : null;
       if (existing) {
-        if (existing.name !== named.display) throw new InviteInputError("لا يمكن تغيير اسم هذا الرد", 409);
         await tx.nightInviteGuest.update({ where: { capabilityHash: existing.capabilityHash },
           data: { rsvp: input.rsvp, gameVote: input.gameVote } });
       } else {

@@ -8,5 +8,5 @@ export default async function NightInvitationPage({ params }: { params: Promise<
   if (process.env.ENABLE_NIGHT_OF_QUDDAM !== "true") notFound();
   const { code } = await params;
   if (!inviteCodePattern.test(code)) notFound();
-  return <NightInviteRsvp code={code.toLowerCase()} />;
+  return <NightInviteRsvp key={code.toLowerCase()} code={code.toLowerCase()} />;
 }

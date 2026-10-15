@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { invitationLocalInstant } from "@/lib/night/invitation-time";
 
 type Summary = { exists: boolean; scheduledAt?: string; timezone?: string;
   coming?: number; declined?: number; votes?: { game: string; title: string; count: number }[] };
 export function NightInvitationSetup({ nightId }: { nightId: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [scheduled, setScheduled] = useState("");
-  const [timezone, setTimezone] = useState("Asia/Riyadh");
+  const [timezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Riyadh");
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Riyadh");
     let active = true;
     void fetch(`/api/night/${nightId}/invitation`, { credentials: "same-origin", cache: "no-store" })
       .then(async response => { if (!response.ok) throw new Error(); return response.json(); })
@@ -22,14 +22,14 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
   }, [nightId]);
   async function create() {
     if (!scheduled || busy) return;
-    const date = new Date(scheduled);
-    if (!Number.isFinite(date.getTime())) { setNotice("تحقق من الموعد."); return; }
+    const scheduledAt = invitationLocalInstant(scheduled, timezone);
+    if (!scheduledAt) { setNotice("تحقق من الموعد. اختر وقتًا صالحًا وغير متكرر عند تغيّر التوقيت الصيفي."); return; }
     setBusy(true); setNotice("");
     try {
       const response = await fetch(`/api/night/${nightId}/invitation`, {
         method: "POST", credentials: "same-origin", cache: "no-store",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: date.toISOString(), timezone }),
+        body: JSON.stringify({ scheduledAt, timezone }),
       });
       const data = await response.json();
       if (!response.ok) { setNotice(data.error ?? "تعذر إنشاء الدعوة."); return; }
