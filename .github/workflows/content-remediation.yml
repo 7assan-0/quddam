@@ -108,6 +108,9 @@ jobs:
             const scenarios = await count("SELECT COUNT(DISTINCT \"scenario\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
             const legacyEnding = await count("SELECT COUNT(*) AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%' AND \"scenario\" LIKE '%هل يحتاج اتفاقًا أوضح مع المجموعة%'");
             const socialWords = await count("SELECT COUNT(*) AS n FROM \"SecretWord\" WHERE id LIKE 'social-seed-%'");
+            const bluffSourceTotal = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%'");
+            const bluffSourcePublished = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%' AND status='PUBLISHED'");
+            const bluffSemanticArchived = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%' AND status='ARCHIVED'");
             const narwhal = await client.query('SELECT "alternativeCorrectAnswers" AS aliases FROM "BluffQuestion" WHERE id=$1',["bluff-seed-oddities-9"]);
             const aliases = narwhal.rows[0]?.aliases ?? [];
             if (socialWords !== 165 || narwhal.rows.length !== 1 || aliases.includes("حريش البحر") || !aliases.includes("ناروال"))
@@ -117,8 +120,8 @@ jobs:
             const css = reviewed.rows.find(x=>x.id==="bluff-seed-technology-4");
             if(reviewed.rows.length!==2 || game?.correctAnswer!=="بات" || !game.question.includes("نقلة قانونية") || game.aliases.includes("الفرس") ||
                css?.correctAnswer!=="font-size" || !css.question.includes("حجم الخط") || css.aliases.includes("أوراق الأنماط المتتالية") ||
-               scenarios!==180 || legacyEnding!==0) throw Error("Reviewed Bluff/Court source changes missing from isolated double seed");
-            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b,scenarios,legacyEnding,socialWords,bluffNarwhalAliases:aliases,reviewedBluffIds:reviewed.rows.map(x=>x.id)}));
+               scenarios!==180 || legacyEnding!==0 || bluffSourceTotal!==156 || bluffSourcePublished!==123 || bluffSemanticArchived!==33) throw Error("Reviewed Bluff/Court source changes or scoped semantic holds missing from isolated double seed");
+            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b,scenarios,legacyEnding,socialWords,bluffSourceTotal,bluffSourcePublished,bluffSemanticArchived,bluffNarwhalAliases:aliases,reviewedBluffIds:reviewed.rows.map(x=>x.id)}));
             if(all!==180 || pub!==170 || archived!==10 || known!==10 || customized!==48 || courts!==180 || p!==180 || b!==180) throw Error("Content double-seed verification failed");
           } finally { await client.end(); }
           NODE
