@@ -48,8 +48,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-002",
     "categorySlug": "general",
-    "title": "كلمات معلومات عامة: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / general / 002",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -57,19 +57,19 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "دفتر",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "ساعة",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -83,14 +83,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "كتاب",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "كرسي",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -99,8 +99,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-003",
     "categorySlug": "general",
-    "title": "كلمات معلومات عامة: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / general / 003",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -108,7 +108,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -157,8 +157,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-004",
     "categorySlug": "general",
-    "title": "كلمات معلومات عامة: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / general / 004",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -166,54 +166,54 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "باب",
-        "correctPosition": 1,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "تمر",
-        "correctPosition": 2,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "دفتر",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "كتاب",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "لمبة",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "مرآة",
-        "correctPosition": 6,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نافذة",
-        "correctPosition": 7,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -412,8 +412,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-009",
     "categorySlug": "saudi",
-    "title": "كلمات السعودية: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / saudi / 009",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -421,7 +421,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -433,14 +433,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "بريدة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تبوك",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -507,8 +507,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-011",
     "categorySlug": "saudi",
-    "title": "كلمات السعودية: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / saudi / 011",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -516,47 +516,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حائل",
-        "correctPosition": 1,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "خيبر",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "رابغ",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "سكاكا",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "ضباء",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "نجران",
-        "correctPosition": 6,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -565,8 +565,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-012",
     "categorySlug": "saudi",
-    "title": "كلمات السعودية: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / saudi / 012",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -574,7 +574,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -586,35 +586,35 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "بريدة",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تبوك",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "رابغ",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "سكاكا",
-        "correctPosition": 5,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "ضباء",
-        "correctPosition": 6,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -834,8 +834,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-017",
     "categorySlug": "history",
-    "title": "كلمات تاريخ: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / history / 017",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -843,7 +843,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -878,8 +878,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-018",
     "categorySlug": "history",
-    "title": "كلمات تاريخ: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / history / 018",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -887,7 +887,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -899,28 +899,28 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "حصن",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "رسالة",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "سيف",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "قصر",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -987,8 +987,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-020",
     "categorySlug": "history",
-    "title": "كلمات تاريخ: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / history / 020",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -996,26 +996,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أرشيف",
-        "correctPosition": 1,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بردية",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تاج",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -1029,21 +1029,21 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "لوح",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "متحف",
-        "correctPosition": 6,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نقش",
-        "correctPosition": 7,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1270,8 +1270,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-025",
     "categorySlug": "geography",
-    "title": "كلمات جغرافيا: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / geography / 025",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1279,26 +1279,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أرض",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بحيرة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تل",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -1314,8 +1314,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-026",
     "categorySlug": "geography",
-    "title": "كلمات جغرافيا: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / geography / 026",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1323,26 +1323,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تل",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جزيرة",
-        "correctPosition": 2,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "خليج",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -1356,7 +1356,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "ساحل",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1365,8 +1365,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-027",
     "categorySlug": "geography",
-    "title": "كلمات جغرافيا: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / geography / 027",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1374,7 +1374,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -1407,14 +1407,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "صحراء",
-        "correctPosition": 5,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "وادي",
-        "correctPosition": 6,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1699,8 +1699,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-033",
     "categorySlug": "science",
-    "title": "كلمات علوم: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / science / 033",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1708,33 +1708,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أكسجين",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بذرة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تربة",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جاذبية",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1743,8 +1743,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-034",
     "categorySlug": "science",
-    "title": "كلمات علوم: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / science / 034",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1752,19 +1752,19 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تربة",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جاذبية",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -1778,14 +1778,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "ذرة",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "سائل",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1794,8 +1794,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-035",
     "categorySlug": "science",
-    "title": "كلمات علوم: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / science / 035",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1803,7 +1803,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -1815,35 +1815,35 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "ذرة",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "سائل",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "ضوء",
-        "correctPosition": 4,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "ماء",
-        "correctPosition": 5,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "نواة",
-        "correctPosition": 6,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -1852,8 +1852,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-036",
     "categorySlug": "science",
-    "title": "كلمات علوم: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / science / 036",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -1861,54 +1861,54 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أكسجين",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بذرة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تربة",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "سائل",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "ضوء",
-        "correctPosition": 5,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "ماء",
-        "correctPosition": 6,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نواة",
-        "correctPosition": 7,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -2186,8 +2186,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-042",
     "categorySlug": "technology",
-    "title": "كلمات تقنية: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / technology / 042",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2195,19 +2195,19 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تطبيق",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جهاز",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -2221,14 +2221,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "ذاكرة",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "شاشة",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -2237,8 +2237,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-043",
     "categorySlug": "technology",
-    "title": "كلمات تقنية: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / technology / 043",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2246,40 +2246,40 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حاسوب",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "ذاكرة",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "شاشة",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "قرص",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "لوحة",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -2295,8 +2295,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-044",
     "categorySlug": "technology",
-    "title": "كلمات تقنية: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / technology / 044",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2304,7 +2304,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -2330,14 +2330,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "شاشة",
-        "correctPosition": 4,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "قرص",
-        "correctPosition": 5,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -2351,7 +2351,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-6",
         "label": "معالج",
-        "correctPosition": 7,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -2564,8 +2564,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-049",
     "categorySlug": "games",
-    "title": "كلمات ألعاب: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / games / 049",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2573,26 +2573,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "ألوان",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطولة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تدريب",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -2659,8 +2659,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-051",
     "categorySlug": "games",
-    "title": "كلمات ألعاب: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / games / 051",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2668,47 +2668,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حركة",
-        "correctPosition": 1,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "سباق",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "طاولة",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "فريق",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "مرحلة",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "نقاط",
-        "correctPosition": 6,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -2717,8 +2717,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-052",
     "categorySlug": "games",
-    "title": "كلمات ألعاب: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / games / 052",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2726,54 +2726,54 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "ألوان",
-        "correctPosition": 1,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطولة",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تدريب",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "طاولة",
-        "correctPosition": 4,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "فريق",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "مرحلة",
-        "correctPosition": 6,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نقاط",
-        "correctPosition": 7,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -2979,8 +2979,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-057",
     "categorySlug": "sports",
-    "title": "كلمات رياضة: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / sports / 057",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -2988,7 +2988,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -3023,8 +3023,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-058",
     "categorySlug": "sports",
-    "title": "كلمات رياضة: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / sports / 058",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3032,40 +3032,40 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تمرين",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جري",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "حارس",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "دراجة",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "سباحة",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3132,8 +3132,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-060",
     "categorySlug": "sports",
-    "title": "كلمات رياضة: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / sports / 060",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3141,26 +3141,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أثقال",
-        "correctPosition": 1,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطولة",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تمرين",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -3174,21 +3174,21 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "صفارة",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "كرة",
-        "correctPosition": 6,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "ملعب",
-        "correctPosition": 7,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3408,8 +3408,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-065",
     "categorySlug": "cars",
-    "title": "كلمات سيارات: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / cars / 065",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3417,33 +3417,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "إطار",
-        "correctPosition": 1,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطارية",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "ترس",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جنط",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3452,8 +3452,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-066",
     "categorySlug": "cars",
-    "title": "كلمات سيارات: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / cars / 066",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3461,40 +3461,40 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "ترس",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جنط",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "حزام",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "دواسة",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "زجاج",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3503,8 +3503,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-067",
     "categorySlug": "cars",
-    "title": "كلمات سيارات: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / cars / 067",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3512,47 +3512,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حزام",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "دواسة",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "زجاج",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "فرامل",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "مقود",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "ناقل",
-        "correctPosition": 6,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3851,8 +3851,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-073",
     "categorySlug": "food",
-    "title": "كلمات طعام: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / food / 073",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3860,33 +3860,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أرز",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بصل",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تمر",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جبن",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3895,8 +3895,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-074",
     "categorySlug": "food",
-    "title": "كلمات طعام: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / food / 074",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3904,7 +3904,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -3930,14 +3930,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "رمان",
-        "correctPosition": 4,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "سكر",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -3946,8 +3946,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-075",
     "categorySlug": "food",
-    "title": "كلمات طعام: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / food / 075",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -3955,40 +3955,40 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "خبز",
-        "correctPosition": 1,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "رمان",
-        "correctPosition": 2,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "سكر",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "عدس",
-        "correctPosition": 4,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "فلفل",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -4004,8 +4004,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-076",
     "categorySlug": "food",
-    "title": "كلمات طعام: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / food / 076",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4013,33 +4013,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أرز",
-        "correctPosition": 1,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بصل",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تمر",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "سكر",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -4053,14 +4053,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-5",
         "label": "فلفل",
-        "correctPosition": 6,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "موز",
-        "correctPosition": 7,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -4331,8 +4331,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-082",
     "categorySlug": "travel",
-    "title": "كلمات سفر: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / travel / 082",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4340,19 +4340,19 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تذكرة",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جواز",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -4366,14 +4366,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "رحلة",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "سائح",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -4382,8 +4382,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-083",
     "categorySlug": "travel",
-    "title": "كلمات سفر: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / travel / 083",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4391,47 +4391,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حقيبة",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "رحلة",
-        "correctPosition": 2,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "سائح",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "طائرة",
-        "correctPosition": 4,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "فندق",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "مطار",
-        "correctPosition": 6,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -4440,8 +4440,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-084",
     "categorySlug": "travel",
-    "title": "كلمات سفر: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / travel / 084",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4449,7 +4449,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -4475,14 +4475,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-3",
         "label": "سائح",
-        "correctPosition": 4,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "طائرة",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -4702,8 +4702,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-089",
     "categorySlug": "movies",
-    "title": "كلمات أفلام ومسلسلات: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / movies / 089",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4711,33 +4711,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أداء",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطولة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تصوير",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جمهور",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -4797,8 +4797,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-091",
     "categorySlug": "movies",
-    "title": "كلمات أفلام ومسلسلات: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / movies / 091",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4806,47 +4806,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حلقة",
-        "correctPosition": 1,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "ديكور",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "سيناريو",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "قصة",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "ممثل",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "نهاية",
-        "correctPosition": 6,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -4855,8 +4855,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-092",
     "categorySlug": "movies",
-    "title": "كلمات أفلام ومسلسلات: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / movies / 092",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -4864,54 +4864,54 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أداء",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بطولة",
-        "correctPosition": 2,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تصوير",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "سيناريو",
-        "correctPosition": 4,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "قصة",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "ممثل",
-        "correctPosition": 6,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نهاية",
-        "correctPosition": 7,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5131,8 +5131,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-097",
     "categorySlug": "language",
-    "title": "كلمات لغة: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / language / 097",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5140,33 +5140,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "اسم",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بيت",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تاء",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جملة",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5175,8 +5175,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-098",
     "categorySlug": "language",
-    "title": "كلمات لغة: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / language / 098",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5184,26 +5184,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تاء",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "جملة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "حرف",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -5217,7 +5217,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "سجع",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5284,8 +5284,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-100",
     "categorySlug": "language",
-    "title": "كلمات لغة: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / language / 100",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5293,26 +5293,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "اسم",
-        "correctPosition": 1,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بيت",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تاء",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -5326,21 +5326,21 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "ضمير",
-        "correctPosition": 5,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "فعل",
-        "correctPosition": 6,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "معنى",
-        "correctPosition": 7,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5553,8 +5553,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-105",
     "categorySlug": "numbers",
-    "title": "كلمات أرقام: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / numbers / 105",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5562,33 +5562,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "آحاد",
-        "correctPosition": 1,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بسط",
-        "correctPosition": 2,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "ترتيب",
-        "correctPosition": 3,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جمع",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5597,8 +5597,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-106",
     "categorySlug": "numbers",
-    "title": "كلمات أرقام: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / numbers / 106",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5606,7 +5606,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -5618,28 +5618,28 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "جمع",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "حد",
-        "correctPosition": 3,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "درجة",
-        "correctPosition": 4,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "زوج",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5648,8 +5648,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-107",
     "categorySlug": "numbers",
-    "title": "كلمات أرقام: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / numbers / 107",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5657,47 +5657,47 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حد",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "درجة",
-        "correctPosition": 2,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "زوج",
-        "correctPosition": 3,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "صفر",
-        "correctPosition": 4,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-4",
         "label": "عامل",
-        "correctPosition": 5,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "مقام",
-        "correctPosition": 6,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -5989,8 +5989,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-113",
     "categorySlug": "oddities",
-    "title": "كلمات غرائب: مجموعة 1",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — هجائي معكوس / oddities / 113",
+    "instruction": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -5998,33 +5998,33 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات هجائيًا بالعكس، من الياء إلى الألف؛ تعامل الهمزة على الألف كألف. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "أثر",
-        "correctPosition": 1,
+        "correctPosition": 4,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "بصمة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تمويه",
-        "correctPosition": 3,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-3",
         "label": "جرس",
-        "correctPosition": 4,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -6033,8 +6033,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-114",
     "categorySlug": "oddities",
-    "title": "كلمات غرائب: مجموعة 2",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأقصر أولًا / oddities / 114",
+    "instruction": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -6042,12 +6042,12 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأقصر إلى الأطول بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "تمويه",
-        "correctPosition": 1,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -6075,7 +6075,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "ظل",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -6084,8 +6084,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-115",
     "categorySlug": "oddities",
-    "title": "كلمات غرائب: مجموعة 3",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الأطول أولًا / oddities / 115",
+    "instruction": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -6093,26 +6093,26 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات من الأطول إلى الأقصر بعدد الحروف؛ عند التعادل استخدم الترتيب الهجائي العربي. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
         "label": "حيلة",
-        "correctPosition": 1,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-1",
         "label": "دهشة",
-        "correctPosition": 2,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "ظل",
-        "correctPosition": 3,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -6126,14 +6126,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "مفاجأة",
-        "correctPosition": 5,
+        "correctPosition": 1,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "نفق",
-        "correctPosition": 6,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       }
@@ -6142,8 +6142,8 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
   {
     "id": "ordering-seed-116",
     "categorySlug": "oddities",
-    "title": "كلمات غرائب: مجموعة 4",
-    "instruction": "رتب الكلمات وفق الترتيب الهجائي العربي من الألف إلى الياء؛ الهمزة على الألف تعامل كألف.",
+    "title": "تحدي الكلمات — الحرف الأخير / oddities / 116",
+    "instruction": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا.",
     "difficulty": "EASY",
     "locale": "ar-SA",
     "orderingType": "CUSTOM",
@@ -6151,7 +6151,7 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
     "sourceLabel": null,
     "sourceUrl": null,
     "sourceDate": null,
-    "explanation": "تحدي لغوي مؤلف؛ نقارن الحروف تباعًا وفق الترتيب الهجائي العربي المعلن.",
+    "explanation": "رتب الكلمات حسب آخر حرف هجائيًا من الألف إلى الياء؛ عند التعادل قارن الكلمة كاملة هجائيًا. الترتيب ثابت وغير خاضع للتفضيل الشخصي.",
     "items": [
       {
         "id": "content-0",
@@ -6163,14 +6163,14 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-1",
         "label": "بصمة",
-        "correctPosition": 2,
+        "correctPosition": 5,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-2",
         "label": "تمويه",
-        "correctPosition": 3,
+        "correctPosition": 6,
         "acceptedAliases": [],
         "displayValue": null
       },
@@ -6184,21 +6184,21 @@ export const orderingSamples: (Omit<Question,"presentation"|"category"> & {id:st
       {
         "id": "content-4",
         "label": "لغز",
-        "correctPosition": 5,
+        "correctPosition": 2,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-5",
         "label": "مفاجأة",
-        "correctPosition": 6,
+        "correctPosition": 7,
         "acceptedAliases": [],
         "displayValue": null
       },
       {
         "id": "content-6",
         "label": "نفق",
-        "correctPosition": 7,
+        "correctPosition": 3,
         "acceptedAliases": [],
         "displayValue": null
       }
