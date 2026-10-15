@@ -105,7 +105,7 @@ export async function createShillaInvite(userId: string, id: string) {
     if (!group || group.ownerId !== userId) deny();
     if (group.status !== "active") deny("الشلّة مؤرشفة", 409, "ARCHIVED");
     if (group._count.members >= SHILLA_MAX_MEMBERS) deny("اكتمل عدد أعضاء الشلّة", 409, "FULL");
-    const active = await tx.shillaInvite.count({ where: { shillaId: id, consumedAt: null, expiresAt: { gt: now } } });
+    const active = await tx.shillaInvite.count({ where: { shillaId: id, consumedAt: null, revokedAt: null, expiresAt: { gt: now } } });
     if (active >= SHILLA_MAX_ACTIVE_INVITES) deny("هناك دعوات نشطة كافية؛ انتظر انتهاء إحداها", 409, "INVITE_LIMIT");
     await tx.shillaInvite.create({ data: { shillaId: id, tokenHash: digest(code),
       expiresAt: new Date(now.getTime() + SHILLA_INVITE_DAYS * 86400_000) } });
@@ -120,7 +120,7 @@ export async function previewShillaInvite(userId: string, code: string) {
     include: { shilla: { select: { name: true, status: true, _count: { select: { members: true } },
       members: { where: { userId }, select: { id: true } } } } } });
   if (!invite) deny("الدعوة غير موجودة");
-  const open = !invite.consumedAt && invite.expiresAt > new Date() && invite.shilla.status === "active" &&
+  const open = !invite.consumedAt && !invite.revokedAt && invite.expiresAt > new Date() && invite.shilla.status === "active" &&
     invite.shilla._count.members < SHILLA_MAX_MEMBERS && invite.shilla.members.length === 0;
   return { name: invite.shilla.name, open, alreadyMember: invite.shilla.members.length > 0 };
 }
@@ -137,7 +137,7 @@ export async function acceptShillaInvite(userId: string, code: string) {
     if (!group || group.status !== "active") deny("الدعوة غير متاحة", 409, "INVITE_CLOSED");
     // Recheck after the lock. A forwarded token is single use.
     const current = await tx.shillaInvite.findUnique({ where: { id: invite.id } });
-    if (!current || current.consumedAt || current.expiresAt <= new Date()) deny("الدعوة مستعملة أو منتهية", 409, "INVITE_CLOSED");
+    if (!current || current.consumedAt || current.revokedAt || current.expiresAt <= new Date()) deny("الدعوة مستعملة أو منتهية", 409, "INVITE_CLOSED");
     if (group._count.members >= SHILLA_MAX_MEMBERS) deny("اكتمل عدد أعضاء الشلّة", 409, "FULL");
     if (await tx.shillaMembership.findUnique({ where: { shillaId_userId: { shillaId: group.id, userId } } }))
       deny("أنت عضو بالفعل", 409, "ALREADY_MEMBER");
