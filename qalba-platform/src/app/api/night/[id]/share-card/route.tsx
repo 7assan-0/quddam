@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       { status: 409, headers: nightPrivateHeaders });
     const recap = deriveNightHighlights(view);
     if (!recap) throw new Error("Expected final Night highlights");
-    const font = await readFile(path.join(process.cwd(), "public/fonts/NotoSansArabic-Bold.ttf"));
+    const font = Uint8Array.from(await readFile(path.join(process.cwd(), "public/fonts/NotoSansArabic-Bold.ttf"))).buffer;
     return new ImageResponse(
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column",
         padding: 58, background: "#0A2B22", color: "#FFFDF5", fontFamily: "Noto Arabic",
