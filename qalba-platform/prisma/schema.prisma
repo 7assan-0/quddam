@@ -1175,6 +1175,7 @@ model NightSession {
   owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   games NightGame[]
   commands NightCommand[]
+  invitation NightInvitation?
   @@unique([ownerId, createKey])
   @@index([ownerId, createdAt])
 }
@@ -1203,4 +1204,35 @@ model NightCommand {
   createdAt DateTime @default(now())
   night NightSession @relation(fields: [nightId], references: [id], onDelete: Restrict)
   @@unique([nightId, key])
+}
+
+/** Planning RSVP is separate from the live player-hosted room and its TTL. */
+model NightInvitation {
+  id String @id @default(cuid())
+  nightId String @unique
+  tokenHash String @unique @db.Char(64)
+  scheduledAt DateTime
+  timezone String @db.VarChar(64)
+  expiresAt DateTime
+  status String @default("open") @db.VarChar(16)
+  rateWindowAt DateTime @default(now())
+  rateCount Int @default(0)
+  createdAt DateTime @default(now())
+  night NightSession @relation(fields: [nightId], references: [id], onDelete: Restrict)
+  guests NightInviteGuest[]
+  @@index([expiresAt])
+}
+model NightInviteGuest {
+  id String @id @default(cuid())
+  inviteId String
+  capabilityHash String @unique @db.Char(64)
+  name String @db.VarChar(60)
+  nameKey String @db.VarChar(60)
+  rsvp String @db.VarChar(8)
+  gameVote String? @db.VarChar(60)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invitation NightInvitation @relation(fields: [inviteId], references: [id], onDelete: Restrict)
+  @@unique([inviteId, nameKey])
+  @@index([inviteId, rsvp])
 }
