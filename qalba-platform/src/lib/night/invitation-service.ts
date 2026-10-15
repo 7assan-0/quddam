@@ -12,8 +12,8 @@ function codeHash(code: string) {
 }
 const include = {
   night: { select: { phase: true, games: { select: { gameSlug: true }, orderBy: { position: "asc" as const } } } },
-  guests: { select: { capabilityHash: true, name: true, rsvp: true, gameVote: true } },
-};
+  guests: { select: { capabilityHash: true, name: true, nameKey: true, rsvp: true, gameVote: true } },
+} as const;
 function project(invite: {
   scheduledAt: Date; timezone: string; expiresAt: Date; status: string;
   night: { phase: string; games: { gameSlug: string }[] };
