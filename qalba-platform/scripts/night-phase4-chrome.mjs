@@ -467,7 +467,7 @@ try {
   await expect(page.getByTestId("night-highlights")).toContainText("سهرة غير مكتملة؛ لا يُعلَن بطل");
   check("early-ended-highlight-truthfully-reports-incomplete-night");
   step = "real-canonical-final-tie-render-and-card"; checkpoint();
-  const nativeCases = JSON.parse(readFileSync(join(output, process.env.NIGHT_PHASE4_NATIVE_RUN ?? "phase4-postgres-preliminary", "cases.private.json"), "utf8"));
+  const nativeCases = JSON.parse(readFileSync(join(output, process.env.NIGHT_PHASE4_NATIVE_RUN ?? "phase4-postgres", "cases.private.json"), "utf8"));
   await page.goto(new URL(`/night/${nativeCases.tieNightId}`, origin).href);
   await expect(page.getByTestId("night-dashboard")).toHaveAttribute("data-phase", "completed");
   await expect(page.getByTestId("night-highlights")).toContainText("انتهت الليلة بتعادل");
