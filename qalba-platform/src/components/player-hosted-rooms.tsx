@@ -68,7 +68,7 @@ export function PlayerHostedRooms() {
     <div className="page-title">
       <span className="eyebrow">مختبر مستقل · غرف تلقائية</span>
       <h1>غرف قدّام باستضافة اللاعب</h1>
-      <p>أنشئ غرفة وشارك رابطها. جهاز الهوست يدير الجرس والنقاط، حتى ثمانية ضيوف. تنتهي الغرفة عند إغلاق الهوست أو بعد 60 دقيقة.</p>
+      <p>أنشئ غرفة وشارك رابطها. الهوست هو اللاعب A ويشارك بنفسه مع حتى ثمانية ضيوف؛ إدارة الجولة متاحة له بشكل منفصل. تنتهي الغرفة عند إغلاق الهوست أو بعد 60 دقيقة.</p>
     </div>
     <section className="panel" style={{ padding: 24, marginBlock: 16 }}>
       <h2>إنشاء أو انضمام</h2>
@@ -96,26 +96,32 @@ export function PlayerHostedRooms() {
       <p className="muted">تجربة محلية ببيانات مؤقتة. قد تمنع بعض الشبكات الاتصال المباشر. لا تحفظ النتائج ولا تنتقل إدارة الغرفة إلى ضيف.</p>
     </section>
     {ui.role && <section className="panel" data-testid="game-panel" style={{ padding: 24, marginBlock: 16 }}>
-      <h2>جولة الجرس</h2>
+      <h2>اللعبة · تسعة لاعبين كحد أقصى</h2>
       <p data-testid="connection">أنت: {labels[ui.slot]} · {ui.phase === "closed" ? "الجلسة مغلقة" : active ? "متصل" : "غير متصل"}
         {ui.role === "host" && ` · الضيوف المتصلون: ${connected}/${MAX_GUESTS}`}</p>
       <p data-testid="round">الجولة {ui.state.round} · الحالة {ui.state.phase} · الإصدار {ui.state.version}</p>
       {ui.role === "host" && <p data-testid="players">{ui.players.map(player =>
         `${labels[player.slot]}: ${player.connected ? "متصل" : "غير متصل"}`).join(" · ")}</p>}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }} data-testid="scores">
-        {labels.map((label, slot) => <p key={label}>{label}: <strong>{ui.state.scores[slot]}</strong></p>)}
+        {labels.map((label, slot) => <p key={label} aria-current={slot === ui.slot ? "true" : undefined}>{slot === ui.slot ? "أنت · " : ""}{label}: <strong>{ui.state.scores[slot]}</strong></p>)}
       </div>
       <p data-testid="winner" aria-live="polite">{!active ? "الجرس مغلق لعدم وجود اتصال مباشر" : ui.state.winner !== null
         ? `أول ضغطة مقبولة: ${labels[ui.state.winner]}` : ui.state.phase === "open" ? "الجرس مفتوح" : "الجرس مغلق"}</p>
-      <div className="utility-links">
-        {ui.role === "host" ? <>
-          <button className="btn btn-primary" disabled={!active || ui.state.round >= 100 || !["waiting", "result"].includes(ui.state.phase)} onClick={() => session.current?.action("open")}>فتح جولة</button>
-          <button className="btn btn-secondary" disabled={!active || ui.state.phase !== "open"} onClick={() => session.current?.action("buzz")}>جرس الهوست</button>
+      <section aria-label="دورك كلاعب" style={{ marginBlock: 16 }}>
+        <h3>دورك كلاعب · {labels[ui.slot]}</h3>
+        <p>أنت مشارك في نفس الجولة ونقاطك تُحسب ضمن اللاعبين التسعة، حتى لو كنت الهوست.</p>
+        <button data-testid="player-buzz" className="btn btn-primary" disabled={!active || ui.state.phase !== "open"}
+          onClick={() => session.current?.buzz()}>اضغط الجرس · {labels[ui.slot]}</button>
+      </section>
+      {ui.role === "host" && <section aria-label="إدارة الجولة" style={{ marginBlock: 16 }}>
+        <h3>إدارة الجولة · للهوست فقط</h3>
+        <div className="utility-links">
+          <button className="btn btn-secondary" disabled={!active || ui.state.round >= 100 || !["waiting", "result"].includes(ui.state.phase)} onClick={() => session.current?.action("open")}>فتح جولة</button>
           <button className="btn btn-success" disabled={!active || ui.state.phase !== "locked"} onClick={() => session.current?.action("award")}>احتساب نقطة للفائز</button>
           <button className="btn btn-outline" disabled={!active || !["open", "locked"].includes(ui.state.phase)} onClick={() => session.current?.action("skip")}>تجاوز الجولة</button>
-        </> : <button className="btn btn-primary" disabled={!active || ui.state.phase !== "open"} onClick={() => session.current?.buzz()}>اضغط الجرس</button>}
-      </div>
-      <p className="muted">الأسبقية حسب أول طلب يصل إلى جهاز الهوست. الهوست وحده يحتسب النقاط، ويمكن لهوست غير أمين التلاعب بالنتائج.</p>
+        </div>
+      </section>}
+      <p className="muted">الأسبقية حسب أول ضغطة يعالجها جهاز الهوست؛ اتصال الشبكة يؤثر على السباق. هذا مختبر محلي بنقاط تجريبية: الهوست يظل مسؤولًا عن اعتماد النقاط ويمكنه التلاعب بها، فلا توجد ضمانة نزاهة مستقلة أو إجابات خاصة للاعبين هنا.</p>
     </section>}
   </div>;
 }
