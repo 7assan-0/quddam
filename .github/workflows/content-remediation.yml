@@ -107,6 +107,11 @@ jobs:
             const b = await count("SELECT COUNT(DISTINCT \"rebuttalPrompt\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
             const scenarios = await count("SELECT COUNT(DISTINCT \"scenario\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
             const legacyEnding = await count("SELECT COUNT(*) AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%' AND \"scenario\" LIKE '%هل يحتاج اتفاقًا أوضح مع المجموعة%'");
+            const courtFactRows = await count('SELECT COUNT(*) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\'');
+            const repeatedInventedFact = await count('SELECT COUNT(*) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\' AND text=\'لم تتفق المجموعة مسبقًا على قاعدة تفصيلية لهذا التصرف.\'');
+            const uniqueActionFacts = await count('SELECT COUNT(DISTINCT text) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\' AND position=1');
+            if(courtFactRows!==360 || repeatedInventedFact!==0 || uniqueActionFacts!==180)
+              throw Error("Court facts were not normalized to two case-grounded lines after isolated double seed");
             const socialWords = await count("SELECT COUNT(*) AS n FROM \"SecretWord\" WHERE id LIKE 'social-seed-%'");
             const bluffSourceTotal = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%'");
             const bluffSourcePublished = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%' AND status='PUBLISHED'");
@@ -121,7 +126,7 @@ jobs:
             if(reviewed.rows.length!==2 || game?.correctAnswer!=="بات" || !game.question.includes("نقلة قانونية") || game.aliases.includes("الفرس") ||
                css?.correctAnswer!=="font-size" || !css.question.includes("حجم الخط") || css.aliases.includes("أوراق الأنماط المتتالية") ||
                scenarios!==180 || legacyEnding!==0 || bluffSourceTotal!==156 || bluffSourcePublished!==123 || bluffSemanticArchived!==33) throw Error("Reviewed Bluff/Court source changes or scoped semantic holds missing from isolated double seed");
-            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b,scenarios,legacyEnding,socialWords,bluffSourceTotal,bluffSourcePublished,bluffSemanticArchived,bluffNarwhalAliases:aliases,reviewedBluffIds:reviewed.rows.map(x=>x.id)}));
+            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b,scenarios,legacyEnding,courtFactRows,repeatedInventedFact,uniqueActionFacts,socialWords,bluffSourceTotal,bluffSourcePublished,bluffSemanticArchived,bluffNarwhalAliases:aliases,reviewedBluffIds:reviewed.rows.map(x=>x.id)}));
             if(all!==180 || pub!==170 || archived!==10 || known!==10 || customized!==48 || courts!==180 || p!==180 || b!==180) throw Error("Content double-seed verification failed");
           } finally { await client.end(); }
           NODE
