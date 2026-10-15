@@ -20,7 +20,7 @@
 ## Court / المحكمة
 
 - The source has 180 unique case texts and 180 prosecution/rebuttal prompts, and no original universal scenario question ending.
-- `Court_180_Individual_Editorial_Gate.csv` enumerates all 180 individually. **All 180 retain the original shared background fact that no detailed prior agreement existed**. They still need meaningful case-by-case editorial differentiation, defense/prosecution fairness review and human juror playtesting. Programmatic rewriting and structural tests are not human editorial sign-off.
+- `Court_180_Individual_Editorial_Gate.csv` is the historical first-pass ledger. Current `Court_180_Individual_Editorial_Gate_V2.csv` enumerates all 180 separately. Removed the universal, unsupported assertion that no detailed prior agreement existed; each case now retains a fictional-context fact and a distinct action grounded in its own scenario. Added source/ledger regression guards and an isolated PostgreSQL double-seed assertion of 360 case-fact rows, zero old blanket facts, and 180 distinct action facts. **This corrects a repeated source assumption; all 180 still require human case-by-case editorial/defense balance assessment and actual juror playtest.**
 - Before approval, test at least one full host/guest/juror browser path against a disposable database and retain native logs; it is not a human judgment of whether the prompts are fun or impartial.
 
 ## Forbidden Word / الكلمة الممنوعة
