@@ -46,3 +46,66 @@ jobs:
         run: npm test
       - name: Production build
         run: npm run build
+
+  seed-postgres:
+    name: Isolated PostgreSQL 17 double-seed verification
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: quddam
+          POSTGRES_PASSWORD: quddam
+          POSTGRES_DB: quddam_content_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam -d quddam_content_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://quddam:quddam@127.0.0.1:5432/quddam_content_test
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qalba-platform/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate isolated Prisma client
+        run: npm run db:generate
+      - name: Apply migrations to disposable service only
+        run: npm run db:migrate
+      - name: First content-only seed (no user accounts)
+        run: npm run db:seed:content
+      - name: Repeat content-only seed to prove updates and idempotence
+        run: npm run db:seed:content
+      - name: Verify archived IDs and original-source replacements in disposable PostgreSQL
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "pg";
+          const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try {
+            const count = async (sql, values=[]) => Number((await client.query(sql,values)).rows[0].n);
+            const all = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%'");
+            const pub = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND status='PUBLISHED'");
+            const archived = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND status='ARCHIVED'");
+            const customized = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND title LIKE 'تحدي الكلمات —%'");
+            const ids = ["054","062","070","078","086","094","102","110","118","120"].map(n=>"ordering-seed-"+n);
+            const known = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id=ANY($1::text[]) AND status='ARCHIVED'",[ids]);
+            const courts = await count("SELECT COUNT(*) AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const p = await count("SELECT COUNT(DISTINCT \"prosecutionPrompt\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const b = await count("SELECT COUNT(DISTINCT \"rebuttalPrompt\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b}));
+            if(all!==180 || pub!==170 || archived!==10 || known!==10 || customized!==48 || courts!==180 || p!==180 || b!==180) throw Error("Content double-seed verification failed");
+          } finally { await client.end(); }
+          NODE
