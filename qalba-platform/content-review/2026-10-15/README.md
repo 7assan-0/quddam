@@ -6,10 +6,15 @@ This directory contains editorial CSV snapshots only. **They are NOT imported by
 
 - `Board_1296_Remediated.csv` — 1,296 proposed board questions
 - `Lightning_600_Remediated.csv` — 600 proposed lightning questions
-- `Letter_224_V3_Canonical_Unmodified.csv` — 224 questions across 28 letters, six medium and two hard per letter. Do not import it alongside the old letter seed.
+- `Letter_224_V3_Canonical_Unmodified.csv` — historical unmodified V3 snapshot; do **not** use for approval because nine invalid alternative answers were identified.
+- `Letter_224_V4_Aliases_Corrected_Review_Pending.csv` — proposed replacement review snapshot: 224 questions across 28 letters, six medium and two hard per letter; nine invalid alternative answers removed. **Still pending independent factual, alias and semantic review.** Do not import alongside the old letter seed.
 - `Survey_26_Remediated.csv`, `Forbidden_52_Remediated.csv`, `Bluff_13_Remediated_Sourced_Review_Pending.csv`, `Ranked_15_Remediated.csv`, `Ordering_15_Remediated.csv`, `Court_15_Remediated.csv` — proposed additional/replacement content, **not automatic production seed changes**.
 - `Issue_Ledger_After_Remediation.csv` — the original 63-item ledger (60 patched locally and three originally source-blocked); these labels describe the supplied offline pack, **not 63 runtime-verified fixes**.
 - `Before_After_Diff_Items.csv` — 60 editorial before/after comparisons.
+
+## V4 letter alias audit
+
+The nine incorrect alternatives removed in V4 were associated with question IDs `letter-mh-022`, `031`, `062`, `099`, `132`, `153`, `183`, `186`, `202`. They incorrectly accepted a different country, compound, currency, person, location, device, rock-unrelated term or currency as the target answer. V3 is retained solely as historical evidence. This is an editorial-only correction, not a deployed data migration or a completed verification of all 224 items.
 
 ## Source-code changes in this draft PR
 
