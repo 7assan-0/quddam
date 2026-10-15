@@ -1,4 +1,4 @@
-import {duplicateOrderingIds} from "./content-remediations";
+import {duplicateOrderingIds, bluffSemanticHoldIds} from "./content-remediations";
 import {sourceBanks} from "../src/lib/content/source";
 import {auditContent} from "../src/lib/content/audit";
 import {boardSamples as samples, socialWords} from "./core-content";
@@ -112,7 +112,7 @@ async function main() {
     const category=await prisma.category.upsert({where:{slug:"bluff-"+slug},create:{slug:"bluff-"+slug,title,sortOrder:110},update:{}});
     for(const sample of bluffSamples.filter(q=>q.category===slug)) {
       validateQuestion(sample);
-      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:bluffEditorialRepairIds.has(sample.id)?{question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers}:{},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:"PUBLISHED",locale:"ar-SA"}});
+      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:{...(bluffEditorialRepairIds.has(sample.id)?{question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers}:{}),...(bluffSemanticHoldIds.has(sample.id)?{status:"ARCHIVED" as const}:{})},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:bluffSemanticHoldIds.has(sample.id)?"ARCHIVED":"PUBLISHED",locale:"ar-SA"}});
     }
   }
   await prisma.featureFlag.upsert({where:{key:"bluff-moderation"},create:{key:"bluff-moderation",enabled:true,config:{blockedTerms:[]}},update:{}});
