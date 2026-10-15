@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
-import { nightEnabled } from "./catalog";
+import { nightEnabled, nightGameTitle } from "./catalog";
 import { attendeeCookieName, digestCapability, invitationResponse, InviteInputError, inviteCodePattern,
   MAX_INVITE_ATTENDEES, MAX_INVITE_MUTATIONS_PER_MINUTE, normalizeAttendeeName,
   validVote, validateSchedule, type RsvpInput } from "./invitation";
@@ -52,12 +52,14 @@ export async function ownerInvitation(ownerId: string, nightId: string) {
   enabled();
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(nightId)) throw new InviteInputError("السهرة غير موجودة", 404);
   const night = await db().nightSession.findUnique({ where: { id: nightId }, select: { ownerId: true,
+    games: { select: { gameSlug: true }, orderBy: { position: "asc" } },
     invitation: { include: { guests: { select: { rsvp: true, gameVote: true } } } } } });
   if (!night || night.ownerId !== ownerId) throw new InviteInputError("السهرة غير موجودة", 404);
   const inv = night.invitation;
   if (!inv) return { exists: false as const };
   return { exists: true as const, scheduledAt: inv.scheduledAt.toISOString(), timezone: inv.timezone,
     coming: inv.guests.filter(g => g.rsvp === "YES").length, declined: inv.guests.filter(g => g.rsvp === "NO").length,
+    votes: night.games.map(slot => ({ game: slot.gameSlug, title: nightGameTitle(slot.gameSlug), count: inv.guests.filter(g => g.rsvp === "YES" && g.gameVote === slot.gameSlug).length })),
     /** Link is intentionally unavailable after one-time creation; only a hash is retained. */
     linkRecoverable: false as const };
 }
