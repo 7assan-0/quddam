@@ -236,8 +236,20 @@ export class RoomController {
     if (this.stopped || this.view.role !== "host" || ![...this.links.values()].some(link => this.playable(link))) return;
     this.change(hostAction(this.view.state, action));
   }
+  /** Every participant has a buzzer. Host A is a real player in slot 0, not a spectator. */
   buzz() {
-    if (this.stopped || this.view.role !== "guest" || this.view.state.phase !== "open" || this.lastBuzzRound === this.view.state.round) return;
+    if (this.stopped || this.view.state.phase !== "open" || this.lastBuzzRound === this.view.state.round) return;
+    if (this.view.role === "host") {
+      // A host may only play while the room has a live guest, like opening a round.
+      if (![...this.links.values()].some(link => this.playable(link))) return;
+      const next = acceptBuzz(this.view.state, 0, this.view.state.round);
+      if (next !== this.view.state) {
+        this.lastBuzzRound = this.view.state.round;
+        this.change(next);
+      }
+      return;
+    }
+    if (this.view.role !== "guest") return;
     const link = this.links.get(this.view.slot);
     if (link && this.send(link, JSON.stringify({ type: "BUZZ", round: this.view.state.round }))) this.lastBuzzRound = this.view.state.round;
   }
