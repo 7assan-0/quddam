@@ -8,6 +8,7 @@ export const actionsSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("INVITE") }).strict(),
   z.object({ op: z.literal("ATTACH"), nightId: z.uuid() }).strict(),
   z.object({ op: z.literal("ARCHIVE") }).strict(),
+  z.object({ op: z.literal("REVOKE"), inviteId: z.uuid() }).strict(),
   z.object({ op: z.literal("LEAVE") }).strict(),
 ]);
 export async function bounded<T>(request: NextRequest, schema: ZodType<T>) {
