@@ -110,7 +110,7 @@ export async function createShillaInvite(userId: string, id: string) {
     if (group._count.members >= SHILLA_MAX_MEMBERS) deny("اكتمل عدد أعضاء الشلّة", 409, "FULL");
     const active = await tx.shillaInvite.count({ where: { shillaId: id, consumedAt: null, revokedAt: null, expiresAt: { gt: now } } });
     if (active >= SHILLA_MAX_ACTIVE_INVITES) deny("هناك دعوات نشطة كافية؛ انتظر انتهاء إحداها", 409, "INVITE_LIMIT");
-    await tx.shillaInvite.create({ data: { shillaId: id, tokenHash: digest(code),
+    await tx.shillaInvite.create({ data: { id: randomUUID(), shillaId: id, tokenHash: digest(code),
       expiresAt: new Date(now.getTime() + SHILLA_INVITE_DAYS * 86400_000) } });
   });
   // Revealed exactly once: only token hash is persisted.
