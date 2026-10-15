@@ -136,7 +136,7 @@ export async function acceptShillaInvite(userId: string, code: string) {
     if (await tx.shillaMembership.findUnique({ where: { shillaId_userId: { shillaId: group.id, userId } } }))
       deny("أنت عضو بالفعل", 409, "ALREADY_MEMBER");
     await tx.shillaMembership.create({ data: { shillaId: group.id, userId, role: "MEMBER" } });
-    await tx.shillaInvite.update({ where: { id: current.id }, data: { consumedAt: new Date(), consumedById: userId } });
+    await tx.shillaInvite.update({ where: { id: current.id }, data: { consumedAt: new Date() } });
     return group.id;
   });
   return { shillaId: joinedId };
