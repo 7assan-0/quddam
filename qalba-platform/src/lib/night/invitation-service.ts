@@ -68,24 +68,27 @@ export async function getPublicInvitation(code: string, capability?: string, now
   return { id: invite.id, view: project(invite, now, capability),
     cookieName: attendeeCookieName(invite.id) };
 }
-export async function respondToInvitation(code: string, input: RsvpInput, capability?: string, now = new Date()) {
+export async function respondToInvitation(code: string, input: RsvpInput, capability?: string, now?: Date) {
   enabled();
   const tokenHash = codeHash(code);
   const named = normalizeAttendeeName(input.name);
-  const invite = await db().nightInvitation.findUnique({ where: { tokenHash }, select: { id: true } });
+  const invite = await db().nightInvitation.findUnique({ where: { tokenHash }, select: { id: true, nightId: true } });
   if (!invite) throw new InviteInputError("الدعوة غير موجودة", 404);
   const newCapability = randomBytes(32).toString("hex");
   const suppliedHash = capability && /^[a-f0-9]{64}$/i.test(capability) ? digestCapability(capability.toLowerCase()) : null;
   try {
     return await db().$transaction(async tx => {
+      // Match the Night command lock order: no acceptance after the organizer starts play.
+      await tx.$queryRawUnsafe('SELECT "id" FROM "NightSession" WHERE "id"=$1 FOR UPDATE', invite.nightId);
       // Serialize all mutations of one invitation, including simultaneous joins and rates.
       await tx.$queryRawUnsafe('SELECT "id" FROM "NightInvitation" WHERE "id"=$1 FOR UPDATE', invite.id);
+      const checkedAt = now ?? new Date();
       const current = await tx.nightInvitation.findUnique({ where: { id: invite.id }, include });
       if (!current) throw new InviteInputError("الدعوة غير موجودة", 404);
-      if (current.status !== "open" || current.expiresAt <= now || current.night.phase !== "preparing")
+      if (current.status !== "open" || current.expiresAt <= checkedAt || current.night.phase !== "preparing")
         throw new InviteInputError("انتهى استقبال الردود على هذه الدعوة", 409);
       validVote(input.gameVote, current.night.games.map(g => g.gameSlug), input.rsvp);
-      const windowReset = now.getTime() - current.rateWindowAt.getTime() >= 60_000;
+      const windowReset = checkedAt.getTime() - current.rateWindowAt.getTime() >= 60_000;
       const used = windowReset ? 0 : current.rateCount;
       if (used >= MAX_INVITE_MUTATIONS_PER_MINUTE) throw new InviteInputError("طلبات كثيرة؛ حاول لاحقًا", 429);
       const existing = suppliedHash ? current.guests.find(g => g.capabilityHash === suppliedHash) : null;
@@ -100,9 +103,9 @@ export async function respondToInvitation(code: string, input: RsvpInput, capabi
           name: named.display, nameKey: named.key, rsvp: input.rsvp, gameVote: input.gameVote } });
       }
       await tx.nightInvitation.update({ where: { id: current.id },
-        data: { rateWindowAt: windowReset ? now : current.rateWindowAt, rateCount: used + 1 } });
+        data: { rateWindowAt: windowReset ? checkedAt : current.rateWindowAt, rateCount: used + 1 } });
       const saved = await tx.nightInvitation.findUniqueOrThrow({ where: { id: current.id }, include });
-      return { view: project(saved, now, existing ? capability : newCapability),
+      return { view: project(saved, checkedAt, existing ? capability : newCapability),
         cookieName: attendeeCookieName(current.id), cookieValue: existing ? capability! : newCapability,
         expiresAt: current.expiresAt };
     }, { timeout: 12_000 });
