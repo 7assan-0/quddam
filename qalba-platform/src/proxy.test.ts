@@ -32,6 +32,27 @@ describe("Night page gate precedes layout streaming", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("x-robots-tag")).toContain("noindex");
   });
+  it("blocks Shillatak page streaming unless both feature flags are on, even for bearer paths", async () => {
+    for (const [night, shilla] of [["false","true"],["true","false"]]) {
+      vi.stubEnv("ENABLE_NIGHT_OF_QUDDAM", night); vi.stubEnv("ENABLE_SHILLATAK", shilla);
+      for (const pathname of ["/shillatak", "/shillatak/00000000-0000-4000-8000-000000000001",
+        `/shillatak/join/${"a".repeat(64)}`]) {
+        const response = await proxy(new NextRequest(`http://localhost:3000${pathname}`));
+        expect(response.status).toBe(404);
+        expect(response.headers.get("cache-control")).toBe("private, no-store");
+        expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+        expect(response.headers.get("x-middleware-next")).toBeNull();
+      }
+    }
+  });
+  it("redacts the join bearer page when enabled", async () => {
+    vi.stubEnv("ENABLE_NIGHT_OF_QUDDAM","true"); vi.stubEnv("ENABLE_SHILLATAK","true");
+    const response = await proxy(new NextRequest(`http://localhost:3000/shillatak/join/${"a".repeat(64)}`));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("x-robots-tag")).toContain("noindex");
+  });
   it.each(["/games", "/nightmare"])("preserves unrelated page forwarding for %s", async path => {
     vi.stubEnv("ENABLE_NIGHT_OF_QUDDAM", undefined);
     const response = await proxy(new NextRequest(`http://localhost:3000${path}`));
