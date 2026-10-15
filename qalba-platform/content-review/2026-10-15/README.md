@@ -6,6 +6,8 @@ See [QUALITY_ACCEPTANCE_GATE.md](QUALITY_ACCEPTANCE_GATE.md) for the mandatory a
 
 Current Court ledger: `Court_180_Individual_Editorial_Gate_V2.csv` reflects removal of the universal ungrounded prior-agreement fact across 180 original cases. `Court_180_Individual_Editorial_Gate.csv` remains the first-pass historical evidence, not the current gate. Both are review-only and **NO-GO** for human editorial/playtest acceptance.
 
+Current Bluff fact-review sheet: `Bluff_169_Item_Review_Gate_V3.csv` (169 rows; 6 original source-corroborated, 150 original without item-level references, 13 staged with preliminary corroboration). Earlier V1/V2 sheets are historical; no item is publication-approved. Human factual/alias/editorial signoff remains pending.
+
 ## Attached reviewed drafts
 
 - `Board_1296_Remediated.csv` — 1,296 proposed board questions
