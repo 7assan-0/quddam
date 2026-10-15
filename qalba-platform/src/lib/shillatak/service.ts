@@ -3,7 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { completedSnapshot, digest, jsonDigest, shillaLeaderboard, ShillaError,
   SHILLA_INVITE_DAYS, SHILLA_MAX_ACTIVE_INVITES, SHILLA_MAX_MEMBERS, shillaEnabled,
-  type ShillaSnapshot, validateCreate } from "./rules";
+  type ShillaSnapshot, normalizedName, validateCreate } from "./rules";
 import type { z } from "zod";
 import type { shillaCreateSchema } from "./rules";
 
@@ -72,7 +72,23 @@ export async function getShillaView(userId: string, id: string) {
   requireEnabled(); groupId(id);
   const group = await db().shilla.findUnique({ where: { id }, include: detailInclude });
   if (!group) deny();
-  return present(group, userId);
+  const view = present(group, userId);
+  if (group.ownerId !== userId || group.status !== "active") return { ...view, eligibleNights: [] };
+  const pending = await db().nightSession.findMany({
+    where: { ownerId: userId, phase: "completed", shillaRecord: null },
+    orderBy: { createdAt: "desc" }, take: 20,
+    select: { id: true, createdAt: true, state: true },
+  });
+  const expected = group.teams.map(team => team.nameKey);
+  const eligibleNights = pending.filter(night => {
+    try {
+      const state = night.state as { phase?: string; teams?: { name: string }[]; results?: unknown[] };
+      return state?.phase === "completed" && state.teams?.length === 2 &&
+        state.results?.length === 3 && state.teams.every((team, index) =>
+          normalizedName(team.name).nameKey === expected[index]);
+    } catch { return false; }
+  }).map(night => ({ id: night.id, createdAt: night.createdAt.toISOString() }));
+  return { ...view, eligibleNights };
 }
 export async function createShillaInvite(userId: string, id: string) {
   requireEnabled(); groupId(id);
@@ -108,7 +124,6 @@ export async function acceptShillaInvite(userId: string, code: string) {
   const invite = await db().shillaInvite.findUnique({ where: { tokenHash: digest(code.toLowerCase()) },
     select: { id: true, shillaId: true } });
   if (!invite) deny("الدعوة غير موجودة");
-  const now = new Date();
   const joinedId = await db().$transaction(async tx => {
     await tx.$queryRawUnsafe('SELECT "id" FROM "Shilla" WHERE "id"=$1 FOR UPDATE', invite.shillaId);
     const group = await tx.shilla.findUnique({ where: { id: invite.shillaId },
