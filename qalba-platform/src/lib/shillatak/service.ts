@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { completedSnapshot, digest, jsonDigest, shillaLeaderboard, ShillaError,
+import { completedSnapshot, digest, snapshotDigest, shillaLeaderboard, ShillaError,
   SHILLA_INVITE_DAYS, SHILLA_MAX_ACTIVE_INVITES, SHILLA_MAX_MEMBERS, shillaEnabled,
   type ShillaSnapshot, normalizedName, validateCreate } from "./rules";
 import type { z } from "zod";
@@ -37,7 +37,7 @@ function present(group: Detail, userId: string) {
   if (!membership) deny();
   const records = group.nights.map(record => {
     const snapshot = safeSnapshot(record.snapshot, record.nightId);
-    if (snapshot.teams.some((team, i) => team.shillaTeamId !== group.teams[i]?.id))
+    if (snapshotDigest(snapshot) !== record.sourceDigest || snapshot.teams.some((team, i) => team.shillaTeamId !== group.teams[i]?.id))
       deny("تعذر التحقق من هوية فريق السهرة", 409, "INVALID_HISTORY");
     return { id: record.id, recordedAt: record.createdAt.toISOString(),
       teams: snapshot.teams.map(({ shillaTeamId, name, points, champion }) => ({
@@ -182,7 +182,7 @@ export async function attachShillaNight(userId: string, shillaId: string, nightI
     if (!night || night.ownerId !== userId) deny("السهرة غير موجودة");
     const snapshot = completedSnapshot(night, group.teams);
     await tx.shillaNight.create({ data: { shillaId, nightId, snapshot: json(snapshot),
-      sourceDigest: jsonDigest({ nightId, sourceDigests: snapshot.sourceDigests, teams: snapshot.teams }) } });
+      sourceDigest: snapshotDigest(snapshot) } });
   }, { timeout: 20_000 });
   return getShillaView(userId, shillaId);
 }
