@@ -25,6 +25,9 @@ jobs:
     timeout-minutes: 90
     env:
       CI: "true"
+      # Synthetic accounts must receive the seeded three trial credits to exercise START.
+      # This flag is scoped to this disposable browser job, never to production or staging.
+      PUBLIC_WELCOME_CREDITS_ENABLED: "true"
       E2E_SEVEN_GAME_SMOKE: "1"
       E2E_REPORT_DIR: "playwright-report/seven-game-smoke"
       NODE_OPTIONS: "--max-old-space-size=4096"
