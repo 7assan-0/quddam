@@ -1,3 +1,7 @@
+import { validateQuestion as validateOrderingQuestion } from "../src/lib/games/ordering/module";
+import { validateCase as validateCourtCase } from "../src/lib/games/court/module";
+import { orderingCategories } from "../prisma/ordering-questions";
+import { courtCategories } from "../prisma/court-cases";
 import { describe, expect, it } from "vitest";
 import { orderingSamples } from "../prisma/ordering-questions";
 import { duplicateOrderingIds } from "../prisma/content-remediations";
@@ -23,6 +27,9 @@ describe("content remediation guardrails", () => {
     expect(instructions.filter((x) => x.startsWith("رتب الكلمات من الأطول"))).toHaveLength(12);
     expect(instructions.filter((x) => x.startsWith("رتب الكلمات حسب آخر حرف"))).toHaveLength(12);
     for (const q of orderingSamples) {
+      const category = orderingCategories.find(([slug]) => slug === q.categorySlug)?.[1];
+      expect(category).toBeTruthy();
+      expect(validateOrderingQuestion({ ...q, category: category! })).toBeTruthy();
       const actual = q.items.map((item) => item.correctPosition).sort((a, b) => a - b);
       expect(actual).toEqual(q.items.map((_, i) => i + 1));
       expect(new Set(q.items.map((item) => item.label)).size).toBe(q.items.length);
@@ -34,6 +41,9 @@ describe("content remediation guardrails", () => {
     expect(new Set(courtSamples.map((q) => q.prosecutionPrompt)).size).toBe(180);
     expect(new Set(courtSamples.map((q) => q.rebuttalPrompt)).size).toBe(180);
     for (const q of courtSamples) {
+      const category = courtCategories.find(([slug]) => slug === q.category)?.[1];
+      expect(category).toBeTruthy();
+      expect(validateCourtCase({ ...q, category: category! })).toBeTruthy();
       expect(q.prosecutionPrompt).toContain(q.title);
       expect(q.rebuttalPrompt).toContain(q.title);
       expect(q.rebuttalPrompt).toContain("بلا جواب مسبق");
