@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { acceptVerifiedResult, advanceNight, prepareNight, startNight, type NightState } from "@/lib/night/core";
-import { completedSnapshot, normalizedName, shillaLeaderboard, shillaEnabled, validateCreate } from "./rules";
+import { completedSnapshot, normalizedName, shillaLeaderboard, shillaEnabled, snapshotDigest, validateCreate } from "./rules";
 const ids = ["night-a", "night-b"];
 const games = ["top-list", "ordering-challenge", "survey-show"] as const;
 const nightTeams = [{ id: "n-a", name: "البرق" }, { id: "n-b", name: "الموج" }];
@@ -46,6 +46,7 @@ describe("Shillatak pure privacy and immutable result bridge", () => {
       { shillaTeamId: "s-b", name: "الموج", points: 6, champion: false },
     ]);
     expect(snap.sourceDigests).toHaveLength(3);
+    expect(snapshotDigest(snap)).toBe(snapshotDigest(JSON.parse(JSON.stringify(snap))));
     expect(JSON.stringify(snap)).not.toContain("sourceSessionId");
     expect(JSON.stringify(snap)).not.toContain("answer");
   });
