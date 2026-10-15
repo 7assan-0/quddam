@@ -129,14 +129,31 @@ try {
       if (previous.fingerprint !== integrity.fingerprint) throw new Error("Runtime source/tests changed since the interrupted run");
     } else await writeFile(resolve(reportDir, "run-integrity.json"), JSON.stringify(integrity, null, 2));
     let completedReports = 0, completedTests = 0;
+    // Opt-in seven-game browser smoke: one exact, pre-existing full-flow case per game.
+    // Normal full-suite and single-spec behavior remain unchanged. This mode never
+    // treats unselected cases as passing, and it cannot reuse earlier reports.
+    const sevenGameSmoke = process.env.E2E_SEVEN_GAME_SMOKE === "1";
+    const sevenCaseTitles = {
+      "bluff-game.spec.ts": "Bluff: full five-round match has exact leaderboard, winner and score audit counts",
+      "court-game.spec.ts": "Court: full five round match role rotation exact scores winner completion",
+      "forbidden-word.spec.ts": "Forbidden Word: six-round match has exact ordered turns winner and final scores",
+      "ordering-challenge.spec.ts": "Ordering: full seven round match exact scores winner immutable snapshots and completion duplicate",
+      "ranked-list.spec.ts": "Ranked List: full five-round match has alternating starters exact totals winner and complete duplicate",
+      "social-deduction.spec.ts": "four phones receive private roles; correct vote and wrong guess let players win",
+      "survey-battle.spec.ts": "Survey Battle: full five-round winner, completion and free rematch are clean",
+    };
+    if (sevenGameSmoke && (continuing || process.env.E2E_ONLY_SPEC || process.env.E2E_ONLY_CASES))
+      throw new Error("Seven-game smoke cannot combine with continuation or other E2E filters");
     const discoveredSpecs = (await readdir("tests/e2e")).filter(name => name.endsWith(".spec.ts")).sort();
-    const specs = process.env.E2E_ONLY_SPEC ? discoveredSpecs.filter(name => name === process.env.E2E_ONLY_SPEC) : discoveredSpecs;
+    const specs = sevenGameSmoke ? discoveredSpecs.filter(name => Object.hasOwn(sevenCaseTitles, name)) : process.env.E2E_ONLY_SPEC ? discoveredSpecs.filter(name => name === process.env.E2E_ONLY_SPEC) : discoveredSpecs;
+    if (sevenGameSmoke && specs.length !== 7) throw new Error("Seven-game smoke specs are incomplete");
     if (!specs.length) throw new Error("No E2E specs selected");
     for (const spec of specs) {
       const group = spec.startsWith("court-game") ? "court" : spec.startsWith("ordering-challenge") ? "ordering" : spec.startsWith("lightning-quiz") ? "lightning" : spec.startsWith("ranked-list") ? "ranked" : spec.startsWith("bluff-game") ? "bluff" : spec.startsWith("forbidden-word") ? "forbidden" : spec.startsWith("survey-battle") ? "survey" : spec.startsWith("letter-network") ? "letter" : spec.startsWith("social-deduction") ? "social"
         : /^(board-hardening|category-board|rooms)/.test(spec) ? "board" : spec.startsWith("party") ? "party" : "platform";
       const discoveredCases = await isolatedCases(spec);
-      const cases = /^(court-game|survey-battle|forbidden-word|bluff-game|ranked-list|lightning-quiz|ordering-challenge)/.test(spec) ? discoveredCases : [null];
+      const cases = sevenGameSmoke ? discoveredCases.filter(test => test.title === sevenCaseTitles[spec]) : /^(court-game|survey-battle|forbidden-word|bluff-game|ranked-list|lightning-quiz|ordering-challenge)/.test(spec) ? discoveredCases : [null];
+      if (sevenGameSmoke && cases.length !== 1) throw new Error("Seven-game smoke title missing or ambiguous: " + spec);
       const stats = [];
       for (const [index, test] of cases.entries()) {
         if (process.env.E2E_ONLY_CASES && !process.env.E2E_ONLY_CASES.split(",").map(Number).includes(index + 1)) continue;
@@ -179,9 +196,9 @@ try {
     }
     const totals = results.reduce((sum, result) => ({ passed: sum.passed + result.expected, failed: sum.failed + result.unexpected,
       skipped: sum.skipped + result.skipped, flaky: sum.flaky + result.flaky }), { passed: 0, failed: 0, skipped: 0, flaky: 0 });
-    await writeFile(resolve(reportDir, "summary.json"), JSON.stringify({ selectedSpec: process.env.E2E_ONLY_SPEC || null, selectedCases: process.env.E2E_ONLY_CASES || null, continuing, completedReports, completedTests, ...integrity, discoveredSpecs, results, totals, testRuns }, null, 2));
+    await writeFile(resolve(reportDir, "summary.json"), JSON.stringify({ sevenGameSmoke, selectedSpec: process.env.E2E_ONLY_SPEC || null, selectedSpecs: specs, selectedCases: process.env.E2E_ONLY_CASES || null, continuing, completedReports, completedTests, ...integrity, discoveredSpecs, results, totals, testRuns }, null, 2));
     console.log(`E2E totals: ${totals.passed} passed, ${totals.failed} failed, ${totals.skipped} skipped, ${totals.flaky} flaky`);
-    if (failures.length || totals.skipped || totals.flaky) throw new AggregateError(failures, "Full E2E run was not clean");
+    if (failures.length || totals.skipped || totals.flaky || (sevenGameSmoke && (totals.passed !== 7 || testRuns.length !== 7 || totals.failed))) throw new AggregateError(failures, "E2E run was not clean or smoke coverage incomplete");
   }
 } finally {
   await server.stop();
