@@ -38,6 +38,9 @@ describe("content remediation guardrails", () => {
 
   it("gives all 180 fictional court cases distinct scenario-specific arguments", () => {
     expect(courtSamples).toHaveLength(180);
+    expect(new Set(courtSamples.map((q) => q.scenario)).size).toBe(180);
+    expect(courtSamples.every((q) => !q.scenario.includes("هل يحتاج اتفاقًا أوضح مع المجموعة، أم أن الموقف له عذر مقبول؟"))).toBe(true);
+    expect(courtSamples.every((q) => q.scenario.includes(`«${q.title}»`))).toBe(true);
     expect(new Set(courtSamples.map((q) => q.prosecutionPrompt)).size).toBe(180);
     expect(new Set(courtSamples.map((q) => q.rebuttalPrompt)).size).toBe(180);
     for (const q of courtSamples) {
