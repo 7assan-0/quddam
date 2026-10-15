@@ -1,0 +1,22 @@
+import type { NightGameSlug } from "./catalog";
+import type { NightPlacement, NightResult, NightTeam } from "./core";
+export type NightCreateInput = { key: string; games: NightGameSlug[]; teams: [string, string] };
+export type NightCommandInput = { key: string; expectedVersion: number; op: "START" | "IMPORT" | "NEXT" | "END" };
+export type NightView = {
+  id: string;
+  phase: "preparing" | "playing" | "completed" | "ended";
+  version: number;
+  teams: NightTeam[];
+  games: { game: NightGameSlug; title: string; position: number; hostHref: string | null; sourceStatus: string | null; imported: boolean }[];
+  currentIndex: number;
+  current: { index: number; game: NightGameSlug; title: string; hostHref: string | null; sourceStatus: string | null } | null;
+  importReady: boolean;
+  blockedReason: string | null;
+  canNext: boolean;
+  results: NightResult[];
+  totals: Record<string, number>;
+  ranking: (NightTeam & { points: number })[];
+  winnerIds: string[];
+};
+export type NightTeamMapping = { nightTeamId: string; sourceTeamId: string; name: string; position: number };
+export type NightResultReceipt = { schemaVersion: 1; sourceSessionId: string; sourceVersion: number; matchNumber: 1; game: NightGameSlug; placements: NightPlacement[]; scores: { nightTeamId: string; score: number }[]; sourceDigest: string; digest: string };

@@ -24,7 +24,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <a href="#main-content" className="skip-link">انتقل إلى المحتوى</a>
     <header className="header"><div className="shell header-inner">
       <Link href="/" className="brand" aria-label="قدّام، الصفحة الرئيسية"><Brand /></Link>
-      <nav className="nav" aria-label="التنقل الرئيسي"><Link href={user ? "/games" : "/#games"}>الألعاب</Link><Link href="/join">انضم لغرفة</Link><Link href="/#how">كيف نلعب</Link></nav>
+      <nav className="nav" aria-label="التنقل الرئيسي"><Link href={user ? "/games" : "/#games"}>الألعاب</Link>{process.env.ENABLE_NIGHT_OF_QUDDAM === "true" && <Link href="/night">ليلة قدّام</Link>}<Link href="/join">انضم لغرفة</Link><Link href="/#how">كيف نلعب</Link></nav>
       <div className="nav-actions">{user ? <><Link className="btn btn-primary btn-small" href="/games">مكتبتي</Link><details className="account-menu"><summary aria-label="حسابي">حسابي</summary><div><Link href="/profile">ملفي الشخصي · رصيدي</Link><Link href="/pricing">باقات الألعاب</Link>{user.role === "ADMIN" && <Link href="/admin">الإدارة</Link>}</div></details><LogoutButton /></> : <><Link className="btn btn-ghost btn-small" href="/login">دخول</Link><Link className="btn btn-primary btn-small" href="/register">حساب جديد</Link></>}</div>
     </div></header>
     <main id="main-content" tabIndex={-1}>{children}</main>

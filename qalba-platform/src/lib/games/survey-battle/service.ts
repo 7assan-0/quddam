@@ -12,14 +12,15 @@ export type Audience={kind:"HOST";id:string}|{kind:"DISPLAY";token:string};
 export type SurveyAction=Action;
 const json=(state:State|Survey)=>state as unknown as Prisma.InputJsonValue;
 const lock=(tx:Prisma.TransactionClient,id:string)=>tx.$queryRawUnsafe('SELECT "id" FROM "GameSession" WHERE "id"=$1 FOR UPDATE',id);
-export async function createSurveySession(hostId:string,names:[string,string]){
+export async function createSurveySessionInTransaction(tx:Prisma.TransactionClient,hostId:string,names:[string,string]){
   const clean=names.map(n=>n.trim().replace(/\s+/g," "));if(clean.some(n=>n.length<2||n.length>60)||clean[0]===clean[1])throw new SurveyError("اختر اسمين مختلفين للفريقين",400);
-  const game=await db().gameType.findUnique({where:{slug:"survey-show"}});if(!game?.enabled)throw new SurveyError("اللعبة غير متاحة",404);
-  const id=await db().$transaction(async tx=>{
-    const session=await tx.gameSession.create({data:{hostId,gameTypeId:game.id,config:{multipliers:DEFAULT_MULTIPLIERS,rematchCredit:"FREE_IN_SAME_SESSION",timers:"UNTIMED_HOST_JUDGED"},state:json(lobby())}});
-    await tx.team.createMany({data:clean.map((name,position)=>({sessionId:session.id,name,position,color:TEAM_COLORS[position]}))});
-    await recordEvent(tx,"GAME_CREATED",hostId,{sessionId:session.id,gameSlug:"survey-show"});return session.id;
-  });return getSurveyView(id,{kind:"HOST",id:hostId});
+  const game=await tx.gameType.findUnique({where:{slug:"survey-show"}});if(!game?.enabled)throw new SurveyError("اللعبة غير متاحة",404);
+  const session=await tx.gameSession.create({data:{hostId,gameTypeId:game.id,config:{multipliers:DEFAULT_MULTIPLIERS,rematchCredit:"FREE_IN_SAME_SESSION",timers:"UNTIMED_HOST_JUDGED"},state:json(lobby())}});
+  await tx.team.createMany({data:clean.map((name,position)=>({sessionId:session.id,name,position,color:TEAM_COLORS[position]}))});
+  await recordEvent(tx,"GAME_CREATED",hostId,{sessionId:session.id,gameSlug:"survey-show"});return session.id;
+}
+export async function createSurveySession(hostId:string,names:[string,string]){
+  const id=await db().$transaction(tx=>createSurveySessionInTransaction(tx,hostId,names));return getSurveyView(id,{kind:"HOST",id:hostId});
 }
 async function load(id:string){const session=await db().gameSession.findUnique({where:{id},include:{gameType:{select:{slug:true}},teams:{orderBy:{position:"asc"}},displayAccesses:{where:{revokedAt:null,expiresAt:{gt:new Date()}},select:{expiresAt:true},take:1}}});if(!session||session.gameType.slug!=="survey-show")throw new SurveyError("المباراة غير موجودة",404);return session;}
 export function tvProjection(state:State,survey:Survey|null){return {phase:state.phase,pausedPhase:state.pausedPhase,matchNumber:state.matchNumber,roundNumber:state.roundIndex+1,roundCount:state.multipliers.length,multiplier:state.multipliers[state.roundIndex],rawPot:state.rawPot,finalPot:state.rawPot*state.multipliers[state.roundIndex],strikes:state.strikes,controlTeamId:state.controlIndex===null?null:state.teamIds[state.controlIndex],activeTeamId:state.controlIndex===null?null:state.teamIds[state.phase==="STEAL"||state.pausedPhase==="STEAL"?1-state.controlIndex:state.controlIndex],roundWinnerId:state.roundWinnerId,winnerTeamId:state.winnerTeamId,question:survey?{text:survey.question,sourceType:survey.sourceType,totalSurveyPoints:survey.answers.reduce((sum,a)=>sum+a.points,0)}:null,board:publicBoard(state,survey),lastEvent:state.lastEvent};}

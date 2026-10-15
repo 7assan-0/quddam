@@ -2,8 +2,8 @@ import { isLaunchGameSlug, type LaunchGameSlug } from "../games/launch-policy";
 
 /**
  * Pure, experimental "ليلة قدّام" series rules. This module neither starts games
- * nor grants permission to report results: the future server-side adapter must
- * authenticate the room host and verify each source session's FINAL result.
+ * nor grants permission to report results. The server-side adapter authenticates
+ * the owner and verifies each source session's completed, full first match.
  */
 export const MIN_NIGHT_GAMES = 3;
 export const MAX_NIGHT_GAMES = 10;
@@ -22,7 +22,8 @@ export type NightResult = {
 export type NightState = {
   schemaVersion: 1;
   nightId: string;
-  phase: "playing" | "completed";
+  phase: "preparing" | "playing" | "completed" | "ended";
+  currentIndex: number;
   games: LaunchGameSlug[];
   teams: NightTeam[];
   results: NightResult[];
@@ -66,7 +67,7 @@ export function createNight(input: {
   if (new Set(teams.map(team => team.id)).size !== teams.length ||
     new Set(teams.map(team => team.name.toLocaleLowerCase("ar"))).size !== teams.length)
     reject("Duplicate team ID or name", "DUPLICATE_TEAM");
-  return { schemaVersion: 1, nightId: input.nightId, phase: "playing",
+  return { schemaVersion: 1, nightId: input.nightId, phase: "playing", currentIndex: 0,
     games: [...input.games] as LaunchGameSlug[], teams, results: [],
     totals: Object.fromEntries(teams.map(team => [team.id, 0])) as Record<string, number>, version: 0 };
 }
@@ -118,7 +119,7 @@ export function acceptVerifiedResult(state: NightState, outcome: VerifiedGameOut
   const totals = Object.fromEntries(state.teams.map(team =>
     [team.id, state.totals[team.id] + points[team.id]])) as Record<string, number>;
   const results = [...state.results, result];
-  return { ...state, results, totals, version: state.version + 1,
+  return { ...state, results, totals, currentIndex: state.currentIndex, version: state.version + 1,
     phase: results.length === state.games.length ? "completed" : "playing" };
 }
 /** Public-safe derived results. No private answers, session credentials or team member IDs. */
@@ -129,4 +130,24 @@ export function nightLeaderboard(state: NightState) {
   return { completed: state.phase === "completed", played: state.results.length,
     totalGames: state.games.length, ranking: sorted,
     winnerIds: state.phase === "completed" ? sorted.filter(team => team.points === max).map(team => team.id) : [] };
+}
+
+/** Persisted orchestration starts with preparation; pure legacy createNight remains compatible. */
+export function prepareNight(input: Parameters<typeof createNight>[0]): NightState {
+  return { ...createNight(input), phase: "preparing" };
+}
+export function startNight(state: NightState): NightState {
+  if (state.phase !== "preparing") reject("Night already started", "INVALID_PHASE");
+  return { ...state, phase: "playing", version: state.version + 1 };
+}
+export function endNight(state: NightState): NightState {
+  if (state.phase === "ended") return state;
+  if (state.phase === "completed") reject("Night already complete", "CLOSED_NIGHT");
+  return { ...state, phase: "ended", version: state.version + 1 };
+}
+
+export function advanceNight(state: NightState): NightState {
+  if (state.phase !== "playing" || state.results.length !== state.currentIndex + 1 || state.currentIndex + 1 >= state.games.length)
+    reject("Import the current result before advancing", "INVALID_PHASE");
+  return { ...state, currentIndex: state.currentIndex + 1, version: state.version + 1 };
 }
