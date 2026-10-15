@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { bluffSamples } from "../prisma/bluff-questions";
 
 const directory = new URL("../content-review/2026-10-15/", import.meta.url);
 
@@ -54,16 +55,20 @@ describe("review-only staged content cross-bank duplicate guard", () => {
   const board = load("Board_1296_Remediated.csv", "السؤال أو التحدي", "الرقم داخل اللعبة");
   const lightning = load("Lightning_600_Remediated.csv", "question", "id");
   const letters = load("Letter_224_V4_Aliases_Corrected_Review_Pending.csv", "question", "id");
+  const stagedBluff = load("Bluff_13_Remediated_Sourced_Review_Pending.csv", "question", "id");
+  const originalBluff = bluffSamples.map((item) => ({ bank: "original-bluff", id: item.id, question: item.question }));
 
   it("preserves the requested staged bank sizes", () => {
     expect(board).toHaveLength(1296);
     expect(lightning).toHaveLength(600);
     expect(letters).toHaveLength(224);
+    expect(stagedBluff).toHaveLength(13);
+    expect(originalBluff).toHaveLength(156);
   });
 
-  it("does not repeat any normalized question within or across these three banks", () => {
+  it("does not repeat normalized questions across three core review banks and both Bluff banks", () => {
     const seen = new Map<string, string>();
-    for (const item of [...board, ...lightning, ...letters]) {
+    for (const item of [...board, ...lightning, ...letters, ...stagedBluff, ...originalBluff]) {
       const key = normalized(item.question);
       expect(key.length).toBeGreaterThan(0);
       const origin = seen.get(key);
@@ -77,6 +82,12 @@ describe("review-only staged content cross-bank duplicate guard", () => {
     const letterItem = letters.find((item) => item.id === "letter-mh-047");
     expect(lightningItem?.question).toBe("في معادلة أرينيوس لسرعة التفاعل الكيميائي ما اسم المقدار الذي يرمز له بـ Ea؟");
     expect(letterItem?.question).toBe("ما اسم المادة التي تسرّع التفاعل الكيميائي من دون أن تُستهلك فيه؟");
+  });
+
+  it("replaces the known verbatim actor-question duplication against original Bluff", () => {
+    const replacement = lightning.find((item) => item.id === "lightning-v600-screen-03");
+    expect(replacement?.question).toContain("مزامنة الصوت والصورة");
+    expect(originalBluff.some((item) => normalized(item.question) === normalized(replacement!.question))).toBe(false);
   });
 
   it("replaces the known verbatim electrical-insulator duplication in the Lightning review bank", () => {
