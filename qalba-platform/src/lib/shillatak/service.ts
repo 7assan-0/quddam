@@ -63,9 +63,15 @@ export async function createShilla(userId: string, input: z.infer<typeof shillaC
   requireEnabled();
   const checked = validateCreate(input);
   const id = randomUUID();
-  await db().shilla.create({ data: { id, name: checked.name, ownerId: userId,
-    members: { create: [{ userId, role: "OWNER" }] },
-    teams: { create: checked.teams.map((team, position) => ({ position, name: team.name, nameKey: team.nameKey })) } } });
+  await db().$transaction(async tx => {
+    await tx.$queryRawUnsafe("SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtextextended($1, 0))",
+      `shilla-create:${userId}`);
+    const owned = await tx.shilla.count({ where: { ownerId: userId } });
+    if (owned >= 5) deny("حد إنشاء الشلل خمسة لكل حساب في هذه النسخة", 409, "GROUP_LIMIT");
+    await tx.shilla.create({ data: { id, name: checked.name, ownerId: userId,
+      members: { create: [{ userId, role: "OWNER" }] },
+      teams: { create: checked.teams.map((team, position) => ({ position, name: team.name, nameKey: team.nameKey })) } } });
+  });
   return getShillaView(userId, id);
 }
 export async function getShillaView(userId: string, id: string) {
