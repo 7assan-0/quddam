@@ -111,7 +111,7 @@ async function main() {
     const category=await prisma.category.upsert({where:{slug:"bluff-"+slug},create:{slug:"bluff-"+slug,title,sortOrder:110},update:{}});
     for(const sample of bluffSamples.filter(q=>q.category===slug)) {
       validateQuestion(sample);
-      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:{},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:"PUBLISHED",locale:"ar-SA"}});
+      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:sample.id==="bluff-seed-oddities-9"?{alternativeCorrectAnswers:sample.alternativeCorrectAnswers}:{},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:"PUBLISHED",locale:"ar-SA"}});
     }
   }
   await prisma.featureFlag.upsert({where:{key:"bluff-moderation"},create:{key:"bluff-moderation",enabled:true,config:{blockedTerms:[]}},update:{}});
