@@ -59,6 +59,15 @@ describe("content remediation guardrails", () => {
     expect(courtSamples.every((q) => q.scenario.includes(`«${q.title}»`))).toBe(true);
     expect(new Set(courtSamples.map((q) => q.prosecutionPrompt)).size).toBe(180);
     expect(new Set(courtSamples.map((q) => q.rebuttalPrompt)).size).toBe(180);
+    expect(new Set(courtSamples.map((q) => q.facts[2])).size).toBe(180);
+    for (const q of courtSamples) {
+      expect(q.facts).toHaveLength(3);
+      const action = q.scenario.match(/^.*?، شخص (.*?)\.(?: |$)/u)?.[1];
+      expect(action).toBeTruthy();
+      expect(q.facts[2]).toBe(`الفعل المختلف عليه في هذا السيناريو: ${action}.`);
+      expect(q.facts[0]).toBe("الموقف خيالي ولا يشير إلى شخص حقيقي.");
+      expect(q.facts[1]).toBe("لم تتفق المجموعة مسبقًا على قاعدة تفصيلية لهذا التصرف.");
+    }
     for (const q of courtSamples) {
       const category = courtCategories.find(([slug]) => slug === q.category)?.[1];
       expect(category).toBeTruthy();
