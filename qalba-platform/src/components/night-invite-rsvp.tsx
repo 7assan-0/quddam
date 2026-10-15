@@ -45,7 +45,7 @@ export function NightInviteRsvp({ code }: { code: string }) {
     finally { setBusy(false); }
   }
   return <div className="shell" data-testid="night-public-invitation" style={{ maxWidth: 750 }}>
-    <div className="page-title"><span className="eyebrow">دعوة خاصة · ليلة قدّام</span><h1>الجمعة أحلى بالشلة</h1>
+    <div className="page-title"><span className="eyebrow">دعوة خاصة · ليلة قدّام</span><h1>سهرتنا قدّام</h1>
       <p>جاوب على الدعوة وصوّت للعبة اللي متحمس لها. دخول اللعب لاحقًا يكون برابط غرفة مستقل.</p></div>
     {error && <p className="form-error" role="alert">{error}</p>}
     {!loaded && <p role="status">جارٍ تحميل الدعوة…</p>}
