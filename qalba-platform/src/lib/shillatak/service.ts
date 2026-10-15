@@ -46,7 +46,7 @@ function present(group: Detail, userId: string) {
   });
   return { id: group.id, name: group.name, status: group.status, owner: group.ownerId === userId,
     myRole: membership.role, teams: group.teams.map(t => ({ id: t.id, name: t.name, position: t.position })),
-    members: group.members.map(member => ({ id: member.userId, name: member.user.name, role: member.role })),
+    members: group.members.map(member => ({ id: member.id, name: member.user.name, role: member.role })),
     leaderboard: shillaLeaderboard(group.teams, group.nights.map(record => safeSnapshot(record.snapshot, record.nightId))),
     nights: records };
 }
