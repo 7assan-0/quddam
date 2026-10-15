@@ -1,4 +1,4 @@
-import {duplicateOrderingIds} from "./content-remediations";
+import {duplicateOrderingIds, bluffSemanticHoldIds} from "./content-remediations";
 import {sourceBanks} from "../src/lib/content/source";
 import {auditContent} from "../src/lib/content/audit";
 import {boardSamples as samples, socialWords} from "./core-content";
@@ -88,7 +88,7 @@ async function main() {
     for (const sample of orderingSamples.filter(q=>q.categorySlug===slug)) {
       validateOrderingQuestion({...sample,category:title});
       const {id,categorySlug: _categorySlug,items,...data}=sample; void _categorySlug;
-      await prisma.orderingQuestion.upsert({where:{id},update:{},create:{...data,id,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,status:duplicateOrderingIds.has(id)?"ARCHIVED":"PUBLISHED",items:{create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}}});
+      await prisma.orderingQuestion.upsert({where:{id},update:{...data,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,...(duplicateOrderingIds.has(id) ? {status:"ARCHIVED" as const} : {}),items:{deleteMany:{},create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}},create:{...data,id,sourceDate:data.sourceDate?new Date(data.sourceDate):null,normalizedTitle:orderingNormalize(data.title),categoryId:category.id,status:duplicateOrderingIds.has(id)?"ARCHIVED":"PUBLISHED",items:{create:items.map(({id:_itemId,...item})=>{void _itemId;return item;})}}});
     }
   }
   for (const [slug,title] of lightningCategories) {
@@ -107,11 +107,12 @@ async function main() {
       await prisma.rankedListQuestion.upsert({where:{id},update:{},create:{id,...snapshot,normalizedTitle:rankedNormalize(sample.title),difficulty,categoryId:category.id,status:"PUBLISHED",locale:"ar-SA",entries:{create:entries}}});
     }
   }
+  const bluffEditorialRepairIds = new Set(["bluff-seed-oddities-9", "bluff-seed-games-1", "bluff-seed-technology-4"]);
   for (const [slug,title] of bluffCategories) {
     const category=await prisma.category.upsert({where:{slug:"bluff-"+slug},create:{slug:"bluff-"+slug,title,sortOrder:110},update:{}});
     for(const sample of bluffSamples.filter(q=>q.category===slug)) {
       validateQuestion(sample);
-      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:{},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:"PUBLISHED",locale:"ar-SA"}});
+      await prisma.bluffQuestion.upsert({where:{id:sample.id},update:{...(bluffEditorialRepairIds.has(sample.id)?{question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers}:{}),...(bluffSemanticHoldIds.has(sample.id)?{status:"ARCHIVED" as const}:{})},create:{id:sample.id,question:sample.question,normalizedQuestion:normalizeArabic(sample.question),correctAnswer:sample.correctAnswer,alternativeCorrectAnswers:sample.alternativeCorrectAnswers,difficulty:sample.difficulty,explanation:sample.explanation,categoryId:category.id,status:bluffSemanticHoldIds.has(sample.id)?"ARCHIVED":"PUBLISHED",locale:"ar-SA"}});
     }
   }
   await prisma.featureFlag.upsert({where:{key:"bluff-moderation"},create:{key:"bluff-moderation",enabled:true,config:{blockedTerms:[]}},update:{}});
@@ -188,7 +189,7 @@ async function main() {
   }
   for (const [slug,title] of courtCategories) {
     const category = await prisma.category.upsert({where:{slug:"court-"+slug},update:{},create:{slug:"court-"+slug,title,sortOrder:700+courtCategories.findIndex(c=>c[0]===slug)}});
-    for (const [i,c] of courtSamples.entries()) if(c.category===slug) { validateCase({...c,category:title}); const {facts,category: ignored,...data}=c; void ignored; await prisma.courtCase.upsert({where:{id:`court-seed-${i+1}`},update:{},create:{id:`court-seed-${i+1}`,...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,status:"PUBLISHED",facts:{create:facts.map((text,position)=>({text,position}))}}}); }
+    for (const [i,c] of courtSamples.entries()) if(c.category===slug) { validateCase({...c,category:title}); const {facts,category: ignored,...data}=c; void ignored; await prisma.courtCase.upsert({where:{id:`court-seed-${i+1}`},update:{...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,facts:{deleteMany:{},create:facts.map((text,position)=>({text,position}))}},create:{id:`court-seed-${i+1}`,...data,normalizedTitle:courtNormalize(c.title),categoryId:category.id,status:"PUBLISHED",facts:{create:facts.map((text,position)=>({text,position}))}}}); }
   }
   console.log(`Court: ${courtSamples.length} original fictional cases.`);
   console.log(`Forbidden Word: ${forbiddenSamples.length} original cards across ${forbiddenCategories.length} categories.`);

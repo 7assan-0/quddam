@@ -1,0 +1,14 @@
+id,category,target,example_candidate_clue_not_player_proven,initial_forbidden_string_collision,editorial_risk,real_team_playtest,hard_rating_state,publication_state
+forbidden-hard-candidate-01,food,زعتر بري,نبات عطري جبلي يضاف أحيانًا للشاي,NONE_EXACT_SUBSTRING,تمييزه عن الزعتر المعتاد,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-02,saudi,القط العسيري,فن تزيين جدران البيوت التقليدية في جنوب السعودية,NONE_EXACT_SUBSTRING,تفسير كلمة القط على أنها الحيوان,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-03,travel,ترانزيت,تغيير الطائرة في محطة وسيطة قبل بلوغ الوجهة,NONE_EXACT_SUBSTRING,قرب وصف المحطة الوسيطة من المصطلح المحظور,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-04,technology,الحوسبة الطرفية,تشغيل الخوارزميات بجانب مصدر البيانات بدل نقلها لمركز بعيد,NONE_EXACT_SUBSTRING,المصطلح تقني وقد يكون بالغ الصعوبة لبعض المجموعات,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-05,sports,الوثب الثلاثي,منافسة يجري فيها اللاعب ثم ينفذ حركات متتابعة قبل الهبوط,NONE_EXACT_SUBSTRING,الحركات قد تحتاج شرحًا يتداخل مع كلمة ممنوعة,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-06,games,غرفة هروب,تدخل مكانًا مغلقًا وتفك شفرات لتفتح الباب قبل انتهاء المهلة,NONE_EXACT_SUBSTRING,الوصف قد يفضي لتلميحات شديدة المباشرة,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-07,screen,المونتاج,مهنة جمع المشاهد المصورة في فيديو متسلسل,NONE_EXACT_SUBSTRING,مرادفات قص وترتيب محتملة في التلميحات,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-08,everyday,منظم كابلات,قطعة تحفظ توصيلات الشواحن خلف الطاولة مرتبة,NONE_EXACT_SUBSTRING,اختلاف التسميات العامية للقطعة,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-09,jobs,مترجم فوري,شخص ينقل كلام المتحدث لحظة نطقه إلى لسان آخر,NONE_EXACT_SUBSTRING,مدى التمييز عن المترجم العادي,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-10,places,متحف مفتوح,موقع تشاهد فيه مباني قديمة في ساحات خارجية لا في قاعات مغلقة,NONE_EXACT_SUBSTRING,غموضه مقابل الموقع الأثري,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-11,animals,الأوكابي,ثديي إفريقي له قوائم مميزة ويشبه الحصان من بعيد,NONE_EXACT_SUBSTRING,احتمال صعوبة غير عادلة حتى مع التلميح,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-12,people,ابن الهيثم,مؤلف كتاب المناظر ومن رواد المنهج التجريبي,NONE_EXACT_SUBSTRING,قد يعطي عنوان الكتاب إجابة مباشرة,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO
+forbidden-hard-candidate-13,school,الهندسة الوصفية,مادة دراسية تشرح أشكال الأجسام على الورق من اتجاهات مختلفة,NONE_EXACT_SUBSTRING,مصطلح تخصصي وقد يكون بالغ الصعوبة,HUMAN_TEAM_PLAYTEST_REQUIRED,DIFFICULTY_PROVISIONAL,NO_GO

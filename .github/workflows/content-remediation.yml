@@ -1,0 +1,132 @@
+name: Content remediation validation
+
+on:
+  pull_request:
+    branches:
+      - design/phase-3-game-show
+    types: [opened, synchronize, reopened]
+    paths:
+      - "qalba-platform/**"
+      - ".github/workflows/content-remediation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-remediation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Source content and application checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # A non-secret placeholder for Prisma config parsing; no database is provisioned or contacted.
+      DATABASE_URL: postgresql://quddam:quddam@127.0.0.1:5432/quddam_ci
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qalba-platform/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client (no database connection)
+        run: npm run db:generate
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Unit and source validation tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+
+  seed-postgres:
+    name: Isolated PostgreSQL 17 double-seed verification
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: quddam
+          POSTGRES_PASSWORD: quddam
+          POSTGRES_DB: quddam_content_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam -d quddam_content_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://quddam:quddam@127.0.0.1:5432/quddam_content_test
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qalba-platform/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate isolated Prisma client
+        run: npm run db:generate
+      - name: Apply migrations to disposable service only
+        run: npm run db:migrate
+      - name: First content-only seed (no user accounts)
+        run: npm run db:seed:content
+      - name: Repeat content-only seed to prove updates and idempotence
+        run: npm run db:seed:content
+      - name: Verify archived IDs and original-source replacements in disposable PostgreSQL
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "pg";
+          const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          try {
+            const count = async (sql, values=[]) => Number((await client.query(sql,values)).rows[0].n);
+            const all = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%'");
+            const pub = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND status='PUBLISHED'");
+            const archived = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND status='ARCHIVED'");
+            const customized = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id LIKE 'ordering-seed-%' AND title LIKE 'تحدي الكلمات —%'");
+            const ids = ["054","062","070","078","086","094","102","110","118","120"].map(n=>"ordering-seed-"+n);
+            const known = await count("SELECT COUNT(*) AS n FROM \"OrderingQuestion\" WHERE id=ANY($1::text[]) AND status='ARCHIVED'",[ids]);
+            const courts = await count("SELECT COUNT(*) AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const p = await count("SELECT COUNT(DISTINCT \"prosecutionPrompt\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const b = await count("SELECT COUNT(DISTINCT \"rebuttalPrompt\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const scenarios = await count("SELECT COUNT(DISTINCT \"scenario\") AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%'");
+            const legacyEnding = await count("SELECT COUNT(*) AS n FROM \"CourtCase\" WHERE id LIKE 'court-seed-%' AND \"scenario\" LIKE '%هل يحتاج اتفاقًا أوضح مع المجموعة%'");
+            const courtFactRows = await count('SELECT COUNT(*) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\'');
+            const repeatedInventedFact = await count('SELECT COUNT(*) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\' AND text=\'لم تتفق المجموعة مسبقًا على قاعدة تفصيلية لهذا التصرف.\'');
+            const uniqueActionFacts = await count('SELECT COUNT(DISTINCT text) AS n FROM "CourtCaseFact" WHERE "caseId" LIKE \'court-seed-%\' AND position=1');
+            if(courtFactRows!==360 || repeatedInventedFact!==0 || uniqueActionFacts!==180)
+              throw Error("Court facts were not normalized to two case-grounded lines after isolated double seed");
+            const socialWords = await count("SELECT COUNT(*) AS n FROM \"SecretWord\" WHERE id LIKE 'social-seed-%'");
+            const bluffSourceTotal = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%'");
+            const bluffSourcePublished = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%' AND status='PUBLISHED'");
+            const bluffSemanticArchived = await count("SELECT COUNT(*) AS n FROM \"BluffQuestion\" WHERE id LIKE 'bluff-seed-%' AND status='ARCHIVED'");
+            const narwhal = await client.query('SELECT "alternativeCorrectAnswers" AS aliases FROM "BluffQuestion" WHERE id=$1',["bluff-seed-oddities-9"]);
+            const aliases = narwhal.rows[0]?.aliases ?? [];
+            if (socialWords !== 165 || narwhal.rows.length !== 1 || aliases.includes("حريش البحر") || !aliases.includes("ناروال"))
+              throw Error("Social expansion or corrected Bluff alias missing after second isolated seed");
+            const reviewed = await client.query('SELECT id, question, "correctAnswer", "alternativeCorrectAnswers" AS aliases FROM "BluffQuestion" WHERE id=ANY($1::text[])', [["bluff-seed-games-1","bluff-seed-technology-4"]]);
+            const game = reviewed.rows.find(x=>x.id==="bluff-seed-games-1");
+            const css = reviewed.rows.find(x=>x.id==="bluff-seed-technology-4");
+            if(reviewed.rows.length!==2 || game?.correctAnswer!=="بات" || !game.question.includes("نقلة قانونية") || game.aliases.includes("الفرس") ||
+               css?.correctAnswer!=="font-size" || !css.question.includes("حجم الخط") || css.aliases.includes("أوراق الأنماط المتتالية") ||
+               scenarios!==180 || legacyEnding!==0 || bluffSourceTotal!==156 || bluffSourcePublished!==123 || bluffSemanticArchived!==33) throw Error("Reviewed Bluff/Court source changes or scoped semantic holds missing from isolated double seed");
+            console.log(JSON.stringify({all,pub,archived,known,customized,courts,uniqueProsecution:p,uniqueRebuttal:b,scenarios,legacyEnding,courtFactRows,repeatedInventedFact,uniqueActionFacts,socialWords,bluffSourceTotal,bluffSourcePublished,bluffSemanticArchived,bluffNarwhalAliases:aliases,reviewedBluffIds:reviewed.rows.map(x=>x.id)}));
+            if(all!==180 || pub!==170 || archived!==10 || known!==10 || customized!==48 || courts!==180 || p!==180 || b!==180) throw Error("Content double-seed verification failed");
+          } finally { await client.end(); }
+          NODE

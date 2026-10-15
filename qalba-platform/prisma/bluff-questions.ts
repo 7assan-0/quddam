@@ -66,7 +66,7 @@ const bank:Record<string,string>= {
  technology:`ما اسم البروتوكول الذي تضيف نسخته المشفرة حرف S إلى HTTP؟|HTTPS
 ما الاختصار الذي يرمز إلى نظام أسماء النطاقات؟|DNS
 ما اسم اللغة التي تصف بنية صفحات الويب باستخدام الوسوم؟|HTML
-ما اسم اللغة المستخدمة أساسًا لتنسيق مظهر صفحات الويب؟|CSS
+ما اسم خاصية CSS المستخدمة لتحديد حجم الخط في صفحة الويب؟|font-size
 ما اسم التقنية التي تُقرأ كنمط من مربعات سوداء وبيضاء لفتح رابط؟|رمز QR
 ما اسم الذاكرة التي يشير إليها الاختصار RAM؟|ذاكرة الوصول العشوائي
 ما اسم البرنامج الذي تفتح به صفحات المواقع مثل فايرفوكس؟|المتصفح
@@ -75,7 +75,7 @@ const bank:Record<string,string>= {
 ما اسم النظام العددي المستخدم لتمثيل البتات بصفر وواحد؟|الثنائي
 ما اسم نظام تتبّع تعديلات الشيفرة الذي يستخدم فروعًا ومستودعات؟|Git
 ما اسم الصورة الصغيرة التي تمثل تطبيقًا على الشاشة؟|أيقونة`,
- games:`ما اسم قطعة الشطرنج التي تتحرك على شكل حرف L؟|الحصان
+ games:`ما اسم حالة التعادل في الشطرنج عندما لا يملك اللاعب نقلة قانونية وملكه غير مهدد؟|بات
 ما اسم قطعة الشطرنج التي تتحرك قطريًا فقط؟|الفيل
 ما اسم قطعة الشطرنج التي تتحرك مستقيمًا فقط دون قفز؟|القلعة
 ما اسم قطعة الشطرنج التي يمكنها التحرك مستقيمًا وقطريًا؟|الوزير
@@ -164,12 +164,12 @@ const alternatives:Record<string,string[]>={
  "history-5":["يوهان غوتنبرغ","غوتنبرج","جوتنبرج"],"history-6":["نيوتن"],
  "geography-3":["المحيط الأطلسي"],"geography-6":["جبل إيفرست"],"geography-7":["القارة القطبية الجنوبية"],
  "science-4":["أوم"],"science-7":["تسامي"],
- "technology-3":["لغة ترميز النص التشعبي"],"technology-4":["أوراق الأنماط المتتالية"],"technology-5":["QR","رمز الاستجابة السريعة"],"technology-6":["الذاكرة العشوائية","RAM"],"technology-9":["Universal Serial Bus"],
- "games-1":["الفرس"],"games-3":["الرخ"],"games-4":["الملكة"],"games-5":["64","أربعة وستون"],"games-6":["مات","كش ملك مات"],
+ "technology-3":["لغة ترميز النص التشعبي"],"technology-4":["Font Size"],"technology-5":["QR","رمز الاستجابة السريعة"],"technology-6":["الذاكرة العشوائية","RAM"],"technology-9":["Universal Serial Bus"],
+ "games-1":["Stalemate","تعادل البات"],"games-3":["الرخ"],"games-4":["الملكة"],"games-5":["64","أربعة وستون"],"games-6":["مات","كش ملك مات"],
  "sports-1":["5","٥"],"sports-2":["6","٦"],"sports-4":["ماراثون"],"sports-6":["سكواش"],"sports-10":["لاف"],"sports-12":["السباق الثلاثي"],
  "food-1":["مياسم الزهرة"],"food-2":["الأوركيد"],
  "travel-2":["فيزا"],"travel-4":["بطاقة صعود الطائرة"],"travel-8":["ترانزيت","الترانزيت"],
  "cinema-1":["Toy Story","توي ستوري"],"cinema-3":["Buzz Lightyear"],"cinema-6":["مونتاج"],"cinema-12":["فيلم وثائقي"],
- "oddities-1":["3","٣"],"oddities-4":["النحام","الفلامينغو"],"oddities-9":["حريش البحر","الناروال"],
+ "oddities-1":["3","٣"],"oddities-4":["النحام","الفلامينغو"],"oddities-9":["ناروال"],
 };
 export const bluffSamples=Object.entries(bank).flatMap(([category,lines])=>lines.trim().split("\n").map((line,index)=>{const [question,correctAnswer]=line.split("|");return {id:`bluff-seed-${category}-${index+1}`,category,question,correctAnswer,alternativeCorrectAnswers:alternatives[`${category}-${index+1}`]??[],difficulty:index<4?"EASY" as const:index<9?"MEDIUM" as const:"HARD" as const,explanation:null as string|null};}));

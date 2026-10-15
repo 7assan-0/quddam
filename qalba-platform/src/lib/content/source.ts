@@ -1,4 +1,4 @@
-import {duplicateOrderingIds} from '../../../prisma/content-remediations';
+import {duplicateOrderingIds,bluffSemanticHoldIds} from '../../../prisma/content-remediations';
 import {boardSamples,socialWords} from '../../../prisma/core-content';
 import {letterSamples} from '../../../prisma/letter-questions';
 import {surveySamples} from '../../../prisma/survey-questions';
@@ -16,7 +16,7 @@ export function sourceBanks():Banks{return {
  'letter-network':letterSamples.map((q,i)=>row(`letter-seed-${i+1}`,q.category,{...q,alternativeAnswers:[]})),
  'survey-show':surveySamples.map((q,i)=>row(`survey-seed-${i+1}`,q.category,{...q,sourceType:'CURATED'})),
  'secret-word':forbiddenSamples.map(q=>row(q.id,q.category,{...q})),
- 'bluff':bluffSamples.map(q=>row(q.id,q.category,{...q})),
+ 'bluff':bluffSamples.map(q=>row(q.id,q.category,{...q,status:bluffSemanticHoldIds.has(q.id)?'ARCHIVED':'PUBLISHED'})),
  'top-list':rankedSamples.map(q=>row(q.id,q.category,{...q})),
  'lightning-quiz':lightningSamples.map(q=>row(q.id,q.category,{...q})),
  'ordering-challenge':orderingSamples.map(q=>row(q.id,q.categorySlug,{...q,status:duplicateOrderingIds.has(q.id)?'ARCHIVED':'PUBLISHED'})),
