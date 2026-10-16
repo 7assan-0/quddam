@@ -11,6 +11,12 @@ export const actionsSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("REVOKE"), inviteId: z.uuid() }).strict(),
   z.object({ op: z.literal("LEAVE") }).strict(),
 ]);
+const emptyJoinSchema = z.object({}).strict();
+/** An invite path supplies the capability; no request body may supply authority. */
+export async function boundedJoin(request: NextRequest) {
+  const raw = await readBoundedText(request, 4096);
+  return emptyJoinSchema.parse(raw.trim() ? JSON.parse(raw) : {});
+}
 export async function bounded<T>(request: NextRequest, schema: ZodType<T>) {
   return schema.parse(JSON.parse(await readBoundedText(request, 4096)));
 }

@@ -91,4 +91,34 @@ describe("Shillatak owner/member-only HTTP boundaries", () => {
     expect((await action(req(`/api/shillatak/${id}`, "POST", { op: "REVOKE", inviteId }), groupCtx)).status).toBe(200);
     expect(m.revoke).toHaveBeenCalledWith("owner", id, inviteId);
   });
+  it.each(['{"host":true}', '{"ownerId":"attacker"}', "[]", "null", "{"])(
+    "rejects malformed or extra-authority join body %s before consuming a link", async body => {
+    const url = `http://localhost:3000/api/shillatak/join/${code}`;
+    const response = await accept(new NextRequest(url, { method: "POST", body,
+      headers: { origin: "http://localhost:3000", "content-type": "application/json" } }), inviteCtx);
+    expect(response.status).toBe(400);
+    expect(m.accept).not.toHaveBeenCalled();
+  });
+  it("bounds a join body before consuming the single-use link", async () => {
+    const response = await accept(new NextRequest(`http://localhost:3000/api/shillatak/join/${code}`, { method: "POST", body: " ".repeat(4097),
+      headers: { origin: "http://localhost:3000" } }), inviteCtx);
+    expect(response.status).toBe(413);
+    expect(m.accept).not.toHaveBeenCalled();
+  });
+  it("accepts an empty join body without requiring a browser-supplied authority field", async () => {
+    const response = await accept(new NextRequest(`http://localhost:3000/api/shillatak/join/${code}`, {
+      method: "POST", headers: { origin: "http://localhost:3000" },
+    }), inviteCtx);
+    expect(response.status).toBe(200);
+    expect(m.accept).toHaveBeenCalledExactlyOnceWith("owner", code);
+  });
+  it("bounds all group write bodies and rejects invalid path identities without consulting private data", async () => {
+    const response = await create(new NextRequest("http://localhost:3000/api/shillatak", {
+      method: "POST", headers: { origin: "http://localhost:3000" }, body: "x".repeat(4097),
+    }));
+    expect(response.status).toBe(413);
+    expect((await detail(req("/api/shillatak/not-an-id"), { params: Promise.resolve({ id: "not-an-id" }) })).status).toBe(400);
+    expect((await preview(req("/api/shillatak/join/not-a-code"), { params: Promise.resolve({ code: "not-a-code" }) })).status).toBe(400);
+    expect(m.create).not.toHaveBeenCalled(); expect(m.view).not.toHaveBeenCalled(); expect(m.preview).not.toHaveBeenCalled();
+  });
 });

@@ -101,20 +101,23 @@ export async function getShillaView(userId: string, id: string) {
 }
 export async function createShillaInvite(userId: string, id: string) {
   requireEnabled(); groupId(id);
-  const code = randomBytes(32).toString("hex"), now = new Date();
-  await db().$transaction(async tx => {
+  const code = randomBytes(32).toString("hex");
+  const expiresAt = await db().$transaction(async tx => {
     await tx.$queryRawUnsafe('SELECT "id" FROM "Shilla" WHERE "id"=$1 FOR UPDATE', id);
     const group = await tx.shilla.findUnique({ where: { id }, include: { _count: { select: { members: true } } } });
     if (!group || group.ownerId !== userId) deny();
     if (group.status !== "active") deny("الشلّة مؤرشفة", 409, "ARCHIVED");
     if (group._count.members >= SHILLA_MAX_MEMBERS) deny("اكتمل عدد أعضاء الشلّة", 409, "FULL");
+    // Lock waits must not shorten a new invitation or keep expired links in the limit.
+    const now = new Date();
     const active = await tx.shillaInvite.count({ where: { shillaId: id, consumedAt: null, revokedAt: null, expiresAt: { gt: now } } });
     if (active >= SHILLA_MAX_ACTIVE_INVITES) deny("هناك دعوات نشطة كافية؛ انتظر انتهاء إحداها", 409, "INVITE_LIMIT");
-    await tx.shillaInvite.create({ data: { id: randomUUID(), shillaId: id, tokenHash: digest(code),
-      expiresAt: new Date(now.getTime() + SHILLA_INVITE_DAYS * 86400_000) } });
+    const expiresAt = new Date(now.getTime() + SHILLA_INVITE_DAYS * 86400_000);
+    await tx.shillaInvite.create({ data: { id: randomUUID(), shillaId: id, tokenHash: digest(code), expiresAt } });
+    return expiresAt;
   });
   // Revealed exactly once: only token hash is persisted.
-  return { path: `/shillatak/join/${code}`, expiresAt: new Date(now.getTime() + SHILLA_INVITE_DAYS * 86400_000).toISOString() };
+  return { path: `/shillatak/join/${code}`, expiresAt: expiresAt.toISOString() };
 }
 export async function previewShillaInvite(userId: string, code: string) {
   requireEnabled();
@@ -123,9 +126,13 @@ export async function previewShillaInvite(userId: string, code: string) {
     include: { shilla: { select: { name: true, status: true, _count: { select: { members: true } },
       members: { where: { userId }, select: { id: true } } } } } });
   if (!invite) deny("الدعوة غير موجودة");
-  const open = !invite.consumedAt && !invite.revokedAt && invite.expiresAt > new Date() && invite.shilla.status === "active" &&
-    invite.shilla._count.members < SHILLA_MAX_MEMBERS && invite.shilla.members.length === 0;
-  return { name: invite.shilla.name, open, alreadyMember: invite.shilla.members.length > 0 };
+  const alreadyMember = invite.shilla.members.length > 0;
+  const current = !invite.consumedAt && !invite.revokedAt && invite.expiresAt > new Date() && invite.shilla.status === "active";
+  // A closed capability cannot remain a perpetual private-group name lookup for outsiders.
+  if (!current && !alreadyMember) deny("الدعوة غير موجودة");
+  const open = current && invite.shilla._count.members < SHILLA_MAX_MEMBERS && !alreadyMember;
+  return { name: invite.shilla.name, open, alreadyMember,
+    ...(alreadyMember ? { shillaId: invite.shillaId } : {}) };
 }
 export async function acceptShillaInvite(userId: string, code: string) {
   requireEnabled();

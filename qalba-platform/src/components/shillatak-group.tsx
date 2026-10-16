@@ -1,21 +1,32 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import type { getShillaView } from "@/lib/shillatak/service";
 type View = Awaited<ReturnType<typeof getShillaView>>;
 type Action = { op: "INVITE" } | { op: "ATTACH"; nightId: string } |
   { op: "ARCHIVE" } | { op: "LEAVE" } | { op: "REVOKE"; inviteId: string };
+const subscribeTimeZone = () => () => {};
+const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+const serverTimeZone = () => "UTC";
 export function ShillatakGroup({ initial }: { initial: View }) {
   const router = useRouter();
   const [group, setGroup] = useState(initial), [inviteLink, setInviteLink] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice, setNotice] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);
   const inFlight = useRef(false);
+  // The first client render must agree with SSR even when their time zones differ.
+  const displayTimeZone = useSyncExternalStore(subscribeTimeZone, browserTimeZone, serverTimeZone);
   const endpoint = `/api/shillatak/${encodeURIComponent(group.id)}`;
+  async function readCurrent() {
+    const response = await fetch(endpoint, { cache: "no-store", credentials: "same-origin" });
+    if (!response.ok) throw new Error("SHILLA_REFRESH_FAILED");
+    return (await response.json()).shilla as View;
+  }
   async function command(action: Action) {
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true); setError(""); setNotice("");
+    if (action.op === "REVOKE" || action.op === "ARCHIVE") setInviteLink("");
     try {
       const response = await fetch(endpoint, { method: "POST", credentials: "same-origin", cache: "no-store",
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(action) });
@@ -24,6 +35,10 @@ export function ShillatakGroup({ initial }: { initial: View }) {
       if (action.op === "INVITE") {
         setInviteLink(new URL(data.invitation.path, location.origin).href);
         setNotice("تم إنشاء رابط عضوية أحادي الاستخدام صالح لسبعة أيام. انسخه الآن؛ لا يُسترجع نصه لاحقًا.");
+        // INVITE reveals its secret once. Refresh revocation metadata separately,
+        // preserving that successful one-time response even if this read fails.
+        try { setGroup(await readCurrent()); }
+        catch { setError("أُنشئت الدعوة. احفظ الرابط ثم حدّث الشلّة لعرض قائمة الدعوات وإلغائها."); }
       } else if (action.op === "LEAVE") router.replace("/shillatak");
       else {
         setGroup(data.shilla);
@@ -36,12 +51,9 @@ export function ShillatakGroup({ initial }: { initial: View }) {
   }
   async function refresh() {
     if (inFlight.current) return;
-    inFlight.current = true; setBusy(true); setError("");
+    inFlight.current = true; setBusy(true); setError(""); setNotice(""); setInviteLink("");
     try {
-      const response = await fetch(endpoint, { cache: "no-store", credentials: "same-origin" });
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      setGroup(data.shilla);
+      setGroup(await readCurrent());
       setNotice("تم تحديث النتائج والعضويات المحفوظة.");
     } catch { setError("تعذر تحديث الشلّة حاليًا."); }
     finally { inFlight.current = false; setBusy(false); }
@@ -49,6 +61,7 @@ export function ShillatakGroup({ initial }: { initial: View }) {
   return <div className="shell" data-testid="shillatak-group">
     <div className="page-title"><span className="eyebrow">مجموعة خاصة · للأعضاء فقط</span><h1>{group.name}</h1>
       <p>{group.status === "active" ? "شلّة نشطة" : "شلّة مؤرشفة للقراءة فقط"} · {group.members.length} أعضاء · {group.nights.length} سهرات مكتملة</p>
+      <p className="form-note">توقيت عرض المواعيد: {displayTimeZone}</p>
     </div>
     {error && <p role="alert" className="form-error">{error}</p>}
     {notice && <p role="status" className="form-note">{notice}</p>}
@@ -67,7 +80,7 @@ export function ShillatakGroup({ initial }: { initial: View }) {
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>سجل السهرات</h2>
       {group.nights.length === 0 && <p>لم تُربط سهرة مكتملة بهذه الشلّة بعد.</p>}
       <div className="history-list">{group.nights.map(night => <article key={night.id} className="history-row">
-        <div><strong>سهرة {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(night.recordedAt))}</strong>
+        <div><strong>سهرة {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(night.recordedAt))}</strong>
           {night.teams.map(team => <p key={team.id}>{team.name}: {team.points} نقاط {team.champion ? "· بطل الليلة" : ""}</p>)}</div>
       </article>)}</div>
     </section>
@@ -77,23 +90,23 @@ export function ShillatakGroup({ initial }: { initial: View }) {
     </section>
     {group.owner && group.status === "active" && <section className="panel" style={{ marginBlock: "1rem" }}
       data-testid="shilla-owner-tools"><h2>أدوات منظّم الشلّة</h2>
-      <h3>دعوة عضو مسجّل</h3><p>الرابط خاص بحساب واحد وأحادي الاستخدام. إنشاء دعوة لا يُرسل رسالة آلية.</p>
+      <h3>دعوة عضو مسجّل</h3><p>يسمح الرابط بانضمام حساب واحد، ويمكن لمن يحمله إعادة مشاركته. يُستخدم مرة واحدة، وإنشاء دعوة لا يُرسل رسالة آلية.</p>
       <button className="btn btn-secondary" disabled={busy} onClick={() => void command({ op: "INVITE" })}>إنشاء رابط عضوية</button>
       {inviteLink && <div><label htmlFor="shilla-new-link">احفظ الرابط الآن</label>
-        <input className="form-input" id="shilla-new-link" dir="ltr" readOnly value={inviteLink} style={{ width: "100%" }}/>
+        <input className="input" id="shilla-new-link" dir="ltr" readOnly value={inviteLink} style={{ width: "100%" }}/>
         <button className="btn btn-secondary" onClick={() => void navigator.clipboard.writeText(inviteLink)
           .then(() => setNotice("تم نسخ رابط العضوية"), () => setError("انسخ الرابط يدويًا من الحقل."))}>نسخ الرابط</button></div>}
       <h3>الدعوات النشطة</h3>
       {group.activeInvites.length === 0 && <p>لا توجد روابط عضوية نشطة.</p>}
       {group.activeInvites.map(invite => <div className="history-row" key={invite.id}>
-        <span>دعوة تنتهي {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invite.expiresAt))}</span>
+        <span>دعوة تنتهي {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(invite.expiresAt))}</span>
         <button className="btn btn-danger" disabled={busy} onClick={() => void command({ op: "REVOKE", inviteId: invite.id })}>إلغاء الدعوة</button>
       </div>)}
       <h3>إضافة سهرة مكتملة إلى لوحة الشرف</h3>
       <p>نربط السهرة صراحةً إذا كنت مالكها، واكتملت ألعابها الثلاث، وطابق اسمَا الفريقين الفريقين الثابتين هنا. لا يُخصم رصيد عند الربط.</p>
       {group.eligibleNights.length === 0 && <p>لا توجد سهرات مؤهلة غير مرتبطة ضمن أحدث 20 سهرة.</p>}
       {group.eligibleNights.map(night => <div className="history-row" key={night.id}>
-        <span>سهرة مكتملة · {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium" }).format(new Date(night.createdAt))}</span>
+        <span>سهرة مكتملة · {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeZone: displayTimeZone }).format(new Date(night.createdAt))}</span>
         <button className="btn btn-primary" disabled={busy} onClick={() => void command({ op: "ATTACH", nightId: night.id })}>سجّل النتيجة</button>
       </div>)}
       <h3>أرشفة الشلّة</h3><p>توقف الدعوات وربط السهرات، وتحفظ السجل للقراءة. ليست حذفًا للبيانات.</p>

@@ -28,15 +28,15 @@ export function ShillatakHome({ initial }: { initial: Entry[] }) {
     {error && <p role="alert" className="form-error">{error}</p>}
     <section className="panel"><h2>أنشئ شلّة</h2>
       <form onSubmit={event => void create(event)}>
-        <label htmlFor="shilla-name">اسم الشلّة</label>
-        <input className="form-input" id="shilla-name" maxLength={60} minLength={2} required value={name}
-          onChange={event => setName(event.target.value)} />
-        <label htmlFor="shilla-team-a">الفريق الأول (اسم ثابت)</label>
-        <input className="form-input" id="shilla-team-a" maxLength={60} minLength={2} required value={teamA}
-          onChange={event => setTeamA(event.target.value)} />
-        <label htmlFor="shilla-team-b">الفريق الثاني (اسم ثابت)</label>
-        <input className="form-input" id="shilla-team-b" maxLength={60} minLength={2} required value={teamB}
-          onChange={event => setTeamB(event.target.value)} />
+        <div className="field"><label htmlFor="shilla-name">اسم الشلّة</label>
+        <input className="input" id="shilla-name" maxLength={60} minLength={2} required value={name}
+          onChange={event => setName(event.target.value)} /></div>
+        <div className="field"><label htmlFor="shilla-team-a">الفريق الأول (اسم ثابت)</label>
+        <input className="input" id="shilla-team-a" maxLength={60} minLength={2} required value={teamA}
+          onChange={event => setTeamA(event.target.value)} /></div>
+        <div className="field"><label htmlFor="shilla-team-b">الفريق الثاني (اسم ثابت)</label>
+        <input className="input" id="shilla-team-b" maxLength={60} minLength={2} required value={teamB}
+          onChange={event => setTeamB(event.target.value)} /></div>
         <p className="form-note">اربط لاحقًا سهرات مكتملة بأسماء الفريقين نفسيهما. لا ننسب فوز الفريق تلقائيًا إلى عضو بعينه.</p>
         <button className="btn btn-primary" disabled={busy || !name.trim() || !teamA.trim() || !teamB.trim()}>
           {busy ? "جارٍ الإنشاء…" : "إنشاء الشلّة"}</button>
