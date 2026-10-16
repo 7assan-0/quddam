@@ -1,20 +1,52 @@
 import { describe, expect, it } from 'vitest';
-import { auditContent, lightningBoardOverlaps, contentValidationExitCode } from '../../src/lib/content/audit';
+import { auditContent, lightningBoardOverlaps, lightningBoardSemanticOverlaps, contentValidationExitCode } from '../../src/lib/content/audit';
+import { lightningBoardSemanticExclusions } from '../../prisma/lightning-editorial-exclusions';
 import { sourceBanks } from '../../src/lib/content/source';
 
 describe('Lightning content beta gate versus Category Board', () => {
  const source = sourceBanks();
  const clone = () => structuredClone(source);
 
- it('has 600 authored candidate prompts, without claiming editorial approval or cross-game overlaps', () => {
+ it('has 600 eligible candidates plus five archived historic originals, without claiming editorial approval', () => {
   const report = auditContent(source);
   const lightning = report.games.find(g => g.game === 'lightning-quiz')!;
-  expect(source['lightning-quiz']).toHaveLength(600);
+  expect(source['lightning-quiz']).toHaveLength(605);
+  expect(source['lightning-quiz'].filter(q => q.status === 'ARCHIVED')).toHaveLength(5);
+  expect(lightningBoardSemanticOverlaps(source)).toEqual([]);
   expect(lightningBoardOverlaps(source)).toEqual([]);
   expect(report.blockingErrors).toBe(0);
   expect(lightning.eligible).toBe(600);
   expect(lightning.warnings).not.toContainEqual({ code: 'LIGHTNING_EDITORIAL_TARGET_600_NOT_MET', ids: [] });
   expect(lightning.capacity).toBe('PASS');
+ });
+
+ it('blocks meaning-equivalent legacy pairs if an older DB still publishes them, without modifying the rows', () => {
+  const banks = clone();
+  for (const { lightningId } of lightningBoardSemanticExclusions) {
+   const row = banks['lightning-quiz'].find(q => q.id === lightningId)!;
+   expect(row.status).toBe('ARCHIVED');
+   row.status = 'PUBLISHED'; // Simulates the existing deployed bank; does not write a DB.
+  }
+  const before = JSON.stringify(banks);
+  expect(lightningBoardSemanticOverlaps(banks)).toEqual(
+   lightningBoardSemanticExclusions.map(({ boardId, lightningId }) => ({
+    code: 'LIGHTNING_BOARD_SEMANTIC_OVERLAP', ids: [boardId, lightningId],
+   })),
+  );
+  const report = auditContent(banks);
+  expect(report.blockingErrors).toBe(5);
+  expect(report.games.find(g => g.game === 'lightning-quiz')?.capacity).toBe('FAIL');
+  expect(contentValidationExitCode(report, null)).toBe(1);
+  expect(JSON.stringify(banks)).toBe(before);
+ });
+
+ it('does not mark a curated semantic pair as an active collision when either linked row is ineligible', () => {
+  const banks = clone();
+  const { boardId, lightningId } = lightningBoardSemanticExclusions[0];
+  banks['lightning-quiz'].find(q => q.id === lightningId)!.status = 'PUBLISHED';
+  expect(lightningBoardSemanticOverlaps(banks)).toHaveLength(1);
+  banks['category-board'].find(q => q.id === boardId)!.categoryActive = false;
+  expect(lightningBoardSemanticOverlaps(banks)).toEqual([]);
  });
 
  it('blocks identical and Arabic-normalized/punctuation-only duplicated board prompts, disclosing IDs only', () => {
