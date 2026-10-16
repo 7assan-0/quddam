@@ -1,23 +1,34 @@
-# Lightning — content expansion 01 / beta gate (2026-10-16)
+# Lightning — 600-question editorial candidate and beta gates (2026-10-16)
 
-Status: **PARTIAL / NOT RELEASE APPROVED**. Independent working branch stacked on PR #16 exact head `11f4991062b27980d0022ba70f90aeadf10eedab`. No merge, publishing, live data, payments, schema changes or cloud resources.
+**PARTIAL / NOT RELEASE APPROVED.** This is an unmerged Draft PR stacked on PR #16 exact base `11f4991062b27980d0022ba70f90aeadf10eedab`. No production seed, live data change, merge, deployment, payments, migration or new cloud resources.
 
-## Scope performed
+## Authored expansion and stable identifiers
 
-- Existing authored Lightning bank: **300** prompts, 15 categories, 20 per category.
-- Added **60** separately authored prompts in `prisma/lightning-expansion-01.ts`, exactly four per category. The exported source bank becomes **360**, 24 per category, with two medium and two hard expansion entries per category.
-- Every original seed ID `lightning-{category}-{1..20}` and its original question order remain intact. The extension receives indices 21..24. No existing question history or immutable snapshot is edited. The seed uses the existing empty-update upsert and does not rewrite existing bank rows.
-- Added a **blocking**, read-only cross-game audit for *eligible published* Lightning vs Category Board prompt identity. Arabic diacritics/Alef variants, whitespace and punctuation normalize for editorial comparison; it emits **IDs only**, checks identical prompts even when canonical answers conflict, and does not reject different prompts merely for sharing an answer. This applies independently to source and configured database audit (`npm run content:validate`), and also to the seed's existing source audit preflight.
-- Preserved the existing engine minimum of 15 playable questions. The agreed **600-question editorial goal** is explicitly reported as `LIGHTNING_EDITORIAL_TARGET_600_NOT_MET` warning; it is not falsely labeled a runtime failure or silently represented as achieved. **240** more carefully reviewed original questions remain.
-- Added tests for source total, stable IDs and difficulty expansion, duplicate rejection, eligible-status filtering, conflict reporting, same-answer nonduplication and nonmutation.
+| Candidate | Added | Total | Per category | Difficulty of new rows |
+| --- | ---: | ---: | ---: | --- |
+| Existing baseline | — | 300 | 20 | Unchanged |
+| `lightning-expansion-01.ts` | 60 | 360 | 24 | 2 MEDIUM + 2 HARD each |
+| `lightning-expansion-02.ts` | 120 | 480 | 32 | 4 MEDIUM + 4 HARD each |
+| `lightning-expansion-03.ts` | 120 | **600** | **40** | 4 MEDIUM + 4 HARD each |
 
-## Preliminary inspection — not an execution certificate
+All original IDs `lightning-{category}-{1..20}` retain their indices and exact source wording. New IDs append through 40, across 15 categories. The current seed keeps existing DB rows unchanged via its empty-update upsert. No historical match, immutable snapshot or existing question is rewritten. The 600 count is an **authored source candidate**, not a claim of 600 independently approved facts or 600 published rows in a deployed database.
 
-A read-only static comparison of the authored row literals on this branch observed **300 + 60 = 360** prompts in 15 category groups; no exact Arabic-normalized/punctuation-normalized duplicates within this authored bank or against the **36 Category Board seed prompts**. Each added row has a prompt and canonical answer. These observations do *not* validate a configured database, hidden semantic paraphrase collisions, factual correctness of all 360 questions, or a successful runtime test. PR CI and editorial review must establish those separately.
+## Quality measures added
 
-## Required independent verification
+- Existing per-row canonical answer/alias validation and source content validation remain enforced.
+- A new *blocking* read-only source and configured-database audit detects Lightning/Category Board eligible published prompt collisions after NFC, Arabic diacritic/Alef/Ya, punctuation and whitespace normalization. Same text with conflicting canonical answers is flagged separately. It emits IDs, not private authored answers or match snapshots. Different prompts with the same answer remain allowed.
+- The previously introduced `LIGHTNING_EDITORIAL_TARGET_600_NOT_MET` audit warning still applies automatically if **eligible** content falls below 600, e.g. on an old DB or if a candidate is archived/inactive; reaching the target does not bypass blocking errors.
+- Tests cover total count, per-category distribution, stable historical IDs, difficulty tiers, collision reporting, excluded draft/archive/inactive rows, no source mutation and same-answer/nonduplicate behavior.
 
-On the exact final branch head, with Node 24 and a fresh **isolated** migrated and seeded database:
+## Preliminary static candidate check (not a test PASS)
+
+Read-only comparison of the authored literal rows **at the 600-candidate assembly step** observed 300+60+120+120=600, 40 per category, no empty row, no duplicate canonical/alias pair, zero identical normalized prompt collisions within Lightning and zero normalized-prompt matches with the 36 current Category Board *source* prompts. Clarification edits in expansion 02 replaced some near-duplicate geographic and travel questions with distinct topics. This does **not** establish absence of semantic paraphrases, correctness of every fact, the contents of a deployed DB, a successful Playwright run or a passed final SHA.
+
+Useful primary review references for selected nontrivial entries (not a blanket factual certificate): KAUST identifies Thuwal as its official address, https://www.kaust.edu.sa/en/contact ; FIBA publishes its current official rules/equipment documents at https://about.fiba.basketball/en/services/resource-hub/downloads . Editorial review must attach evidence for any other uncertain geographic, history, sport, science, technical or date-sensitive prompt and correct/withdraw ambiguous answers rather than relying only on automated checks.
+
+## Required verification — exact *final* PR SHA
+
+On Node 24 and a **new isolated migrated/seeded PostgreSQL test database**:
 
 ```sh
 cd qalba-platform
@@ -27,18 +38,20 @@ npm run test -- --maxWorkers=1 --retry=0 tests/content/lightning-board-uniquenes
 npm run typecheck
 npm run lint
 npm run build
+npm run db:migrate
+npm run db:seed
 npm run content:validate -- --output content-audit.json
 npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts
 ```
 
-Capture exact SHA, process exit codes, source/database bank counts, blocking overlap IDs, warnings, tests passed/failed/skipped/flaky and original failures. Never run a configured-database content validation on production just to claim this PR passed; do not weaken CI or retry failing tests away. Check original unchanged IDs and row status on an isolated reseed.
+The migration/seed commands above require the independently configured isolated `DATABASE_URL` and synthetic seed credentials; **never** point them at production. The e2e runner independently creates its own isolated DB. Capture original failures and fresh exit codes bound to the final exact SHA. Verify content audit source **and** database counts, eligible published totals, aliases, category activation, no overlap, and the fact that reseeding does not modify pre-existing IDs or live match snapshots. Financial CI is a separate gate, not standalone Lightning Host/TV/buzzer acceptance.
 
-## Further acceptance blockers
+## Release blockers / decision
 
-1. Editorial review of the 60 candidates and remaining 240 questions with appropriate primary references for nontrivial factual assertions. Review **meaning-level** overlap with Category Board, which string normalization alone cannot prove absent.
-2. Content audit on actual isolated PostgreSQL bank, including category activation and published statuses.
-3. Full Playwright Lightning Host + both team buzzer phones + TV journey, loss/reconnection, timeout/steal, concurrent buzz, rematch, credit/idempotency and final persistence, with result bound to the final SHA.
-4. Product-wide shared QR/20-player integration is **not provided by this standalone two-team buzzer engine**. Do not claim integration or a real-device LAN/NAT pass.
-5. PR #16 full security audit and broader beta operations gates remain separate blockers.
+- Fact-check and editorially approve or archive the new 300 candidates, including review of *meaning-level* overlaps that string equality cannot discover. This is separate from the row count.
+- Isolated PostgreSQL content report and all new/affected unit tests, TypeScript, lint and build on the final committed head.
+- Full Lightning Playwright (Host + two independent team buzzer phones + read-only TV), winner/timer/steal/concurrency/reconnect/rematch/credits and end-of-game persistence.
+- Product's future 20-player shared QR integration is **not** represented by the existing standalone two-team buzzer flow. Real-device LAN/NAT and load tests remain NOT RUN until genuinely performed.
+- PR #16 full security audit and the other platform operations/privacy gates must pass before external Beta.
 
-Only after the above can the game be labeled GAME_READY for its approved scope; external Beta remains NO-GO until platform gates also pass.
+**Current verdict: PARTIAL.** No implicit merge or deployment approval.
