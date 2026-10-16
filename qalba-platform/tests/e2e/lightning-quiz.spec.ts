@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import type { LightningView } from "../../src/lib/games/lightning/service";
 import type { HostAction, Question } from "../../src/lib/games/lightning/module";
+import { archivedLightningSeedIds } from "../../prisma/lightning-editorial-exclusions";
 const origin = "http://127.0.0.1:3000";
 test.beforeEach(() => expect(process.env.E2E_DATABASE_URL, "Lightning browser tests require the DB runner").toBeTruthy());
 async function sql(query: string, values: unknown[] = []) { const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL, max: 1 }); try { return await pool.query(query, values); } finally { await pool.end(); } }
@@ -25,6 +26,21 @@ async function expire(id: string) { await sql('UPDATE "GameSession" SET "state"=
 async function snapshot(id: string, index = 0): Promise<Question> { return (await sql('SELECT "snapshot" FROM "LightningQuestionUse" WHERE "sessionId"=$1 AND "matchNumber"=(SELECT ("state"->>\'matchNumber\')::int FROM "GameSession" WHERE "id"=$1) AND "questionIndex"=$2', [id, index])).rows[0].snapshot; }
 async function sse(page: Page, id: string, audience: "display" | "buzzer", token: string) { return page.evaluate(async ({ id, audience, token }) => new Promise<unknown>((resolve, reject) => { const stream = new EventSource(`/api/lightning/${id}/events?audience=${audience}&token=${token}`), timer = setTimeout(() => { stream.close(); reject(new Error("Missing authoritative SSE state")); }, 8000); stream.addEventListener("state", event => { clearTimeout(timer); stream.close(); resolve(JSON.parse((event as MessageEvent).data)); }); stream.onerror = () => { clearTimeout(timer); stream.close(); reject(new Error("SSE unavailable")); }; }), { id, audience, token }); }
 async function close(contexts: BrowserContext[]) { for (const context of contexts) await context.close(); }
+test("Lightning Quiz: isolated seeded database has exactly 600 eligible across 15 categories and five preserved archives", async () => {
+ const result = await sql(
+  'SELECT q."id", q."status", q."locale", c."slug", c."active" FROM "LightningQuestion" q JOIN "Category" c ON c."id"=q."categoryId" WHERE q."id" LIKE \'lightning-%\' ORDER BY q."id"'
+ );
+ const rows = result.rows as { id: string; status: string; locale: string; slug: string; active: boolean }[];
+ expect(rows).toHaveLength(605);
+ const archived = rows.filter(row => row.status === "ARCHIVED");
+ expect(new Set(archived.map(row => row.id))).toEqual(archivedLightningSeedIds);
+ const eligible = rows.filter(row => row.status === "PUBLISHED" && row.locale === "ar-SA" && row.active && row.slug.startsWith("lightning-"));
+ expect(eligible).toHaveLength(600);
+ const byCategory = new Map<string, number>();
+ for (const row of eligible) byCategory.set(row.slug, (byCategory.get(row.slug) ?? 0) + 1);
+ expect(byCategory.size).toBe(15);
+ expect([...byCategory.values()].sort((a, b) => a - b)).toEqual(Array(15).fill(40));
+});
 test("Lightning Quiz: create A B links and Team A locks question on Host TV and both phones", async ({ page, browser }) => {
   const id = await setup(page), v = await read(page, id); expect(v.teams.map(t => [t.name, t.position, t.color])).toEqual([["فريق ياقوت", 0, "#F24C74"], ["فريق ألف", 1, "#29C7C9"]]);
   await page.getByRole("button", { name: "إنشاء جرس A", exact: true }).click(); await expect(page.getByRole("link", { name: "افتح جرس A", exact: true })).toBeVisible(); const aUrl = await page.getByRole("link", { name: "افتح جرس A", exact: true }).getAttribute("href"); await page.getByRole("button", { name: "إنشاء جرس B", exact: true }).click(); await expect(page.getByRole("link", { name: "افتح جرس B", exact: true })).toBeVisible(); const bUrl = await page.getByRole("link", { name: "افتح جرس B", exact: true }).getAttribute("href");
