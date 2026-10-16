@@ -62,7 +62,7 @@ jobs:
           node --version
           echo "Exact candidate: $(git rev-parse HEAD)"
           test -n "$PG_SERVICE_CONTAINER"
-          docker exec "$PG_SERVICE_CONTAINER" postgres --version | grep -E 'PostgreSQL 17\\.'
+          docker exec "$PG_SERVICE_CONTAINER" postgres --version | grep -F 'PostgreSQL 17.'
       - name: Locked install and Prisma generate
         run: |
           npm ci --include=dev --no-audit --no-fund
@@ -85,7 +85,11 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Full isolated twenty-one-case Lightning browser suite
-        run: npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts --retries=0 --workers=1
+        env:
+          E2E_REPORT_FILE: playwright-report/lightning-beta-native.json
+        run: |
+          mkdir -p playwright-report
+          npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts --retries=0 --workers=1
       - name: Upload sanitized content acceptance result (always)
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
@@ -94,5 +98,6 @@ jobs:
           path: |
             qalba-platform/content-audit.json
             qalba-platform/lightning-beta-report.json
+            qalba-platform/playwright-report/lightning-beta-native.json
           if-no-files-found: warn
           retention-days: 7
