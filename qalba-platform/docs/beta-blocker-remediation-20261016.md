@@ -19,3 +19,15 @@ Draft only. Never merge main, publish environment, open a public listener, enabl
 
 ## Approved participation direction
 The owner selected both shared-screen play and individual phone participation through one QR/code room. The authoritative server owns identity, allowed actions, round state, scores and credits. Peer-to-peer transport is optional and must not be a prerequisite for participation or a source of official results. Target capacity is 20 participants plus host, subject to measured acceptance; current category-board and nine-seat lab limits remain distinct until a new implementation is tested. Keep the PR #9 experiment isolated and default-off. No network exposure or deployment was approved by this product decision.
+
+## Dependency remediation procedure
+Run from a disposable checkout of the exact PR head in qalba-platform. Record command exit codes independently and keep raw audit output outside Git:
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm audit --omit=dev --json
+npm audit --json
+npm ls --all
+```
+
+Review affected production dependency paths and the smallest compatible patched versions. Change manifest and lockfile together; do not use a forced major upgrade or suppress nonzero audit exits. Then repeat a normal clean install, Prisma generation, full unit suite, TypeScript, lint, build and affected PostgreSQL/browser acceptance. A new audit result and exact-head evidence are required before changing the blocker status.
