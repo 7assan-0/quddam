@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
   const next = () => {
     const response = NextResponse.next({ request: { headers } });
     response.headers.set("Content-Security-Policy-Report-Only", policy);
-    if (request.nextUrl.pathname.startsWith("/night/invite/")) {
+    if ((request.nextUrl.pathname.startsWith("/night/invite/") || request.nextUrl.pathname.startsWith("/shillatak/join/"))) {
       // The invite token is a bearer secret in the path: never send it as a referrer.
       response.headers.set("Referrer-Policy", "no-referrer");
       response.headers.set("Cache-Control", "private, no-store");
@@ -29,6 +29,12 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   if (process.env.ENABLE_NIGHT_OF_QUDDAM !== "true" && (pathname === "/night" || pathname.startsWith("/night/"))) {
     return new NextResponse("الصفحة غير متاحة.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex, nofollow", "Content-Security-Policy-Report-Only": policy } });
+  }
+  if ((process.env.ENABLE_NIGHT_OF_QUDDAM !== "true" || process.env.ENABLE_SHILLATAK !== "true") &&
+    (pathname === "/shillatak" || pathname.startsWith("/shillatak/"))) {
+    return new NextResponse("الصفحة غير متاحة.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff",
+      "X-Robots-Tag": "noindex, nofollow", "Content-Security-Policy-Report-Only": policy } });
   }
   const match = /^\/lightning\/(buzzer|display)\/([^/]+)$/.exec(request.nextUrl.pathname);
   if (!match) return next();

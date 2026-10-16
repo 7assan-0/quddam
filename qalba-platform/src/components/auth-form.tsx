@@ -3,10 +3,13 @@ import { Brand } from "./brand";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authReturnPath } from "@/lib/auth/return-path";
 
 type Mode = "login" | "register" | "forgot" | "reset";
 
-export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
+export function AuthForm({ mode, token, returnTo, onModeChange }: {
+  mode: Mode; token?: string; returnTo?: string; onModeChange?: (mode: "login" | "register") => void;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -26,7 +29,7 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
       if (!response.ok) throw new Error(result.error ?? "تعذّر إكمال الطلب");
       if (mode === "forgot") setSuccess("إذا كان البريد مسجلًا، سيصلك رابط خلال دقائق.");
       else if (mode === "reset") { setSuccess("تم تحديث كلمة المرور. يمكنك الدخول الآن."); }
-      else { router.push("/games"); router.refresh(); }
+      else { router.push(authReturnPath(returnTo)); router.refresh(); }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "تعذّر إكمال الطلب"); }
     finally { setBusy(false); }
   }
@@ -40,8 +43,12 @@ export function AuthForm({ mode, token }: { mode: Mode; token?: string }) {
       <button className="btn btn-primary" style={{ width: "100%" }} type="submit" disabled={busy || (mode === "reset" && !token)}>{busy ? "لحظة..." : button}</button>
     </form>
     <div className="form-row" style={{ marginTop: 22 }}>
-      {mode === "login" && <><Link className="subtle-link" href="/register">حساب جديد</Link><Link className="subtle-link" href="/forgot-password">نسيت كلمة المرور؟</Link></>}
-      {mode === "register" && <><span className="muted">عندك حساب؟</span><Link className="subtle-link" href="/login">سجّل دخولك</Link></>}
+      {mode === "login" && <>{onModeChange ? <button type="button" className="subtle-link" disabled={busy}
+        onClick={() => onModeChange("register")}>حساب جديد</button> : <Link className="subtle-link" href="/register">حساب جديد</Link>}
+        <Link className="subtle-link" href="/forgot-password">نسيت كلمة المرور؟</Link></>}
+      {mode === "register" && <><span className="muted">عندك حساب؟</span>{onModeChange ? <button type="button"
+        className="subtle-link" disabled={busy} onClick={() => onModeChange("login")}>سجّل دخولك</button> :
+        <Link className="subtle-link" href="/login">سجّل دخولك</Link>}</>}
       {(mode === "forgot" || mode === "reset") && <Link className="subtle-link" href="/login">العودة لتسجيل الدخول</Link>}
     </div>
   </div></div>;
