@@ -4,6 +4,7 @@ import { expect, test, type Browser, type BrowserContext, type Page } from "@pla
 import type { LightningView } from "../../src/lib/games/lightning/service";
 import type { HostAction, Question } from "../../src/lib/games/lightning/module";
 import { archivedLightningSeedIds } from "../../prisma/lightning-editorial-exclusions";
+import { TEAM_COLORS } from "../../src/lib/design/team-colors";
 const origin = "http://127.0.0.1:3000";
 test.beforeEach(() => expect(process.env.E2E_DATABASE_URL, "Lightning browser tests require the DB runner").toBeTruthy());
 async function sql(query: string, values: unknown[] = []) { const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL, max: 1 }); try { return await pool.query(query, values); } finally { await pool.end(); } }
@@ -42,7 +43,7 @@ test("Lightning Quiz: isolated seeded database has exactly 600 eligible across 1
  expect([...byCategory.values()].sort((a, b) => a - b)).toEqual(Array(15).fill(40));
 });
 test("Lightning Quiz: create A B links and Team A locks question on Host TV and both phones", async ({ page, browser }) => {
-  const id = await setup(page), v = await read(page, id); expect(v.teams.map(t => [t.name, t.position, t.color])).toEqual([["فريق ياقوت", 0, "#F24C74"], ["فريق ألف", 1, "#29C7C9"]]);
+  const id = await setup(page), v = await read(page, id); expect(v.teams.map(t => [t.name, t.position, t.color])).toEqual([["فريق ياقوت", 0, TEAM_COLORS[0]], ["فريق ألف", 1, TEAM_COLORS[1]]]);
   await page.getByRole("button", { name: "إنشاء جرس A", exact: true }).click(); await expect(page.getByRole("link", { name: "افتح جرس A", exact: true })).toBeVisible(); const aUrl = await page.getByRole("link", { name: "افتح جرس A", exact: true }).getAttribute("href"); await page.getByRole("button", { name: "إنشاء جرس B", exact: true }).click(); await expect(page.getByRole("link", { name: "افتح جرس B", exact: true })).toBeVisible(); const bUrl = await page.getByRole("link", { name: "افتح جرس B", exact: true }).getAttribute("href");
   const a = await phone(browser, aUrl!), b = await phone(browser, bUrl!), { tv, context } = await display(page, browser, id);
   try { await expect(a.page.getByRole("button", { name: "استعد", exact: true })).toBeDisabled(); await expect(b.page.getByRole("button", { name: "استعد", exact: true })).toBeDisabled(); await page.getByRole("button", { name: "افتح البرق", exact: true }).click(); await expect(a.page.getByRole("button", { name: "اضغط الجرس", exact: true })).toBeEnabled(); await expect(b.page.getByRole("button", { name: "اضغط الجرس", exact: true })).toBeEnabled(); await a.page.getByRole("button", { name: "اضغط الجرس", exact: true }).click(); for (const p of [page, tv]) await expect(p.locator("[data-buzz-winner]")).toHaveAttribute("data-buzz-winner", v.teams[0].id); await expect(a.page.getByRole("button", { name: "أنت أول!", exact: true })).toBeDisabled(); await expect(b.page.getByRole("button", { name: "سبقكم فريق ياقوت", exact: true })).toBeDisabled(); await expect(page.getByRole("button", { name: "صحيح +٢", exact: true })).toBeEnabled(); expect(await tv.getByRole("button").count()).toBe(0); } finally { await close([a.context, b.context, context]); }
