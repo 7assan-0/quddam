@@ -78,7 +78,7 @@ export function auditBank(game:ContentGame,rows:ContentRow[]){
  * IDs only in output; no private snapshots or user data are accessed.
  */
 export function lightningBoardOverlaps(banks:Pick<Banks,'category-board'|'lightning-quiz'>):AuditIssue[]{
- const promptKey=(value:unknown)=>contentKey(String(value??'')).replace(/[\\p{P}\\p{S}]/gu,' ').replace(/\\s+/gu,' ').trim();
+ const promptKey=(value:unknown)=>contentKey(String(value??'')).replace(/[\p{P}\p{S}]/gu,' ').replace(/\s+/gu,' ').trim();
  const board=new Map<string,ContentRow[]>();
  for(const row of banks['category-board'].filter(r=>isContentEligible('category-board',r))){
   const key=promptKey(row.question);if(!key)continue;
