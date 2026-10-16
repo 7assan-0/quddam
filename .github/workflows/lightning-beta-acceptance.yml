@@ -1,0 +1,92 @@
+name: Lightning Beta isolated acceptance (owner dispatch only)
+
+# Manual only. Do not run automatically on PR updates: a browser run may consume
+# private repository Actions minutes. Owner reviews usage/cost before dispatch.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lightning-beta:
+    if: ${{ github.ref_name == 'feature/lightning-content-qa-20261016' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: lightning_beta_ci
+          POSTGRES_USER: lightning_beta_ci
+          POSTGRES_PASSWORD: lightning-beta-disposable-only
+        ports:
+          - 55469:5432
+        options: >-
+          --health-cmd "pg_isready -U lightning_beta_ci -d lightning_beta_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      DATABASE_URL: postgresql://lightning_beta_ci:lightning-beta-disposable-only@127.0.0.1:55469/lightning_beta_ci
+      LIGHTNING_BETA_TEST_DATABASE: '1'
+      DATABASE_POOL_MAX: '2'
+      APP_URL: http://127.0.0.1:3000
+      AUTH_RATE_LIMIT_SECRET: synthetic-lightning-beta-only-never-production-20261016
+      SEED_ADMIN_EMAIL: admin@example.test
+      SEED_ADMIN_PASSWORD: e2e-admin-password-123
+      SEED_USER_EMAIL: player@example.test
+      SEED_USER_PASSWORD: e2e-player-password-123
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Verify exact scoped PR source and native PostgreSQL 17
+        run: |
+          test "$(git branch --show-current)" = "feature/lightning-content-qa-20261016" || test "$GITHUB_REF_NAME" = "feature/lightning-content-qa-20261016"
+          test "$(node -v)" = "v24.19.0"
+          node -p "process.version"
+          node --version
+          echo "Exact candidate: $(git rev-parse HEAD)"
+          docker --version
+      - name: Locked install and Prisma generate
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Isolated native PG17 migration and synthetic seed
+        run: |
+          npm run db:migrate
+          npm run db:seed
+      - name: General source and database content report
+        run: npm run content:validate -- --output content-audit.json
+      - name: Strict Lightning source plus native PostgreSQL 17 database gate
+        run: node --import tsx scripts/lightning-beta-validate.ts --output lightning-beta-report.json
+      - name: Targeted Lightning content and engine tests
+        run: npm run test -- --maxWorkers=1 --retry=0 tests/content/lightning-beta-readiness.test.ts tests/content/lightning-board-uniqueness.test.ts src/lib/games/lightning/module.test.ts src/lib/games/lightning/service.test.ts
+      - name: Typecheck lint and production build
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Full isolated twenty-one-case Lightning browser suite
+        run: npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts --retries=0 --workers=1
+      - name: Upload sanitized content acceptance result (always)
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: lightning-beta-content-${{ github.run_id }}
+          path: |
+            qalba-platform/content-audit.json
+            qalba-platform/lightning-beta-report.json
+          if-no-files-found: warn
+          retention-days: 7
