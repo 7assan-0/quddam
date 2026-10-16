@@ -85,7 +85,11 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Full isolated twenty-one-case Lightning browser suite
+        # Synthetic seeded signups need the existing 3 welcome credits to START.
+        # Scope this flag to the disposable PGlite browser runner only; never
+        # enable it in production or in the platform's unrelated CI steps.
         env:
+          PUBLIC_WELCOME_CREDITS_ENABLED: 'true'
           E2E_REPORT_FILE: playwright-report/lightning-beta-native.json
         run: |
           mkdir -p playwright-report
