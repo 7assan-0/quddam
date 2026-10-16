@@ -62,7 +62,7 @@ jobs:
           node --version
           echo "Exact candidate: $(git rev-parse HEAD)"
           test -n "$PG_SERVICE_CONTAINER"
-          docker exec "$PG_SERVICE_CONTAINER" postgres --version | grep -F 'PostgreSQL 17.'
+          docker exec "$PG_SERVICE_CONTAINER" postgres --version | grep -E 'PostgreSQL[)]? 17[.]'
       - name: Locked install and Prisma generate
         run: |
           npm ci --include=dev --no-audit --no-fund
