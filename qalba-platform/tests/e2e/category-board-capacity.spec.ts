@@ -34,7 +34,7 @@ test("twenty independent mobile guests retain their seats and submit concurrentl
     const admission = rejectedPage.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/join"));
     await rejectedPage.getByRole("button", { name: "انضم إلى الغرفة", exact: true }).click();
     expect((await admission).status()).toBe(409);
-    await expect(rejectedPage.getByRole("alert")).toContainText("اكتملت الغرفة");
+    await expect(rejectedPage.getByRole("alert").filter({ hasText: "اكتملت الغرفة" })).toHaveText("اكتملت الغرفة");
     expect((await readRoom(page, code)).participants).toEqual(roster.participants);
     const before = await readRoom(guests[19].page, code);
     await guests[19].context.setOffline(true);
