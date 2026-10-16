@@ -3,7 +3,7 @@ import { TeamMarker } from "./team-marker";
 import { RematchCopy } from "./cta-copy";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { getBoardSession } from "@/lib/games/category-board/service";
 import type { BoardCommand, PowerSlug } from "@/lib/games/category-board/module";
 import { QuestionReportForm } from "@/components/question-report-form";
@@ -20,6 +20,7 @@ const descriptions: Record<PowerSlug, string> = {
 
 export function BoardHost({ initial }: { initial: View }) {
   const [view, setView] = useState(initial);
+  const viewRef = useRef(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [scoreAmount, setScoreAmount] = useState(100);
@@ -31,6 +32,14 @@ export function BoardHost({ initial }: { initial: View }) {
   const displayDialog = useRef<HTMLDialogElement>(null);
   const [judgmentFeedback, setJudgmentFeedback] = useState<"correct" | "wrong" | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyView = useCallback((next: View, sentAt: number) => {
+    // TV-access refreshes can overlap a judgment. A delayed read must never
+    // reopen a completed cell or replace a newer authoritative score.
+    if (next.id !== viewRef.current.id || !Number.isSafeInteger(next.version) || next.version < viewRef.current.version) return;
+    viewRef.current = next;
+    setServerOffset(serverOffsetMs(next.serverNow, localNowMs(), sentAt));
+    setView(next);
+  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setClock(Date.now()), 250);
     return () => window.clearInterval(timer);
@@ -39,7 +48,7 @@ export function BoardHost({ initial }: { initial: View }) {
   async function refresh() {
     const sentAt = localNowMs();
     const response = await fetch(`/api/games/category-board/${view.id}`, { cache: "no-store" });
-    if (response.ok) { const current: View = await response.json(); setServerOffset(serverOffsetMs(current.serverNow, localNowMs(), sentAt)); setView(current); }
+    if (response.ok) { const current: View = await response.json(); applyView(current, sentAt); }
   }
   async function openTv() {
     if (displayBusy) return;
@@ -92,8 +101,7 @@ export function BoardHost({ initial }: { initial: View }) {
         if (response.status === 409) await refresh();
         throw new Error(result.error ?? "تعذّر تنفيذ الأمر");
       }
-      setServerOffset(serverOffsetMs(result.session.serverNow, localNowMs(), sentAt));
-      setView(result.session);
+      applyView(result.session, sentAt);
       if (action.type === "CORRECT" || action.type === "WRONG") {
         if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
         setJudgmentFeedback(action.type === "CORRECT" ? "correct" : "wrong");

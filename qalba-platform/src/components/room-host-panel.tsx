@@ -3,6 +3,7 @@ import { connectLive } from "@/lib/realtime/client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { roomView } from "@/lib/rooms/service";
+import { acceptsRoomView } from "./room-view-order";
 type View = Awaited<ReturnType<typeof roomView>>;
 export function RoomHostPanel({ sessionId }: { sessionId: string }) {
   const [code, setCode] = useState(""); const [view, setView] = useState<View | null>(null);
@@ -24,10 +25,12 @@ export function RoomHostPanel({ sessionId }: { sessionId: string }) {
   }, [sessionId]);
   useEffect(() => { if (!code) return;
     const live = connectLive<View>({ events: `/api/rooms/${code}/events`, endpoint: `/api/rooms/${code}`,
-      apply: next => setView(next), temporary: () => {}, terminal: () => setView(null),
+      apply: next => setView(current => next.code !== code || next.session.id !== sessionId || !next.host
+        ? current : current === null || acceptsRoomView(current, next) ? next : current),
+      temporary: () => {}, terminal: () => setView(null),
     });
     return () => live.close();
-  }, [code]);
+  }, [code, sessionId]);
   async function create() { setBusy(true); setError(""); try { const response = await fetch("/api/rooms", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) });
     const result = await response.json(); if (!response.ok) throw new Error(result.error); setCode(result.code);
   } catch (cause) { setError(cause instanceof Error ? cause.message : "تعذّر إنشاء الغرفة"); } finally { setBusy(false); } }
