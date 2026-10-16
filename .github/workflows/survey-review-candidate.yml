@@ -1,0 +1,114 @@
+name: Survey 91 candidate review (isolated)
+
+# Draft editorial validation only; no import, deployment, billing or live DB.
+on:
+  pull_request:
+    branches:
+      - audit/survey-91-editorial-20261016
+    types: [opened, synchronize, reopened]
+    paths:
+      - "qalba-platform/content-review/2026-10-16/**"
+      - "qalba-platform/tests/survey-91-review-candidate.test.ts"
+      - ".github/workflows/survey-review-candidate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: survey-candidate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  content:
+    name: Exact-head 91-candidate structural tests, TypeScript and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:5432/prisma_config_placeholder
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - name: Checkout exact head without retained credentials
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Confirm source identity
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+      - name: Set up Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client without connecting
+        run: npm run db:generate
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Candidate and existing staged structural tests
+        run: npx vitest run tests/survey-91-review-candidate.test.ts tests/remaining-games-review-staged.test.ts
+
+  seeded-browser-baseline:
+    name: Exact-head existing Survey Chromium flow (original 65 only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    env:
+      CI: "true"
+      PUBLIC_WELCOME_CREDITS_ENABLED: "true"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:5432/prisma_config_placeholder
+      E2E_REPORT_FILE: playwright-report/survey-original-baseline.json
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - name: Checkout exact candidate head without retained credentials
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Confirm source identity
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+      - name: Set up Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Generate Prisma client without connecting
+        run: npm run db:generate
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run existing seeded five-round browser case on disposable local PGlite
+        run: |
+          mkdir -p playwright-report
+          node scripts/e2e-with-db.mjs tests/e2e/survey-battle.spec.ts --grep "full five-round winner"
+      - name: Confirm original-seed native report has one pass and zero skipped, retries or failures
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const report = JSON.parse(readFileSync("playwright-report/survey-original-baseline.json","utf8"));
+          const s=report.stats || {};
+          console.log(JSON.stringify({source: process.env.EXPECTED_HEAD_SHA, baseline: "existing original 65 only", stats:s}));
+          if(s.expected!==1 || s.unexpected!==0 || s.skipped!==0 || s.flaky!==0) throw Error("Incomplete baseline browser report");
+          const tests=[];
+          const visit=suites=>{for(const suite of suites||[]){for(const spec of suite.specs||[])tests.push(...spec.tests);visit(suite.suites)}};
+          visit(report.suites);
+          if(tests.length!==1 || tests[0].results.length!==1 || tests[0].results[0].status!=="passed") throw Error("Baseline case retried or not passed exactly once");
+          NODE
+      - name: Retain native baseline report including on failure
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.3.4
+        with:
+          name: survey-original-seed-baseline-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: qalba-platform/playwright-report/
+          if-no-files-found: warn
+          retention-days: 7
