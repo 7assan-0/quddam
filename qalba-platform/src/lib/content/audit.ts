@@ -67,9 +67,40 @@ export function auditBank(game:ContentGame,rows:ContentRow[]){
   const enabled=Object.entries(letters).filter(([l,n])=>n>=8&&(LETTER_WEIGHTS[l]??0)>0);if(enabled.length<5||enabled.reduce((n,[,count])=>n+count,0)<25)errors.push({code:'LETTER_BOARD_CAPACITY',ids:[]});
  }
  if(eligible.length<contentPolicies[game].minimum*2)warnings.push({code:'REMATCH_REPETITION_POSSIBLE',ids:[]});
+ if(game==='lightning-quiz'&&eligible.length<600)warnings.push({code:'LIGHTNING_EDITORIAL_TARGET_600_NOT_MET',ids:[]});
  if(game==='ordering-challenge'&&eligible.filter(r=>String(r.instruction).includes('الهجائي')).length>eligible.length/3)warnings.push({code:'ALPHABETICAL_TEMPLATE_CONCENTRATION',ids:[]});
  return {game,total:rows.length,published:rows.filter(r=>r.status==='PUBLISHED').length,eligible:eligible.length,inactive:rows.filter(r=>r.status==='PUBLISHED'&&!r.categoryActive).length,archivedOrUnpublished:rows.filter(r=>r.status!=='PUBLISHED').length,blockingInvalid:invalidIds.size,duplicatesFound:duplicates,categories,languages,difficulty,letters,minimum:contentPolicies[game].minimum,capacity:errors.length?'FAIL':warnings.length?'WARN':'PASS',errors,warnings};
 }
-export function auditContent(banks:Banks){const games=(Object.keys(contentPolicies) as ContentGame[]).map(g=>auditBank(g,banks[g]));return {schemaVersion:1,nonMutating:true,games,blockingErrors:games.reduce((n,g)=>n+g.errors.length,0),warnings:games.reduce((n,g)=>n+g.warnings.length,0)};}
+/**
+ * Separate launch editorial rule: Lightning may not reuse a published, eligible
+ * Category Board prompt. Compare punctuation- and Arabic-normalized prompts,
+ * not answers alone: different questions can legitimately share an answer.
+ * IDs only in output; no private snapshots or user data are accessed.
+ */
+export function lightningBoardOverlaps(banks:Pick<Banks,'category-board'|'lightning-quiz'>):AuditIssue[]{
+ const promptKey=(value:unknown)=>contentKey(String(value??'')).replace(/[\\p{P}\\p{S}]/gu,' ').replace(/\\s+/gu,' ').trim();
+ const board=new Map<string,ContentRow[]>();
+ for(const row of banks['category-board'].filter(r=>isContentEligible('category-board',r))){
+  const key=promptKey(row.question);if(!key)continue;
+  const candidates=board.get(key)??[];candidates.push(row);board.set(key,candidates);
+ }
+ const issues:AuditIssue[]=[];
+ for(const row of banks['lightning-quiz'].filter(r=>isContentEligible('lightning-quiz',r))){
+  const key=promptKey(row.question);if(!key)continue;
+  for(const prior of board.get(key)??[])issues.push({
+   code:contentKey(String(prior.answer??''))===contentKey(String(row.answer??''))?'LIGHTNING_BOARD_PROMPT_OVERLAP':'LIGHTNING_BOARD_CONFLICTING_ANSWER',
+   ids:[prior.id,row.id],
+  });
+ }
+ return issues;
+}
+export function auditContent(banks:Banks){
+ const games=(Object.keys(contentPolicies) as ContentGame[]).map(g=>auditBank(g,banks[g]));
+ const overlaps=lightningBoardOverlaps(banks);
+ const lightning=games.find(g=>g.game==='lightning-quiz')!;
+ lightning.errors.push(...overlaps);
+ if(overlaps.length)lightning.capacity='FAIL';
+ return {schemaVersion:1,nonMutating:true,games,blockingErrors:games.reduce((n,g)=>n+g.errors.length,0),warnings:games.reduce((n,g)=>n+g.warnings.length,0)};
+}
 
 export function contentValidationExitCode(source:{blockingErrors:number},database:{blockingErrors:number}|null){return source.blockingErrors||(database?.blockingErrors??0)?1:0;}
