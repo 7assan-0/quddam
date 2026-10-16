@@ -1,3 +1,4 @@
+import { archivedLightningSeedIds } from '../../../prisma/lightning-editorial-exclusions';
 import {duplicateOrderingIds} from '../../../prisma/content-remediations';
 import {boardSamples,socialWords} from '../../../prisma/core-content';
 import {letterSamples} from '../../../prisma/letter-questions';
@@ -18,7 +19,7 @@ export function sourceBanks():Banks{return {
  'secret-word':forbiddenSamples.map(q=>row(q.id,q.category,{...q})),
  'bluff':bluffSamples.map(q=>row(q.id,q.category,{...q})),
  'top-list':rankedSamples.map(q=>row(q.id,q.category,{...q})),
- 'lightning-quiz':lightningSamples.map(q=>row(q.id,q.category,{...q})),
+ 'lightning-quiz':lightningSamples.map(q=>row(q.id,q.category,{...q,status:archivedLightningSeedIds.has(q.id)?'ARCHIVED':'PUBLISHED'})),
  'ordering-challenge':orderingSamples.map(q=>row(q.id,q.categorySlug,{...q,status:duplicateOrderingIds.has(q.id)?'ARCHIVED':'PUBLISHED'})),
  'the-court':courtSamples.map((q,i)=>row(`court-seed-${i+1}`,q.category,{...q})),
 };}

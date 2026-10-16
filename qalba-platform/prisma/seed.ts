@@ -1,3 +1,4 @@
+import { archivedLightningSeedIds } from "./lightning-editorial-exclusions";
 import {duplicateOrderingIds} from "./content-remediations";
 import {sourceBanks} from "../src/lib/content/source";
 import {auditContent} from "../src/lib/content/audit";
@@ -96,7 +97,7 @@ async function main() {
     for (const sample of lightningSamples.filter(q=>q.category===slug)) {
       validateLightningQuestion(sample);
       const {category:unused,...question}=sample;void unused;
-      await prisma.lightningQuestion.upsert({where:{id:sample.id},update:{},create:{...question,normalizedQuestion:lightningNormalize(sample.question),categoryId:category.id,status:"PUBLISHED",locale:"ar-SA"}});
+      await prisma.lightningQuestion.upsert({where:{id:sample.id},update:{},create:{...question,normalizedQuestion:lightningNormalize(sample.question),categoryId:category.id,status:archivedLightningSeedIds.has(sample.id)?"ARCHIVED":"PUBLISHED",locale:"ar-SA"}});
     }
   }
   for (const [slug,title] of rankedCategories) {

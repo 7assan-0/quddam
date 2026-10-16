@@ -1,0 +1,107 @@
+name: Lightning Beta isolated acceptance (owner label only)
+
+# Owner-gated only: an explicit label on PR #18 after reviewing Actions minutes.
+# Not triggered by pushes or ordinary PR updates. No cloud resources/deploy.
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  lightning-beta:
+    if: ${{ github.event.pull_request.number == 18 && github.event.label.name == 'lightning-ci-approved' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: lightning_beta_ci
+          POSTGRES_USER: lightning_beta_ci
+          POSTGRES_PASSWORD: lightning-beta-disposable-only
+        ports:
+          - 55469:5432
+        options: >-
+          --health-cmd "pg_isready -U lightning_beta_ci -d lightning_beta_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      DATABASE_URL: postgresql://lightning_beta_ci:lightning-beta-disposable-only@127.0.0.1:55469/lightning_beta_ci
+      LIGHTNING_BETA_TEST_DATABASE: '1'
+      DATABASE_POOL_MAX: '2'
+      APP_URL: http://127.0.0.1:3000
+      AUTH_RATE_LIMIT_SECRET: synthetic-lightning-beta-only-never-production-20261016
+      SEED_ADMIN_EMAIL: admin@example.test
+      SEED_ADMIN_PASSWORD: e2e-admin-password-123
+      SEED_USER_EMAIL: player@example.test
+      SEED_USER_PASSWORD: e2e-player-password-123
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Verify exact scoped PR source and native PostgreSQL 17
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+          PG_SERVICE_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(node -v)" = "v24.19.0"
+          node -p "process.version"
+          node --version
+          echo "Exact candidate: $(git rev-parse HEAD)"
+          test -n "$PG_SERVICE_CONTAINER"
+          docker exec "$PG_SERVICE_CONTAINER" postgres --version | grep -E 'PostgreSQL[)]? 17[.]'
+      - name: Locked install and Prisma generate
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Isolated native PG17 migration and synthetic seed
+        run: |
+          npm run db:migrate
+          npm run db:seed
+      - name: General source and database content report
+        run: npm run content:validate -- --output content-audit.json
+      - name: Strict Lightning source plus native PostgreSQL 17 database gate
+        run: node --import tsx scripts/lightning-beta-validate.ts --output lightning-beta-report.json
+      - name: Targeted Lightning content and engine tests
+        run: npm run test -- --maxWorkers=1 --retry=0 tests/content/lightning-beta-readiness.test.ts tests/content/lightning-board-uniqueness.test.ts src/lib/games/lightning/module.test.ts src/lib/games/lightning/service.test.ts
+      - name: Typecheck lint and production build
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Full isolated twenty-one-case Lightning browser suite
+        # Synthetic seeded signups need the existing 3 welcome credits to START.
+        # Scope this flag to the disposable PGlite browser runner only; never
+        # enable it in production or in the platform's unrelated CI steps.
+        env:
+          PUBLIC_WELCOME_CREDITS_ENABLED: 'true'
+          E2E_REPORT_FILE: playwright-report/lightning-beta-native.json
+        run: |
+          mkdir -p playwright-report
+          npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts --retries=0 --workers=1
+      - name: Upload sanitized content acceptance result (always)
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: lightning-beta-content-${{ github.run_id }}
+          path: |
+            qalba-platform/content-audit.json
+            qalba-platform/lightning-beta-report.json
+            qalba-platform/playwright-report/lightning-beta-native.json
+          if-no-files-found: warn
+          retention-days: 7
