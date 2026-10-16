@@ -6,15 +6,15 @@ describe('Lightning content beta gate versus Category Board', () => {
  const source = sourceBanks();
  const clone = () => structuredClone(source);
 
- it('keeps the expanded 360-prompt source separate from board without falsely passing the 600 editorial goal', () => {
+ it('has 600 authored candidate prompts, without claiming editorial approval or cross-game overlaps', () => {
   const report = auditContent(source);
   const lightning = report.games.find(g => g.game === 'lightning-quiz')!;
-  expect(source['lightning-quiz']).toHaveLength(360);
+  expect(source['lightning-quiz']).toHaveLength(600);
   expect(lightningBoardOverlaps(source)).toEqual([]);
   expect(report.blockingErrors).toBe(0);
-  expect(lightning.eligible).toBe(360);
-  expect(lightning.warnings).toContainEqual({ code: 'LIGHTNING_EDITORIAL_TARGET_600_NOT_MET', ids: [] });
-  expect(lightning.capacity).toBe('WARN');
+  expect(lightning.eligible).toBe(600);
+  expect(lightning.warnings).not.toContainEqual({ code: 'LIGHTNING_EDITORIAL_TARGET_600_NOT_MET', ids: [] });
+  expect(lightning.capacity).toBe('PASS');
  });
 
  it('blocks identical and Arabic-normalized/punctuation-only duplicated board prompts, disclosing IDs only', () => {
