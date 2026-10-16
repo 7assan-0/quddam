@@ -1,3 +1,4 @@
+import { lightningBoardSemanticExclusions } from '../../../prisma/lightning-editorial-exclusions';
 import {LETTER_WEIGHTS} from '../games/letter-network/module';
 import {orderingCanonicalIssue} from './ordering-review';
 import { z } from 'zod';
@@ -94,9 +95,19 @@ export function lightningBoardOverlaps(banks:Pick<Banks,'category-board'|'lightn
  }
  return issues;
 }
+/** Known meaning-equivalent legacy prompts: exact-text normalization alone cannot
+ * find a differently phrased question about the same fact. An existing DB with
+ * both source IDs still eligible is blocked; this never mutates or archives it.
+ */
+export function lightningBoardSemanticOverlaps(banks:Pick<Banks,'category-board'|'lightning-quiz'>):AuditIssue[]{
+ const board=new Set(banks['category-board'].filter(r=>isContentEligible('category-board',r)).map(r=>r.id));
+ const lightning=new Set(banks['lightning-quiz'].filter(r=>isContentEligible('lightning-quiz',r)).map(r=>r.id));
+ return lightningBoardSemanticExclusions.filter(({boardId,lightningId})=>board.has(boardId)&&lightning.has(lightningId))
+  .map(({boardId,lightningId})=>({code:'LIGHTNING_BOARD_SEMANTIC_OVERLAP',ids:[boardId,lightningId]}));
+}
 export function auditContent(banks:Banks){
  const games=(Object.keys(contentPolicies) as ContentGame[]).map(g=>auditBank(g,banks[g]));
- const overlaps=lightningBoardOverlaps(banks);
+ const overlaps=[...lightningBoardOverlaps(banks),...lightningBoardSemanticOverlaps(banks)];
  const lightning=games.find(g=>g.game==='lightning-quiz')!;
  lightning.errors.push(...overlaps);
  if(overlaps.length)lightning.capacity='FAIL';
