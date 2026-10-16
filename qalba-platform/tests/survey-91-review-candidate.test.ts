@@ -133,9 +133,15 @@ describe("Survey Show 91-round candidate (review-only, NOT imported or human app
   it("keeps the historical 26-pack unchanged and the V2/combined supplemental candidates identical", () => {
     expect(historical.map((item) => item.id)).toEqual(supplement.map((item) => item.id));
     expect(rewrittenSupplements).toHaveLength(13);
-    const changed = supplement.filter((item, index) => item.question !== historical[index].question)
-      .map((item) => item.id);
+    const changedPrompts = supplement.filter((item, index) => item.question !== historical[index].question).map((item) => item.id);
+    expect(changedPrompts).toHaveLength(12); // school-01 keeps its question but clarifies two answer slots
+    const changed = supplement.filter((item, index) =>
+      item.question !== historical[index].question ||
+      JSON.stringify(answers(item)) !== JSON.stringify(answers(historical[index]))
+    ).map((item) => item.id);
     expect(changed.sort()).toEqual([...rewrittenSupplements].sort());
+    expect(answers(supplement.find((item) => item.id === "survey-supplement-school-01")!)
+      .map((item) => item.answer)).toContain("لابتوب");
     for (const s of supplement) {
       const c = byId(s.id);
       expect(c.question).toBe(s.question);
