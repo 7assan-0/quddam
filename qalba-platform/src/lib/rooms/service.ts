@@ -57,12 +57,25 @@ export async function joinRoom(code: string, name: string, teamId: string) {
   const preview = await previewRoom(normalized);
   if (!preview.teams.some((team) => team.id === teamId)) throw new RoomError("اختر فريقًا من الغرفة");
   const user = await currentUser();
+  const cookieStore = await cookies();
+  const existingToken = cookieStore.get(cookieName(normalized))?.value;
   const token = newToken();
-  const room = await db().$transaction(async (tx) => {
+  const joined = await db().$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "Room" WHERE "code" = ${normalized} FOR UPDATE`;
     const room = await tx.room.findUniqueOrThrow({ where: { code: normalized }, include: { session: true } });
     if (room.expiresAt <= new Date() || !room.session || ["COMPLETED", "ABANDONED"].includes(room.session.status)) throw new RoomError("الغرفة غير متاحة", 404);
     if (user?.id === room.hostId) throw new RoomError("المضيف يدير الغرفة من لوحة المباراة", 409);
+    // A retained guest capability identifies its existing seat, including when
+    // a successful join response was lost. Do not rotate it into a second seat.
+    if (existingToken) {
+      const existing = await tx.roomParticipant.findFirst({ where: { roomId: room.id, tokenHash: tokenHash(existingToken) },
+        select: { name: true, teamId: true } });
+      if (existing) {
+        if (existing.name.toLocaleLowerCase("ar") !== cleanName.toLocaleLowerCase("ar") || existing.teamId !== teamId)
+          throw new RoomError("أنت منضم بالفعل. عد إلى مقعدك الحالي في الغرفة", 409);
+        return { room, token: existingToken };
+      }
+    }
     const participants = await tx.roomParticipant.findMany({ where: { roomId: room.id }, select: { name: true } });
     if (participants.length >= 20) throw new RoomError("اكتملت الغرفة", 409);
     if (participants.some((person) => person.name.toLocaleLowerCase("ar") === cleanName.toLocaleLowerCase("ar"))) throw new RoomError("الاسم مستخدم في هذه الغرفة", 409);
@@ -72,9 +85,9 @@ export async function joinRoom(code: string, name: string, teamId: string) {
     await tx.roomParticipant.create({ data: { roomId: room.id, userId: user?.id, playerId: player.id, tokenHash: tokenHash(token), teamId, name: cleanName } });
     await tx.room.update({ where: { id: room.id }, data: { version: { increment: 1 } } });
     await recordEvent(tx, "ROOM_JOINED", user?.id ?? null, { roomId: room.id });
-    return room;
+    return { room, token };
   });
-  (await cookies()).set(cookieName(normalized), token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", expires: room.expiresAt });
+  cookieStore.set(cookieName(normalized), joined.token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", expires: joined.room.expiresAt });
   return { code: normalized };
 }
 
