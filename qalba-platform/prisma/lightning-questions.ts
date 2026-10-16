@@ -1,4 +1,5 @@
 import type { Question } from "../src/lib/games/lightning/module";
+import { lightningExpansion01 } from "./lightning-expansion-01";
 // Independently worded short-answer prompts; no imported quiz database or fake ranking.
 export const lightningCategories = [["general", "معلومات عامة"], ["saudi", "السعودية"], ["history", "تاريخ"], ["geography", "جغرافيا"], ["science", "علوم"], ["technology", "تقنية"], ["games", "ألعاب"], ["sports", "رياضة"], ["cars", "سيارات"], ["food", "طعام"], ["travel", "سفر"], ["screen", "أفلام ومسلسلات"], ["language", "لغة"], ["numbers", "أرقام"], ["curiosities", "غرائب"]] as const;
 // Each line: original question | canonical answer | optional accepted aliases.
@@ -304,7 +305,7 @@ const bank: Record<(typeof lightningCategories)[number][0], string> = {
 ما اسم قطعة جسم فضائي تصل إلى سطح الأرض دون أن تحترق كلها؟|النيزك
 ما اسم الضوء المرئي لجسم فضائي يحترق أثناء دخوله الغلاف الجوي؟|الشهاب`,
 };
-export const lightningSamples: (Question & { id: string })[] = lightningCategories.flatMap(([category]) => bank[category].split("\n").map((row, i) => {
+export const lightningSamples: (Question & { id: string })[] = lightningCategories.flatMap(([category]) => [...bank[category].split("\n"), ...lightningExpansion01[category]].map((row, i) => {
   const [question, answer, ...alternativeAnswers] = row.split("|");
-  return { id: `lightning-${category}-${i + 1}`, category, question, answer, alternativeAnswers, explanation: null, difficulty: i >= 18 ? "HARD" : i >= 10 ? "MEDIUM" : "EASY" };
+  return { id: `lightning-${category}-${i + 1}`, category, question, answer, alternativeAnswers, explanation: null, difficulty: i >= 22 ? "HARD" : i >= 20 ? "MEDIUM" : i >= 18 ? "HARD" : i >= 10 ? "MEDIUM" : "EASY" };
 }));
