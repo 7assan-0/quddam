@@ -3,6 +3,7 @@ import { ANSWER_MS, STEAL_MS, lobby, fresh, transition, buzz, timeout, expired, 
 import { publicProjection, hostProjection, buzzerProjection } from "./service";
 import { questionSchema, createSchema, commandSchema, buzzSchema } from "./validation";
 import { lightningCategories, lightningSamples } from "../../../../prisma/lightning-questions";
+import { archivedLightningSeedIds } from "../../../../prisma/lightning-editorial-exclusions";
 const now = 100_000, q: Question = { question: "سؤال علني", answer: "جواب سري", alternativeAnswers: ["بديل سري"], explanation: "تفسير سري", category: "علوم", difficulty: "EASY" };
 const run = (s: State, type: HostAction["type"], time = now) => transition(s, { type }, time);
 const ready = () => fresh(lobby(), ["z-team", "a-team"], Array.from({ length: 15 }, (_, i) => "use" + i));
@@ -10,7 +11,21 @@ const question = () => run(ready(), "PREPARE_QUESTION");
 const open = () => run(question(), "OPEN_BUZZ");
 const answering = (index = 0) => buzz(open(), index, now);
 const steal = () => run(answering(), "WRONG", now + 1000);
-it("expanded bank contains 600 unique valid prompts, forty per category and stable legacy IDs", () => { expect(lightningSamples).toHaveLength(600); expect(new Set(lightningSamples.map(q => normalize(q.question))).size).toBe(600); for (const [category] of lightningCategories) { const items = lightningSamples.filter(q => q.category === category); expect(items).toHaveLength(40); expect(items.slice(0, 20).map(q => q.id)).toEqual(Array.from({ length: 20 }, (_, i) => `lightning-${category}-${i + 1}`)); expect(items.slice(20).map(q => q.difficulty)).toEqual(["MEDIUM", "MEDIUM", "HARD", "HARD", ...Array(4).fill("MEDIUM"), ...Array(4).fill("HARD"), ...Array(4).fill("MEDIUM"), ...Array(4).fill("HARD")]); } for (const sample of lightningSamples) expect(validateQuestion(sample)).toBe(true); });
+it("600 eligible candidates plus five retained archived semantic duplicates preserve every historical ID", () => {
+ expect(lightningSamples).toHaveLength(605);
+ expect(new Set(lightningSamples.map(q => normalize(q.question))).size).toBe(605);
+ for (const [category] of lightningCategories) {
+  const items = lightningSamples.filter(q => q.category === category);
+  const retired = items.filter(q => archivedLightningSeedIds.has(q.id));
+  expect(items).toHaveLength(40 + retired.length);
+  expect(items.filter(q => !archivedLightningSeedIds.has(q.id))).toHaveLength(40);
+  expect(items.slice(0, 20).map(q => q.id)).toEqual(Array.from({ length: 20 }, (_, i) => `lightning-${category}-${i + 1}`));
+  expect(items.slice(20, 40).map(q => q.difficulty)).toEqual(["MEDIUM", "MEDIUM", "HARD", "HARD", ...Array(4).fill("MEDIUM"), ...Array(4).fill("HARD"), ...Array(4).fill("MEDIUM"), ...Array(4).fill("HARD")]);
+  expect(items.slice(40).every(q => q.difficulty === "HARD")).toBe(true);
+ }
+ expect(archivedLightningSeedIds.size).toBe(5);
+ for (const sample of lightningSamples) expect(validateQuestion(sample)).toBe(true);
+});
 it.each([[" أَحْمَدُ ", "احمد"], ["إِبْرَة", "ابرة"], ["آثار", "اثار"], ["فتى", "فتي"], ["كَـتَبَ", "كتب"], ["  كلمة   أخرى  ", "كلمة اخري"], ["CPU", "cpu"], ["a\u0301", "á"]])("safe Arabic NFC normalization %s", (input, expected) => expect(normalize(input)).toBe(expected));
 it("normalization keeps meaningful spaces and ta marbuta distinct from ha", () => { expect(normalize("كرة")).not.toBe(normalize("كره")); expect(normalize("عبد الله")).not.toBe(normalize("عبدالله")); });
 it.each(["", "   ", "ــَ", "a\u0000", "a\u202e", "x".repeat(501)])("blank control format or overlong prompt is rejected: %j", value => expect(() => validateQuestion({ ...q, question: value })).toThrow());
