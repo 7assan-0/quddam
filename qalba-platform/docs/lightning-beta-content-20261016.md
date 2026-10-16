@@ -26,6 +26,28 @@ Read-only comparison of the authored literal rows after five replacements observ
 
 Useful primary review references for selected nontrivial entries (not a blanket factual certificate): KAUST identifies Thuwal as its official address, https://www.kaust.edu.sa/en/contact ; FIBA publishes its current official rules/equipment documents at https://about.fiba.basketball/en/services/resource-hub/downloads . Editorial review must attach evidence for any other uncertain geographic, history, sport, science, technical or date-sensitive prompt and correct/withdraw ambiguous answers rather than relying only on automated checks.
 
+## Strict Beta v1 acceptance gate
+
+The catalogue's ordinary runtime minimum (15 questions) is not the Beta launch target. A separate read-only gate, `src/lib/content/lightning-beta.ts`, requires:
+- **600 structurally valid, eligible PUBLISHED questions**, not 600 raw rows (the five historical archives never count);
+- **15 distinct active categories with at least 40 valid eligible questions each**;
+- zero bank validation failures and zero published cross-game exact/Arabic-normalized or five known curated semantic collisions;
+- **both authored source AND a fresh isolated migrated/seeded database** passing. Source-only reporting returns `NOT_RUN_DATABASE` with Exit 2, never a launch PASS.
+
+Run the stricter validation only with disposable synthetic credentials:
+
+```sh
+cd qalba-platform
+# Point DATABASE_URL at an isolated disposable, migrated & seeded database.
+LIGHTNING_BETA_TEST_DATABASE=1 node --import tsx scripts/lightning-beta-validate.ts --output lightning-beta-report.json
+# Exit 0 = source+database PASS; Exit 1 = factual structure/count/overlap failure;
+# Exit 2 = source-only/unexecuted database or setup failure.
+```
+
+No production writes are performed by this validator. A new Playwright case also checks the isolated fresh-seed database: 605 authored rows, 600 PUBLISHED/active/ar-SA across 15 categories (40 each), and the exact five archived historical IDs. That Playwright runner uses isolated PGlite; it is **not proof of native PostgreSQL 17**. Native PostgreSQL 17 and a full 21-case Lightning browser run must be independently executed on the exact final SHA.
+
+Selected primary-reference spot checks, not a complete editorial certificate: KAUST's official location is Thuwal (https://admissions.kaust.edu.sa/about-kaust/kausts-location); the FIBA rule hub publishes the 2024 four-by-ten-minute regulation (https://refereeing.fiba.basketball/en/rules); the Saudi Ministry of Foreign Affairs describes 1932 unification (https://www.mofa.gov.sa/ar/ministry/officialvisits/JeddahSummit2023/Pages/AboutKingdom.aspx). Every other ambiguous or date-sensitive authored assertion needs appropriate primary-reference editorial approval before publication.
+
 ## Required verification — exact *final* PR SHA
 
 On Node 24 and a **new isolated migrated/seeded PostgreSQL test database**:
@@ -41,6 +63,7 @@ npm run build
 npm run db:migrate
 npm run db:seed
 npm run content:validate -- --output content-audit.json
+LIGHTNING_BETA_TEST_DATABASE=1 node --import tsx scripts/lightning-beta-validate.ts --output lightning-beta-report.json
 npm run test:e2e:db -- tests/e2e/lightning-quiz.spec.ts
 ```
 
@@ -50,7 +73,7 @@ The migration/seed commands above require the independently configured isolated 
 
 - Fact-check and editorially approve or archive the 305 added candidates (including five replacement prompts), including further review of *meaning-level* overlaps that string equality cannot discover. A pre-existing database with the five old IDs still published must undergo an explicitly approved, backed-up content retirement; run validation again afterward. No automatic production update is authorized. This is separate from the row count.
 - Isolated PostgreSQL content report and all new/affected unit tests, TypeScript, lint and build on the final committed head.
-- Full Lightning Playwright (Host + two independent team buzzer phones + read-only TV), winner/timer/steal/concurrency/reconnect/rematch/credits and end-of-game persistence.
+- Full **21-case** Lightning Playwright (including fresh-seed inventory, Host + two independent team buzzer phones + read-only TV), winner/timer/steal/concurrency/reconnect/rematch/credits and end-of-game persistence.
 - Product's future 20-player shared QR integration is **not** represented by the existing standalone two-team buzzer flow. Real-device LAN/NAT and load tests remain NOT RUN until genuinely performed.
 - PR #16 full security audit and the other platform operations/privacy gates must pass before external Beta.
 
