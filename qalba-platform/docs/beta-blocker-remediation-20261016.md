@@ -16,3 +16,6 @@ Cross-device LAN, distinct-network NAT, six other complete games, approved priva
 
 ## Change policy
 Draft only. Never merge main, publish environment, open a public listener, enable payment, change live data or create cloud resources without owner approval. Preserve previous evidence and record exact SHA for each new test run.
+
+## Approved participation direction
+The owner selected both shared-screen play and individual phone participation through one QR/code room. The authoritative server owns identity, allowed actions, round state, scores and credits. Peer-to-peer transport is optional and must not be a prerequisite for participation or a source of official results. Target capacity is 20 participants plus host, subject to measured acceptance; current category-board and nine-seat lab limits remain distinct until a new implementation is tested. Keep the PR #9 experiment isolated and default-off. No network exposure or deployment was approved by this product decision.
