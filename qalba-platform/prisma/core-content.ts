@@ -1,4 +1,6 @@
-export const boardSamples = [
+import { boardExpansionSamples } from "./board-expansion";
+
+export const boardStarterSamples = [
   ["general", "كم عدد أضلاع الشكل السداسي؟", "ستة", "EASY", 200],
   ["general", "ما اسم الأداة التي تقيس درجة حرارة الهواء؟", "الترمومتر", "MEDIUM", 400],
   ["general", "كم دقيقة في ساعتين ونصف؟", "150", "HARD", 600],
@@ -74,6 +76,9 @@ export const boardSamples = [
   ["cybersecurity", "ما اسم الهجوم الذي يتلاعب باستعلام قاعدة البيانات عبر مدخلات SQL غير الآمنة؟", "حقن SQL", "HARD", 600],
   ["cybersecurity", "ما اسم الناتج الثابت الطول عادةً لدالة تجزئة تشفيرية تطبق على البيانات؟", "قيمة التجزئة", "HARD", 600],
 ] as const;
+
+// Retain the original 72 IDs verbatim; append 504 distinct reviewed-candidate slots.
+export const boardSamples = [...boardStarterSamples, ...boardExpansionSamples] as const;
 
 
 export const socialWords: Record<string, string[]> = {
