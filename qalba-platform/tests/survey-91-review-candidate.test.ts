@@ -57,7 +57,7 @@ function balance(points: number[]): number[] {
 }
 const rewrittenSupplements = [
   "daily-02", "saudi-02", "family-01", "food-02", "travel-01", "travel-02",
-  "school-01", "tech-01", "games-02", "cars-01", "work-01", "light-01", "light-02"
+  "school-01", "tech-01", "games-02", "cars-01", "work-01", "occasions-01", "light-01", "light-02"
 ].map((key) => "survey-supplement-" + key);
 
 describe("Survey Show 91-round candidate (review-only, NOT imported or human approved)", () => {
@@ -116,14 +116,19 @@ describe("Survey Show 91-round candidate (review-only, NOT imported or human app
     }
   });
 
-  it("changes only the two explicitly selected original prompt/answer sets", () => {
-    const changed = new Set(["survey-seed-23", "survey-seed-49"]);
+  it("tracks four explicitly selected original review-only prompt/answer sets", () => {
+    const rewrittenPrompts = new Set(["survey-seed-23", "survey-seed-49", "survey-seed-65"]);
+    const answerOnly = new Set(["survey-seed-26"]);
+    const changed = new Set([...rewrittenPrompts, ...answerOnly]);
     for (let i = 0; i < 65; i++) {
       const item = candidate[i];
       if (!changed.has(item.id)) {
         expect(item.question).toBe(surveySamples[i].question);
         expect(answers(item).map((answer) => answer.answer))
           .toEqual(surveySamples[i].answers.map((answer) => answer.answer));
+      } else if (answerOnly.has(item.id)) {
+        expect(item.question).toBe(surveySamples[i].question);
+        expect(answers(item).map((answer) => answer.answer)).not.toEqual(surveySamples[i].answers.map((answer) => answer.answer));
       } else expect(item.question).not.toBe(surveySamples[i].question);
     }
     expect(byId("survey-seed-23").question).toContain("موظف استقبال الفندق");
@@ -132,9 +137,9 @@ describe("Survey Show 91-round candidate (review-only, NOT imported or human app
 
   it("keeps the historical 26-pack unchanged and the V2/combined supplemental candidates identical", () => {
     expect(historical.map((item) => item.id)).toEqual(supplement.map((item) => item.id));
-    expect(rewrittenSupplements).toHaveLength(13);
+    expect(rewrittenSupplements).toHaveLength(14);
     const changedPrompts = supplement.filter((item, index) => item.question !== historical[index].question).map((item) => item.id);
-    expect(changedPrompts).toHaveLength(12); // school-01 keeps its question but clarifies two answer slots
+    expect(changedPrompts).toHaveLength(13); // school-01 keeps its question but clarifies two answer slots
     const changed = supplement.filter((item, index) =>
       item.question !== historical[index].question ||
       JSON.stringify(answers(item)) !== JSON.stringify(answers(historical[index]))
@@ -164,6 +169,11 @@ describe("Survey Show 91-round candidate (review-only, NOT imported or human app
     const tech = answers(byId("survey-supplement-tech-01")).map((answer) => answer.answer);
     expect(tech).not.toContain("بطء");
     expect(tech).not.toContain("تطبيق لا يستجيب");
+    expect(answers(byId("survey-seed-26")).map(a => a.answer)).toContain("قلم حبر");
+    expect(answers(byId("survey-seed-26")).map(a => a.answer)).not.toContain("رصاص");
+    expect(byId("survey-seed-65").question).toContain("لعب الأطفال");
+    expect(byId("survey-supplement-occasions-01").question).toContain("كضيف");
+    expect(byId("survey-seed-58").question).toContain("إرسال دعوة");
   });
 
   it("checks real matcher normalization for selected safe candidate aliases; host remains final judge", () => {
