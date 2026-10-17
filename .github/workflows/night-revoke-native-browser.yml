@@ -64,8 +64,10 @@ jobs:
           npm ci --include=dev --no-audit --no-fund
           npm run db:generate
       - name: Full shared Night and Shillatak unit regression on integration candidate
+        # Unit tests have their own origin/feature mocks; the loopback app URL is
+        # only for later native HTTP and Chromium. Keep security checks enabled.
         run: |
-          npm run test -- --maxWorkers=1 --retry=0
+          env -u APP_URL -u BASE_URL -u ENABLE_NIGHT_OF_QUDDAM npm run test -- --maxWorkers=1 --retry=0
       - name: Create 0600 out-of-checkout DB fixture and verify brand-new native PostgreSQL17
         run: |
           set -euo pipefail
