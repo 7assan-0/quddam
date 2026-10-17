@@ -29,8 +29,7 @@ export type BoardCommand =
   | { type: "START" }
   | { type: "PAUSE_GAME" | "RESUME_GAME" | "END_GAME" }
   | { type: "EDIT_SCORE"; teamId: string; delta: number }
-  | { type: "OPEN"; cellKey: string; categoryId?: never; value?: never }
-  | { type: "OPEN"; categoryId: string; value: number; cellKey?: never }
+  | { type: "OPEN"; cellKey?: string; categoryId?: string; value?: number }
   | { type: "REVEAL" }
   | { type: "TIMER_START" | "TIMER_PAUSE" | "TIMER_RESET" }
   | { type: "CORRECT" | "WRONG" | "SKIP" | "UNDO" }
