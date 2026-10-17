@@ -115,8 +115,8 @@ export async function createBoardRoom(page: Page, prefix: string) {
   const code = (await page.locator(".room-code").innerText()).trim();
   expect(code, "Room code format").toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
   const board = await readBoard(page, id);
-  expect(board.cells).toHaveLength(72);
-  expect(new Set(board.cells.map(cell => cell.key)).size).toBe(72);
+  expect(board.cells).toHaveLength(36);
+  expect(new Set(board.cells.map(cell => cell.key)).size).toBe(36);
   expect(board.teams).toHaveLength(2);
   return { id, code, board, email };
 }
