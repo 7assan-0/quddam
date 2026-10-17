@@ -85,7 +85,7 @@ export function NightOfQuddamSetup() {
         </ol>
       </fieldset>
       <fieldset disabled={locked} style={{ border: 0, padding: 0, minWidth: 0 }}><legend><h2>الفريقان</h2></legend><div className="profile-grid">{teams.map((name, index) => <div className="field" key={index}><label htmlFor={`night-team-${index}`}>اسم الفريق {index === 0 ? "أ" : "ب"}</label><input className="input" id={`night-team-${index}`} data-testid={index === 0 ? "night-team-a" : "night-team-b"} value={name} required minLength={2} maxLength={60} autoComplete="off" onChange={event => setTeams(current => index === 0 ? [event.target.value, current[1]] : [current[0], event.target.value])}/></div>)}</div></fieldset>
-      <p className="form-note">تحتاج الليلة رصيد ${formatNumber(3)} ألعاب.</p>
+      <p className="form-note">تحتاج الليلة رصيد {formatNumber(3)} ألعاب.</p>
       <ul className="night-setup-rules"><li>إنشاء السهرة والتنقل بين مبارياتها لا يخصمان رصيدًا.</li><li>أكملوا كل جولات المباراة، ثم اضغطوا «أكمل المباراة».</li><li>النتائج تُقرأ تلقائيًا؛ الإنهاء المبكر وإعادة المباراة لا يُعتمدان.</li></ul>
       <details><summary>تفاصيل إضافية</summary><p>يمكن إنهاء السهرة غير المكتملة دون إعلان بطل.</p></details>
       {error && <p className="form-error" role="alert">{error}</p>}
