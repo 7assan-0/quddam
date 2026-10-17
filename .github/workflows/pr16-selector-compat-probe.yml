@@ -16,6 +16,8 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
       NODE_OPTIONS: --max-old-space-size=4096
+      # Prisma generate validates URL presence but never connects to this nonexistent DB.
+      DATABASE_URL: postgresql://probe:probe@127.0.0.1:65432/never_connect_ci
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
@@ -37,6 +39,7 @@ jobs:
         run: |
           cp package-lock.json /tmp/pr16-original-lock.json
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cmp /tmp/pr16-original-lock.json package-lock.json || { echo "Committed lockfile differs from npm's resolution"; exit 1; }
           node <<'NODE'
           const fs=require('node:fs'), crypto=require('node:crypto');
           const old=JSON.parse(fs.readFileSync('/tmp/pr16-original-lock.json','utf8')), after=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
