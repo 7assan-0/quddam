@@ -1,0 +1,131 @@
+name: Beta exact-head dependency verification (full audit fail-closed)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/beta-exact-head-security.yml'
+      - 'qalba-platform/package.json'
+      - 'qalba-platform/package-lock.json'
+permissions:
+  contents: read
+jobs:
+  full-security-audit:
+    if: ${{ github.event.pull_request.head.ref == 'security/beta-exact-head-proof-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind audit to exact proposed commit
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Clean lockfile install
+        run: npm ci --include=dev --no-fund --no-audit
+      - name: Production audit at moderate or higher
+        run: npm audit --omit=dev --audit-level=moderate
+      - name: Full audit at moderate or higher — blocking, no exception
+        run: npm audit --audit-level=moderate
+
+  selector-regression-only-not-security-signoff:
+    if: ${{ github.event.pull_request.head.ref == 'security/beta-exact-head-proof-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://probe:probe@127.0.0.1:65432/never_connect_ci
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind regression to exact proposed commit
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          echo "REGRESSION_SOURCE_SHA=$EXPECTED_SHA"
+      - name: Verify npm reproduces the committed lockfile
+        run: |
+          cp package-lock.json /tmp/beta-security-original-lock.json
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cmp /tmp/beta-security-original-lock.json package-lock.json
+      - name: Clean install and verify precise selector fix
+        run: |
+          npm ci --include=dev --no-fund --no-audit
+          npm ls postcss-selector-parser --all
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const pkg = require('./package.json');
+          const lock = require('./package-lock.json');
+          assert.equal(pkg.overrides['postcss-selector-parser'], '7.1.6');
+          assert.equal(lock.packages['node_modules/postcss-selector-parser'].version, '7.1.6');
+          assert.equal(require('./node_modules/postcss-selector-parser/package.json').version, '7.1.6');
+          assert.ok(lock.packages['node_modules/postcss-selector-parser'].integrity.startsWith('sha512-'));
+          const braces = lock.packages['node_modules/braces'];
+          if (braces) console.log('Unresolved braces in dev graph: version=' + braces.version + ', dev=' + braces.dev + '; NOT APPROVED');
+          console.log('selector parser pinned and installed at 7.1.6');
+          NODE
+      - name: Record advisory inventory without suppressing any finding
+        run: |
+          set +e
+          npm audit --json > beta-full-audit.json
+          audit_status=$?
+          set -e
+          AUDIT_STATUS="$audit_status" node <<'NODE'
+          const fs=require('node:fs');
+          const report=JSON.parse(fs.readFileSync('beta-full-audit.json', 'utf8'));
+          if (report.error || !report.metadata || !report.vulnerabilities) throw new Error('Audit could not be parsed or completed');
+          const findings=Object.entries(report.vulnerabilities);
+          const advisories=[...new Set(findings.flatMap(([,v])=>v.via.filter(x=>typeof x==='object').map(x=>x.url)))];
+          console.log('FULL_AUDIT_EXIT='+process.env.AUDIT_STATUS);
+          console.log('FINDING_PACKAGES='+JSON.stringify(findings.map(([name,v])=>({name, severity:v.severity}))));
+          console.log('ADVISORIES='+JSON.stringify(advisories));
+          if (advisories.some(url=>String(url).includes('GHSA-rj75-hqrm-r3gf'))) throw new Error('Selector parser advisory still present');
+          if (Number(process.env.AUDIT_STATUS)!==0) console.log('FULL AUDIT REMAINS BLOCKING IN SEPARATE full-security-audit JOB. THIS IS NOT A WAIVER.');
+          NODE
+      - name: Prisma generate and complete unit suite — no skips/retries
+        env:
+          APP_URL: http://localhost:3000
+        run: |
+          npm run db:generate
+          npm run test -- --maxWorkers=1 --retry=0
+      - name: Next route type generation, TypeScript and ESLint
+        env:
+          APP_URL: http://localhost:3000
+        run: |
+          node node_modules/next/dist/bin/next typegen
+          npm run typecheck
+          npm run lint
+      - name: Production build on synthetic URL (no deployment)
+        env:
+          APP_URL: https://quddam.test
+        run: npm run build
+      - name: Upload evidence, including failed-audit diagnostics
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: beta-security-proof-${{ github.run_id }}
+          path: |
+            qalba-platform/package.json
+            qalba-platform/package-lock.json
+            qalba-platform/beta-full-audit.json
+          if-no-files-found: warn
+          retention-days: 7
