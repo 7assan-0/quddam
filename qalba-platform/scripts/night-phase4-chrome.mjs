@@ -454,7 +454,10 @@ try {
   await captureNight(page, "05-champion");
   step = "end-an-unfinished-night-through-the-real-ui"; checkpoint();
   const balanceBeforeEnding = await wallet();
-  await page.getByRole("link", { name: "ابدأ سهرة جديدة", exact: true }).click();
+  // Completed-night redesign uses the concise CTA. Assert its destination and navigate through the real UI.
+  const newNightLink = page.getByTestId("night-champion").getByRole("link", { name: "سهرة جديدة", exact: true });
+  await expect(newNightLink).toHaveAttribute("href", "/night/new");
+  await newNightLink.click();
   await expect(page.getByTestId("night-setup")).toBeVisible();
   const extra = await clickMutation(page, page.getByTestId("night-create"), "/api/night", 201);
   await expect(page.getByTestId("night-dashboard")).toHaveAttribute("data-phase", "preparing");
