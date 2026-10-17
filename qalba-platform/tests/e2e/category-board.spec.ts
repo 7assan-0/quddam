@@ -77,6 +77,10 @@ test("host configures and plays a round, then refreshes on desktop and mobile", 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "إنهاء المباراة" }).click();
   await expect(display.getByRole("heading", { name: "الفائز: فريق البرق" })).toBeVisible();
+  // The intentional completed-match redesign collapses post-game score corrections.
+  await expect(page.locator(".score-editor-details")).toBeVisible();
+  await page.locator(".score-editor-details summary").click();
+  await expect(page.locator(".score-editor-details")).toHaveAttribute("open", "");
   await page.getByRole("button", { name: "أضف نقاطًا إلى فريق الموج" }).click();
   await display.reload();
   await expect(display.locator(".display-team").filter({ hasText: "فريق الموج" }).locator("strong")).toHaveText("100");
