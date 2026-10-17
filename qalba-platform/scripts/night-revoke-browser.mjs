@@ -37,7 +37,7 @@ mkdirSync(evidence, { mode: 0o700 });
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const pool = new Pool({ connectionString: cfg.DATABASE_URL, max: 2 });
 const checks = [];
-let browser, step = "initialize", pass = false;
+let browser, step = "initialize", pass = false, failureClass = null;
 function check(name, condition) { assert.ok(condition, name); checks.push({ name, passed: true }); }
 function apiPath(path) { return new URL(path, origin).href; }
 async function inBrowser(page, path) {
@@ -124,7 +124,7 @@ try {
   const freshPage = await fresh.newPage();
   const freshDoc = await freshPage.goto(apiPath(invitePath));
   assert.equal(freshDoc.status(), 200); // shell is intentionally public, API must deny.
-  await expect(freshPage.getByRole("alert")).toContainText("تعذر فتح الدعوة أو انتهت صلاحيتها");
+  await expect(freshPage.getByTestId("night-public-invitation").locator(".form-error[role=alert]")).toContainText("تعذر فتح الدعوة أو انتهت صلاحيتها");
   await expect(freshPage.getByTestId("night-rsvp-submit")).toHaveCount(0);
   const freshRead = await fresh.request.get(apiPath(guestApi));
   check("new-independent-browser-receives-404-not-invitation", freshRead.status() === 404);
@@ -140,7 +140,7 @@ try {
 
   step = "previously-accepted-guest-also-blocked";
   await firstPage.reload();
-  await expect(firstPage.getByRole("alert")).toContainText("تعذر فتح الدعوة أو انتهت صلاحيتها");
+  await expect(firstPage.getByTestId("night-public-invitation").locator(".form-error[role=alert]")).toContainText("تعذر فتح الدعوة أو انتهت صلاحيتها");
   await expect(firstPage.getByTestId("night-rsvp-submit")).toHaveCount(0);
   const oldPost = await first.request.post(apiPath(guestApi), {
     headers: { Origin: origin.origin },
@@ -161,12 +161,17 @@ try {
   check("native-DB-persists-single-prior-attendee-zero-credit-debits-and-revoked-state", true);
   await owner.close(); await first.close(); await fresh.close();
   pass = true;
+} catch (error) {
+  // Playwright stack traces can contain private invite paths, cookies and DOM.
+  // Retain only a bounded failure class and checkpoint in the private receipt.
+  failureClass = error instanceof Error && /^[A-Za-z][A-Za-z0-9]*$/.test(error.name) ? error.name : "UnknownError";
+  process.exitCode = 1;
 } finally {
   await browser?.close();
   await pool.end();
-  const receipt = { sourceHead: head, status: pass ? "PASSED" : "FAILED", failureStep: pass ? null : step,
+  const receipt = { sourceHead: head, status: pass ? "PASSED" : "FAILED", failureStep: pass ? null : step, failureClass,
     syntheticOnly: true, nativePostgres17: true, actualChromiumContexts: 3, actualHttp: true,
     requestMocks: false, checks, privateCredentialsInviteCodesAndAnswersWithheld: true };
   writeFileSync(join(evidence, "receipt.json"), JSON.stringify(receipt, null, 2), { mode: 0o600, flag: "wx" });
-  console.log(JSON.stringify({ status: receipt.status, passed: checks.length, failed: pass ? 0 : 1, failureStep: receipt.failureStep }));
+  console.log(JSON.stringify({ status: receipt.status, passed: checks.length, failed: pass ? 0 : 1, failureStep: receipt.failureStep, failureClass }));
 }
