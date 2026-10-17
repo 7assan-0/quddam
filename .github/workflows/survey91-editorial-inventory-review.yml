@@ -1,0 +1,56 @@
+name: Survey91 assistant editorial inventory (review only)
+on:
+  pull_request:
+    branches:
+      - content/survey-91-targeted-clarity-20261017
+    types: [opened, synchronize, reopened]
+    paths:
+      - "qalba-platform/content-review/2026-10-16/**"
+      - "qalba-platform/content-review/2026-10-17/**"
+      - "qalba-platform/tests/survey-91-review-candidate.test.ts"
+      - ".github/workflows/survey91-editorial-inventory-review.yml"
+permissions:
+  contents: read
+concurrency:
+  group: survey91-editorial-inventory-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-quality-only:
+    if: ${{ github.event.pull_request.head.ref == 'audit/survey91-merge-readiness-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect_generate_only
+      EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout literal reviewed source without credentials
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Assert exact candidate SHA
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Set up Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Clean install (not a security-audit waiver)
+        run: npm ci --no-fund --no-audit
+      - name: Generate Prisma without DB connection
+        run: npm run db:generate
+      - name: Exact 91/117 review-source and status tests
+        run: npx vitest run tests/survey-91-review-candidate.test.ts tests/remaining-games-review-staged.test.ts --maxWorkers=1 --retry=0
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Explicit scope receipt
+        run: |
+          echo "SURVEY_91_117_ASSISTANT_REVIEW_STRUCTURE_ONLY_SHA=$EXPECTED_SHA"
+          echo "ORIGINAL_65_BROWSER_IS_NOT_RERUN; CANDIDATE_91_NOT_IMPORTED; HUMAN_EDITORIAL_AND_BLIND_PLAYER_TEST_NOT_RUN"
