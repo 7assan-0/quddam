@@ -100,7 +100,7 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
   });
   it("synchronizes the assistant screening ledger while withholding all independent editorial and playtest approvals", () => {
     const csv = readFileSync(new URL("../../../content-review/2026-10-17/Board_576_Item_Review.csv", import.meta.url), "utf8");
-    const lines = csv.trimEnd().split(/\\r?\\n/);
+    const lines = csv.trimEnd().split(/\r?\n/);
     const parse = (line: string) => [...line.matchAll(/"((?:[^"]|"")*)"(?:,|$)/g)].map(m => m[1].replace(/""/g, '"'));
     const keys = parse(lines[0]), records = lines.slice(1).map(line => Object.fromEntries(parse(line).map((v, i) => [keys[i], v])));
     expect(records).toHaveLength(576);
