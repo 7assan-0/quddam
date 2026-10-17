@@ -149,13 +149,13 @@ try {
   check("existing-cookie-replay-cannot-bypass-revocation", oldPost.status() === 404);
   const summary = await inBrowser(host, `/api/night/${nightId}/invitation`);
   assert.equal(summary.status, 200);
-  assert.equal(summary.value.invitation.status, "revoked");
+  assert.equal(summary.value.invitation.status, "closed");
   assert.equal(summary.value.invitation.coming, 1);
   assert.equal(summary.value.invitation.votes.find(g => g.game === "top-list").count, 1);
   assert.equal(summary.value.invitation.linkRecoverable, false);
   check("organizer-aggregate-retains-prior-attendee-and-vote-without-secret", !JSON.stringify(summary.value).includes(invitePath.split("/").at(-1)));
   const stored = await pool.query('SELECT i.status, count(g.id)::int AS attendees FROM "NightInvitation" i LEFT JOIN "NightInviteGuest" g ON g."inviteId"=i.id WHERE i."nightId"=$1 GROUP BY i.status', [nightId]);
-  assert.deepEqual(stored.rows.map(x => ({ status: x.status, attendees: x.attendees })), [{ status: "revoked", attendees: 1 }]);
+  assert.deepEqual(stored.rows.map(x => ({ status: x.status, attendees: x.attendees })), [{ status: "closed", attendees: 1 }]);
   assert.equal((await pool.query('SELECT balance FROM "CreditWallet" WHERE "userId"=$1', [fixture.ownerId])).rows[0].balance, balance);
   assert.equal((await pool.query('SELECT count(*)::int AS n FROM "GameCredit" WHERE "userId"=$1 AND delta=-1', [fixture.ownerId])).rows[0].n, beforeDebits);
   check("native-DB-persists-single-prior-attendee-zero-credit-debits-and-revoked-state", true);
