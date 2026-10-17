@@ -213,4 +213,48 @@ describe("Survey Show 91-round candidate (review-only, NOT imported or human app
     const setup = readFileSync(new URL("survey-setup.tsx", root), "utf8");
     for (const file of [view, host, setup]) expect(file).toContain("ليست نتائج استطلاع حقيقي");
   });
+  it("synchronizes the initial 91-row / 117-alias reviewer inventories without fabricated decisions", () => {
+    const review17 = new URL("../content-review/2026-10-17/", import.meta.url);
+    const load = (name: string) => parseCsv(readFileSync(new URL(name, review17), "utf8"));
+    const triage = load("Survey_91_Assistant_Triage_No_Human_Signoff.csv");
+    const aliases = load("Survey_117_Alias_Semantic_Review_Pending.csv");
+    expect(triage).toHaveLength(91);
+    expect(aliases).toHaveLength(117);
+    expect(triage.map(row => row.id)).toEqual(candidate.map(row => row.id));
+    expect(triage.filter(row => row.assistant_risk_priority === "P1")).toHaveLength(12);
+    expect(triage.filter(row => row.assistant_risk_priority === "P2")).toHaveLength(13);
+    expect(aliases.filter(row => row.assistant_risk_priority === "P1")).toHaveLength(6);
+    expect(aliases.filter(row => row.assistant_risk_priority === "P2")).toHaveLength(4);
+    const expected = new Set<string>();
+    for (let i = 0; i < candidate.length; i++) {
+      const item = candidate[i], record = triage[i], a = answers(item);
+      expect(record.candidate_question).toBe(item.question);
+      expect(record.six_primary_answers).toBe(a.map(z => z.answer).join(" | "));
+      expect(record.six_authored_points).toBe(a.map(z => z.points).join(" | "));
+      expect(Number(record.alias_count)).toBe(a.reduce((n, z) => n + z.alternativeAnswers.length, 0));
+      expect(record.assistant_screening).toBe("ASSISTANT_INITIAL_TEXT_SCREEN_ONLY");
+      expect(record.editorial_status).toBe("PENDING_INDEPENDENT_ITEM_REVIEW");
+      expect(record.rank_and_difficulty_status).toBe("PENDING_BLIND_RANK_AND_DIFFICULTY_CHECK");
+      expect(record.playtest_status).toBe("NOT_RUN");
+      expect(record.reviewer).toBe("");
+      expect(record.review_date).toBe("");
+      for (const z of a) for (const alias of z.alternativeAnswers)
+        expected.add([item.id, z.position, z.answer, alias].join("|"));
+    }
+    const actual = aliases.map(z => [z.id, z.slot_position, z.primary_answer, z.candidate_alias].join("|"));
+    expect(new Set(actual).size).toBe(117);
+    expect(new Set(actual)).toEqual(expected);
+    for (const alias of aliases) {
+      expect(alias.alias_review_status).toBe("PENDING_HUMAN_ONE_TO_ONE_SEMANTIC_REVIEW");
+      expect(alias.spoken_playtest_status).toBe("NOT_RUN");
+      expect(alias.reviewer).toBe("");
+      expect(alias.review_date).toBe("");
+    }
+    expect(byId("survey-supplement-tech-01").question).toBe("سبب يخليك تعيد تشغيل جوالك؟");
+    expect(supplement.find(item => item.id === "survey-supplement-tech-01")?.question).toBe("سبب يخليك تعيد تشغيل جوالك؟");
+    expect(ledger.find(item => item.id === "survey-supplement-tech-01")?.candidate_question).toBe("سبب يخليك تعيد تشغيل جوالك؟");
+    // A planned software update is a possible reason to reboot, not a device malfunction.
+    expect(answers(byId("survey-supplement-tech-01")).map(z => z.answer)).toContain("تحديث يتطلب إعادة التشغيل");
+  });
+
 });
