@@ -79,7 +79,7 @@ describe("Night invitation service validation and replay boundaries", () => {
   it("revokes under Night→Invitation locks exactly once and retains existing responses", async () => {
     let status = "open";
     const locks: string[] = [];
-    const update = vi.fn(async () => { status = "revoked"; });
+    const update = vi.fn(async () => { status = "closed"; });
     const guests = [{ name: "ضيف سابق", rsvp: "YES", gameVote: "top-list" }];
     serviceDb.transaction.mockImplementation(async callback => callback({
       $queryRawUnsafe: vi.fn(async (sql: string) => { locks.push(sql.includes('"NightSession"') ? "NightSession" : "NightInvitation"); }),
@@ -92,7 +92,7 @@ describe("Night invitation service validation and replay boundaries", () => {
     }));
     expect(await revokeInvitation("owner", "night")).toEqual({ revoked: true });
     expect(locks).toEqual(["NightSession", "NightInvitation"]);
-    expect(update).toHaveBeenCalledWith({ where: { id: "invitation" }, data: { status: "revoked" } });
+    expect(update).toHaveBeenCalledWith({ where: { id: "invitation" }, data: { status: "closed" } });
     expect(guests).toHaveLength(1);
     expect(await revokeInvitation("owner", "night")).toEqual({ revoked: true });
     expect(update).toHaveBeenCalledTimes(1);
@@ -109,7 +109,7 @@ describe("Night invitation service validation and replay boundaries", () => {
     expect(update).not.toHaveBeenCalled();
   });
   it("does not reveal revoked bearer links through public invitation reads", async () => {
-    serviceDb.findInvitation.mockResolvedValue({ id: "invitation", status: "revoked" });
+    serviceDb.findInvitation.mockResolvedValue({ id: "invitation", status: "closed" });
     await expect(getPublicInvitation("a".repeat(64))).rejects.toMatchObject({ status: 404 });
   });
   it("rechecks the minimum schedule after the Night lock has been acquired", async () => {
