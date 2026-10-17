@@ -54,7 +54,7 @@ export async function createInvitation(ownerId: string, nightId: string,
     timezone: result.timezone, expiresAt: result.expiresAt.toISOString() };
 }
 /**
- * Owner-only irreversible revocation. Uses the same Night -> Invitation lock order
+ * Owner-only irreversible revocation using the existing DB-approved "closed" status.\n * Uses the same Night -> Invitation lock order
  * as RSVP and START, so a concurrent RSVP is either committed before revocation
  * or rejected after it. Preserve historical guest responses and vote aggregates.
  * Never store/recover the raw bearer or create a replacement implicitly.
@@ -72,9 +72,9 @@ export async function revokeInvitation(ownerId: string, nightId: string) {
     const current = await tx.nightInvitation.findUnique({ where: { id: invite.id }, select: { status: true } });
     if (!current) throw new InviteInputError("الدعوة غير موجودة", 404);
     if (current.status === "open")
-      await tx.nightInvitation.update({ where: { id: invite.id }, data: { status: "revoked" } });
+      await tx.nightInvitation.update({ where: { id: invite.id }, data: { status: "closed" } });
     // Idempotent retry after a lost successful DELETE response.
-    return { revoked: current.status === "open" || current.status === "revoked" };
+    return { revoked: current.status === "open" || current.status === "closed" };
   }, { timeout: 12_000 });
 }
 export async function ownerInvitation(ownerId: string, nightId: string) {
@@ -95,7 +95,7 @@ export async function ownerInvitation(ownerId: string, nightId: string) {
 export async function getPublicInvitation(code: string, capability?: string, now = new Date()) {
   enabled();
   const invite = await db().nightInvitation.findUnique({ where: { tokenHash: codeHash(code) }, include });
-  if (!invite || invite.status === "revoked") throw new InviteInputError("الدعوة غير موجودة", 404);
+  if (!invite || invite.status === "closed") throw new InviteInputError("الدعوة غير موجودة", 404);
   return { id: invite.id, view: project(invite, now, capability),
     cookieName: attendeeCookieName(invite.id), expiresAt: invite.expiresAt };
 }
