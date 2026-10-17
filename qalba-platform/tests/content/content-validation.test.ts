@@ -31,12 +31,13 @@ describe('M14 authored content boundary',()=>{
   const categories=[...new Set(rows.map(row=>row.categoryId))];
   const complete=categories.filter(categoryId=>[200,400,600].every(pointValue=>rows.some(row=>row.categoryId===categoryId&&row.pointValue===pointValue)));
   expect(complete.length).toBeGreaterThanOrEqual(6);
-  // 72 distinct authored questions form a four-per-tier pool for varied 36-cell matches; the separate
-  // editorial 96-per-category target remains a warning until authored.
-  expect(rows.length).toBe(72);
-  for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBe(4);
-  expect(auditBank('category-board',rows)).toMatchObject({duplicatesFound:0,capacity:'WARN',errors:[]});
-  expect(auditBank('category-board',rows).warnings.some(issue=>issue.code==='BOARD_96_BANK_NOT_YET_READY')).toBe(true);
+  // The original 72 IDs remain stable; 504 more authored questions supply
+  // 32 distinct entries per tier in all six categories (576 overall).
+  expect(rows.length).toBe(576);
+  expect(complete).toHaveLength(6);
+  for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBe(32);
+  expect(auditBank('category-board',rows)).toMatchObject({duplicatesFound:0,capacity:'PASS',errors:[]});
+  expect(auditBank('category-board',rows).warnings.some(issue=>issue.code==='BOARD_96_BANK_NOT_YET_READY')).toBe(false);
  });
  it('blocking database errors fail the command even with clean definitions',()=>{expect(contentValidationExitCode({blockingErrors:0},{blockingErrors:1})).toBe(1);expect(contentValidationExitCode({blockingErrors:1},{blockingErrors:0})).toBe(1);});
  it('warnings remain successful while blocking errors fail',()=>{expect(contentValidationExitCode({blockingErrors:0},null)).toBe(0);});
