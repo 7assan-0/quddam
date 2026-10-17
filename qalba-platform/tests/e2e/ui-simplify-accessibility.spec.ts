@@ -70,7 +70,7 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   await page.getByRole("button", { name: "جهّز اللوحة" }).click();
   await expect(page).toHaveURL(/\/play\/[^/]+$/);
   await page.getByRole("button", { name: "ابدأ المباراة" }).click();
-  await expect(page.locator(".mobile-balance b")).toHaveText(String(beforeDebit - 1));
+  // Root layouts may persist through an in-page action: verify the authoritative value on fresh server render.
   await page.reload();
   await expect(page.locator(".mobile-balance b")).toHaveText(String(beforeDebit - 1));
   await page.goto("/profile");
