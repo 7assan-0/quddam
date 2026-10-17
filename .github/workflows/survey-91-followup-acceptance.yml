@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   candidate-structure:
-    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-focused-browser-20261017' }}
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'content/survey-91-targeted-clarity-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -50,7 +50,7 @@ jobs:
           NODE
 
   original-seed-browser:
-    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-focused-browser-20261017' }}
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'content/survey-91-targeted-clarity-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     defaults:
