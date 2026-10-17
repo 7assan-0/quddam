@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   beta-integration:
-    if: ${{ github.event.pull_request.head.ref == 'security/beta-unified-selector-20261017' }}
+    if: ${{ github.event.pull_request.head.ref == 'test/board36-integrated-acceptance-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 95
     concurrency:
@@ -194,7 +194,7 @@ jobs:
           retention-days: 7
 
   board-36:
-    if: ${{ github.event.pull_request.head.ref == 'security/beta-unified-selector-20261017' }}
+    if: ${{ github.event.pull_request.head.ref == 'test/board36-integrated-acceptance-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 70
     defaults:
