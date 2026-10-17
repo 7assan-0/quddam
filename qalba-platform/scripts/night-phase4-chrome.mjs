@@ -467,8 +467,8 @@ try {
   await expect(page.locator(".night-tv-note")).toBeHidden();
   await page.getByTestId("night-champion").screenshot({ path: join(evidence, "champion-owner-1920.png") });
   await page.getByTestId("night-tv-link").click();
-  check("explicit-tv-url", new URL(page.url()).searchParams.get("tv") === "1");
   await expect(page.getByTestId("night-dashboard")).toHaveAttribute("data-tv-mode", "true");
+  check("explicit-tv-url", new URL(page.url()).searchParams.get("tv") === "1");
   await expect(page.locator(".header")).toBeHidden();
   await expect(page.locator(".night-champion-actions")).toBeHidden();
   await expect(page.locator(".night-tv-note")).toBeVisible();
