@@ -99,12 +99,15 @@ jobs:
             head -n 2 "$NIGHT_MVP_OUTPUT/source-before.stderr.private.log"
             exit 1
           fi
-      - name: Full regression, TypeScript, lint and single production build
+      - name: Full regression, TypeScript, lint, production build and strict Next-generated-file integrity
+        env:
+          BETA_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           npm run test -- --maxWorkers=1 --retry=0
           npm run typecheck
           npm run lint
           npm run build
+          node scripts/beta-next-env-integrity.mjs
       - name: Apply original migrations and seed only guarded synthetic Beta + original Room bank
         run: |
           npm run db:migrate
