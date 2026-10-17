@@ -49,7 +49,7 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   await page.getByLabel("البريد الإلكتروني").fill("admin@example.test");
   await page.getByLabel("كلمة المرور").fill("e2e-admin-password-123");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
-  await expect(page).toHaveURL(/\\/games$/);
+  await expect(page).toHaveURL(/\/games$/);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/profile");
   const beforeDebit = Number((await page.locator(".credit-panel .stat").innerText()).trim());
