@@ -44,6 +44,12 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
     expect(boardSamples.every(row => row[1].trim().length >= 8 && row[2].trim().length > 0)).toBe(true);
     expect(boardSamples.every(row => row[1].length <= 2000 && row[2].length <= 1000)).toBe(true);
   });
+  it("rejects new prompts that reveal their own literal answer in the wording", () => {
+    const exposed = boardExpansionSamples
+      .filter(([, question, answer]) => canonical(answer).length >= 5 && canonical(question).includes(canonical(answer)))
+      .map(([category, question]) => category + ": " + question);
+    expect(exposed).toEqual([]);
+  });
   it("guards near-repeated wording that tests the same answer in the same category", () => {
     const found: string[] = [];
     for (let i = 0; i < boardSamples.length; i++) for (let j = i + 1; j < boardSamples.length; j++) {
