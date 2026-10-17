@@ -164,7 +164,10 @@ try {
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
   await mutation(page, page.getByRole("button", { name: "تسجيل الدخول", exact: true }), "/api/auth/login");
   await expect(page).toHaveURL(/\/games$/); await page.reload();
-  await expect(page.getByRole("link", { name: /رصيدك: 3 ألعاب/ })).toBeVisible();
+  await expect(page.locator(".mobile-balance")).toHaveAttribute("href", "/profile");
+  // Keep the 8-guest host journey on the desktop layout after independently exercising phone auth.
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.locator(".library-balance").getByRole("link", { name: /رصيدك: 3 ألعاب/ })).toBeVisible();
   check("Logout, real login and refresh preserve the correct account and wallet");
   checkpoint("create-legacy-board-room");
   await page.getByRole("link", { name: "ابدأ لوحة التحدي", exact: true }).click();
