@@ -137,3 +137,82 @@ jobs:
         run: |
           npm ci --include=dev --no-fund --no-audit
           npm audit --audit-level=moderate
+
+  built-artifact-closure:
+    if: ${{ github.event.pull_request.head.ref == 'security/braces-path-containment-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect
+      APP_URL: https://quddam.test
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind artifact proof to exact PR source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Build from complete development install using synthetic settings
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+          npm run build
+      - name: Reject vulnerable braces in Next server output trace
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),path=require('node:path');
+          const results=[];
+          const stack=['.next'];
+          while(stack.length) {
+            const dir=stack.pop();
+            for(const entry of fs.readdirSync(dir,{withFileTypes:true})) {
+              const p=path.join(dir,entry.name);
+              if(entry.isDirectory()) stack.push(p);
+              else if(entry.isFile()&&entry.name.endsWith('.nft.json')) {
+                const trace=JSON.parse(fs.readFileSync(p,'utf8'));
+                const refs=trace.files??[];
+                const bad=refs.filter(f=>/(^|[\\/])node_modules[\\/]braces([\\/]|$)/.test(String(f).replace(/\\/g,'/')));
+                if(bad.length) throw new Error('braces included in runtime trace '+p);
+                results.push({file:p,fileCount:refs.length});
+              }
+            }
+          }
+          if(!results.length) throw new Error('No Next.js server trace manifests to prove artifact absence');
+          fs.writeFileSync('braces-built-artifact-closure.json', JSON.stringify({traceCount:results.length, runtimeBracesTraces:0, traces:results},null,2)+'\n');
+          console.log('PASS: '+results.length+' Next server trace manifests contain no braces dependency');
+          NODE
+      - name: Prune built workspace to production-only packages, then check physical closure
+        run: |
+          npm prune --omit=dev --no-audit --no-fund
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          assert.equal(require('./node_modules/next/package.json').version,'16.4.2');
+          assert.equal(require('./node_modules/@prisma/client/package.json').version,'7.10.0');
+          NODE
+          if find node_modules -type f -path '*/braces/package.json' -print -quit | grep -q .; then
+            echo 'FAIL: braces physically remains in built-and-pruned production runtime'
+            exit 1
+          fi
+          echo 'PASS: no braces package in built-and-pruned production runtime'
+          npm audit --omit=dev --audit-level=moderate
+          git diff --exit-code -- package.json package-lock.json
+      - name: Preserve non-sensitive trace inventory
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: braces-built-artifact-closure-${{ github.run_id }}
+          path: qalba-platform/braces-built-artifact-closure.json
+          if-no-files-found: warn
+          retention-days: 7
