@@ -41,6 +41,10 @@ async function main() {
   const night = read("integrated-night-chrome", "journey.private.json");
   const group = read("integrated-shilla-chrome", "journey.private.json");
   const board = read("integrated-room-chrome", "journey.private.json");
+  const roomProof = read("integrated-room-chrome");
+  assert.ok(roomProof.checks.some((item: { name: string; passed: boolean }) =>
+    item.passed && item.name === "All thirty-six cells genuinely resolved through exact-key UI, final result reaches all eight guests"),
+    "Actual 36-cell Chrome evidence missing from this exact source");
   assert.equal(night.ownerId, fixture.ownerId);
   assert.equal(group.ownerId, fixture.ownerId);
   assert.equal(group.nightId, night.nightId);
@@ -78,10 +82,10 @@ async function main() {
   const summary = { schemaVersion: 1, sourceHead: head, status: "PASSED",
     nativePostgres17: true, isolatedSyntheticOnly: true, requestMocks: false,
     scopes: recorded, linkedNightToGroup: true, canonicalGameReceipts: 3,
-    distinctRoomSession: true, roomParticipants: 8, originalBoardCells: 18,
+    distinctRoomSession: true, roomParticipants: 8, boardCells: 36,
     noCrossAuthorityOrExtraDebits: true,
     limitations: ["Current HTTP/SSE Room only; PR9 WebRTC NOT MERGED/NOT RUN",
-      "36-cell Challenge Board PR20 is independent and NOT part of this codebase",
+      "Current 36-cell Board is included and must pass its separate exact-head browser and native acceptance; 96 per category editorial pool remains incomplete",
       "Loopback only; multi-device LAN and NAT NOT RUN",
       "PR16 security blocker, public HTTPS and production launch NOT APPROVED"] };
   writeFileSync(join(output, "integrated-summary.json"), JSON.stringify(summary, null, 2)+"\n", { mode: 0o600, flag: "wx" });

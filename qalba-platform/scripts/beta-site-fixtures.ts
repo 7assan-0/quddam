@@ -1,4 +1,4 @@
-/** Append-only, wholly synthetic legacy-board bank and canonical test grant.
+/** Append-only, wholly synthetic 36-cell board bank and canonical test grant.
  * Requires the inherited external marker/loopback database guard. Never a seed
  * entrypoint or an application dependency; existing content/results are untouched.
  */
@@ -26,14 +26,14 @@ async function main() {
       const rows = [];
       for (let index = 1; index <= 6; index++) rows.push(await tx.category.create({ data: {
         slug: `beta-site-${fixture.run}-${index}`, title: `اختبار محلي ${index}`, sortOrder: 100 + index,
-        questions: { create: [200, 400, 600].map(pointValue => ({ gameTypeId: game.id,
-          question: `سؤال اصطناعي للفئة ${index} بقيمة ${pointValue}؟`, answer: "إجابة اصطناعية",
-          alternativeAnswers: [], difficulty: "EASY", pointValue, type: "TEXT", status: "PUBLISHED" })) },
+        questions: { create: [200, 400, 600].flatMap(pointValue => [1, 2].map(variant => ({ gameTypeId: game.id,
+          question: `سؤال اصطناعي للفئة ${index} بقيمة ${pointValue} نسخة ${variant}؟`, answer: "إجابة اصطناعية",
+          alternativeAnswers: [], difficulty: "EASY", pointValue, type: "TEXT", status: "PUBLISHED" }))) },
       } }));
       return rows.map(row => row.id);
     });
     writeFileSync(receipt, JSON.stringify({ run: fixture.run, categoryIds: ids }), { mode: 0o600, flag: "wx" });
-    console.log("Created six new synthetic categories and eighteen questions; no existing content changed.");
+    console.log("Created six new synthetic categories and thirty-six eligible questions; no existing content changed.");
     return;
   }
   const input = process.env.BETA_SITE_ACCOUNT_FILE;

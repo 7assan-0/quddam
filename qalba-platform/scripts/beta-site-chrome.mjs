@@ -43,7 +43,7 @@ const result = { schemaVersion: 1,
   sourceHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   sourceDirty: !!execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], { encoding: "utf8" }).trim(),
   browser: browserVersion, headless: true, realHttp: true, syntheticOnly: true, nativePostgres17: true,
-  mocks: false, siteScope: "existing category-board/Room; PR9 WebRTC not included",
+  mocks: false, siteScope: "36-cell category-board/Room; PR9 WebRTC not included",
   checks: [], pageAudit: [], screenshots: [], errors: { pageExceptions: 0, consoleErrors: 0, consoleErrorCategories: {}, failedRequests: 0, failedRequestCategories: {}, externalRequests: 0 },
   startedAt: new Date().toISOString(), limitations: ["Single-machine loopback only; LAN/NAT NOT RUN", "Other game setup pages smoke-tested; only category-board played by this harness"],
 };
@@ -216,7 +216,7 @@ try {
   check("Canonical START consumes exactly one credit", await wallet() === 2);
   await page.reload(); await expect(page.locator(".room-code")).toHaveText(code);
   check("Reloading started board leaves wallet unchanged", await wallet() === 2);
-  const firstCell = page.getByRole("button", { name: "اختبار محلي 1 200", exact: true });
+  const firstCell = page.getByRole("button", { name: "اختبار محلي 1 200", exact: true }).first(); // Board36 has two distinct 200-point IDs.
   await mutation(page, firstCell, `/api/games/category-board/${sessionId}/commands`);
   for (const item of guests) await expect(item.page.locator(".room-question h2")).toBeVisible();
   check("The original open game round reaches all eight real guests");
@@ -236,7 +236,7 @@ try {
   check("Host legitimately judges response and score is saved");
   await guests[7].page.close();
   checkpoint("complete-all-board-cells");
-  for (let i = 0; i < 17; i++) {
+  for (let i = 0; i < 35; i++) {
     await mutation(page, page.locator(".board-cell:not([disabled])").first(), `/api/games/category-board/${sessionId}/commands`);
     await mutation(page, page.getByRole("button", { name: "تخطي", exact: true }), `/api/games/category-board/${sessionId}/commands`);
     if (i === 1) {
@@ -259,7 +259,7 @@ try {
     await expect(item.page.locator(".team-score b")).toHaveText(["200", "0"]);
     await expect(item.page.getByRole("link", { name: "ارجع إلى تحكم المضيف", exact: true })).toHaveCount(0);
   }
-  check("All eighteen cells genuinely resolved through unchanged UI, final result reaches all eight guests");
+  check("All thirty-six cells genuinely resolved through exact-key UI, final result reaches all eight guests");
   check("All eight guests retain identical final 200–0 scores and no management controls");
   await audit(page, "mobile-board-results", true);
   check("Finishing board and room adds no extra debit", await wallet() === 2);

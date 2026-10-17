@@ -259,6 +259,10 @@ try {
   step = "library-night-entry"; checkpoint();
   await page.goto(new URL("/games", origin).href);
   step = "library-ten-official-games"; checkpoint();
+  await expect(page.locator(".game-card")).toHaveCount(10);
+  await expect(page.getByRole("article")).toHaveCount(3); // Seven cards are initially collapsed by the intentional simplified UI.
+  await page.locator(".more-games summary").click();
+  await expect(page.locator(".more-games")).toHaveAttribute("open", "");
   await expect(page.getByRole("article")).toHaveCount(10);
   step = "night-home-navigation"; checkpoint();
   await page.locator(".library-balance").getByRole("link", { name: "ليلة قدّام", exact: true }).click();
