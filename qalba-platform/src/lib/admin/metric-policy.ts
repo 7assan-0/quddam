@@ -4,7 +4,7 @@ export function saudiDayStart(now = new Date()) {
   return new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) - 3 * 3600_000);
 }
 export const analyticsSince = (now = new Date()) => new Date(now.getTime() - 30 * 86400_000);
-export const saudiDate = (value: Date) => new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeZone: "Asia/Riyadh" }).format(value);
+export const saudiDate = (value: Date) => new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium", timeZone: "Asia/Riyadh" }).format(value);
 
 /** One card per durable session, describing its LATEST match, never a sum of ScoreEvent history. */
 export function sessionHistorySummary(game: { gameType: { slug: string }; state: unknown; currentRoundNumber: number; teams: { id: string; name: string; score: number; position: number }[]; bluffParticipants?: { name: string; score: number; position: number }[] }) {
