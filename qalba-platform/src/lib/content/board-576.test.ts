@@ -57,11 +57,21 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
     const csv = readFileSync(new URL("../../../content-review/2026-10-17/Board_576_Item_Review.csv", import.meta.url), "utf8");
     const lines = csv.trimEnd().split(/\r?\n/);
     expect(lines).toHaveLength(577); // header + one stable-ID row per authored question
+    const parseRow = (line: string) => [...line.matchAll(/"((?:[^"]|"")*)"(?:,|$)/g)]
+      .map(match => match[1].replace(/""/g, '"'));
+    const header = parseRow(lines[0]);
+    expect(header).toContain("review_reason");
+    expect(header).toContain("verification_reference");
     for (let i = 0; i < 576; i++) {
-      expect(lines[i + 1].startsWith(`"seed-category-${i + 1}",`)).toBe(true);
-      expect(lines[i + 1]).toContain('"PENDING_INDEPENDENT_ITEM_REVIEW"');
-      expect(lines[i + 1]).toContain('"PENDING_INDEPENDENT_FACTCHECK"');
-      expect(lines[i + 1]).toContain('"NOT_RUN"');
+      const cells = parseRow(lines[i + 1]), authored = boardSamples[i];
+      expect(cells).toHaveLength(header.length);
+      expect(cells[0]).toBe(`seed-category-${i + 1}`);
+      expect(cells.slice(1, 6)).toEqual([authored[0], String(authored[4]), authored[3], authored[1], authored[2]]);
+      expect(cells[7]).toBe("PENDING_INDEPENDENT_ITEM_REVIEW");
+      expect(cells[8]).toBe("PENDING_INDEPENDENT_FACTCHECK");
+      expect(cells[10]).toBe("NOT_RUN");
+      expect(cells[11]).toBe("");
+      expect(cells[12]).toBe("");
     }
   });
   it("passes the real source validation (not just a synthetic standalone CSV tally)", () => {
