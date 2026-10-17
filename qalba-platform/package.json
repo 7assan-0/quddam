@@ -10,7 +10,8 @@
     "deepmerge-ts": "8.0.2",
     "vitest": {
       "vite": "7.3.6"
-    }
+    },
+    "postcss-selector-parser": "7.1.6"
   },
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
