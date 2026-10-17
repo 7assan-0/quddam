@@ -49,7 +49,14 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   await page.getByLabel("البريد الإلكتروني").fill("admin@example.test");
   await page.getByLabel("كلمة المرور").fill("e2e-admin-password-123");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
-  await expect(page).toHaveURL(/\/games$/);
+  await expect(page).toHaveURL(/\\/games$/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/profile");
+  const beforeDebit = Number((await page.locator(".credit-panel .stat").innerText()).trim());
+  expect(Number.isSafeInteger(beforeDebit)).toBe(true);
+  expect(beforeDebit).toBeGreaterThan(0);
+  await expect(page.locator(".mobile-balance b")).toHaveText(String(beforeDebit));
+  await expect(page.locator(".mobile-balance")).toHaveAttribute("aria-label", `رصيدك: ${beforeDebit} ألعاب`);
   for (const width of [360, 390]) {
     await visit("signed-in library", "/games", width);
     await visit("Shillatak empty/setup", "/shillatak", width);
@@ -63,6 +70,12 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   await page.getByRole("button", { name: "جهّز اللوحة" }).click();
   await expect(page).toHaveURL(/\/play\/[^/]+$/);
   await page.getByRole("button", { name: "ابدأ المباراة" }).click();
+  await expect(page.locator(".mobile-balance b")).toHaveText(String(beforeDebit - 1));
+  await page.reload();
+  await expect(page.locator(".mobile-balance b")).toHaveText(String(beforeDebit - 1));
+  await page.goto("/profile");
+  await expect(page.locator(".credit-panel .stat")).toHaveText(String(beforeDebit - 1));
+  await page.goBack();
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.evaluate(() => document.fonts.ready);
