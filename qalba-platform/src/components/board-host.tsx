@@ -1,6 +1,5 @@
 "use client";
 import { TeamMarker } from "./team-marker";
-import { RematchCopy } from "./cta-copy";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
