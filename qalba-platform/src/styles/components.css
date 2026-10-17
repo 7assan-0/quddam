@@ -55,7 +55,10 @@
 @keyframes winner-spark { from { opacity:0; transform:scale(.4) rotate(-25deg); } to { opacity:1; transform:scale(1) rotate(0); } }
 @media(min-width:1600px) { .display-mode { padding-inline:max(42px,calc((100vw - var(--layout-tv))/2)); } .display-cell { min-height:76px; } .display-column { grid-template-rows:minmax(64px,auto) repeat(3,minmax(76px,auto)); } }
 @media(min-width:1600px) and (max-height:1200px) {
-  .display-mode { height:100vh; padding-block:20px; gap:10px; }
+  .display-mode { min-height:100vh; padding-block:20px 40px; gap:10px; }
+  .display-mode:has(.display-wait) .display-wait { flex:0 0 auto; min-height:128px; padding:12px 20px; }
+  .display-mode:has(.display-wait) .display-grid { flex:1 0 340px; min-height:340px; }
+  .display-mode:has(.display-wait) .display-column { grid-template-rows:minmax(72px,auto) repeat(3,minmax(76px,1fr)); }
   .display-top { min-height:54px; }
   .display-team { padding:9px 16px; gap:12px; min-height:116px; }
   .display-team span { font-size:clamp(1.4rem,2vw,2.25rem); line-height:1.25; }
@@ -69,7 +72,7 @@
   .display-grid { gap:8px; }
   .display-column { gap:6px; grid-template-rows:minmax(56px,auto) repeat(3,minmax(62px,auto)); }
   .display-cell { min-height:62px; font-size:clamp(1.8rem,2.2vw,2.6rem); }
-  .display-column h2 { font-size:clamp(1.05rem,1.3vw,1.6rem); }
+  .display-column h2 { font-size:clamp(28px,1.55vw,32px); line-height:1.25; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
 /* Social deduction uses the existing surfaces, colors and control styles. */

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-const format = (value: number) => new Intl.NumberFormat("ar-SA-u-nu-latn").format(value);
+import { formatNumber } from "@/lib/format-number";
 
 /** Presentation only: the server-provided score remains the source of truth. */
 export function AnimatedScore({ value, as: Tag = "strong" }: { value: number; as?: "strong" | "b" }) {
@@ -31,7 +31,7 @@ export function AnimatedScore({ value, as: Tag = "strong" }: { value: number; as
     return () => { cancelAnimationFrame(frame); if (hide) window.clearTimeout(hide); };
   }, [value]);
 
-  return <><Tag className="score-number" aria-hidden="true">{format(shown)}</Tag>
-    <span className="visually-hidden" aria-live="polite">{format(value)}</span>
-    {delta !== null && <span className={`score-feedback ${delta > 0 ? "score-feedback--gain" : "score-feedback--loss"}`} aria-hidden="true">{delta > 0 ? "+" : "−"}{format(Math.abs(delta))}</span>}</>;
+  return <><Tag className="score-number" aria-hidden="true">{formatNumber(shown)}</Tag>
+    <span className="visually-hidden" aria-live="polite">{formatNumber(value)}</span>
+    {delta !== null && <span className={`score-feedback ${delta > 0 ? "score-feedback--gain" : "score-feedback--loss"}`} aria-hidden="true">{delta > 0 ? "+" : "−"}{formatNumber(Math.abs(delta))}</span>}</>;
 }

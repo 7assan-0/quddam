@@ -21,7 +21,7 @@ export function LetterHost({initial}:{initial:LetterView}){
     {access&&<div className="social-modal-backdrop"><div className="panel social-modal" role="dialog" aria-modal="true" aria-label="رابط شاشة العرض">
       <button className="btn btn-outline btn-small" onClick={()=>setAccess(null)}>إغلاق</button><h2>شاشة العرض</h2>
       <Image unoptimized src={access.qrDataUrl} alt="رمز QR لرابط شاشة العرض" width={220} height={220}/>
-      <p>ينتهي الرابط: {new Date(access.expiresAt).toLocaleString("ar-SA")}</p><a className="btn btn-secondary" href={access.url} target="_blank" rel="noopener noreferrer">فتح العرض في هذا الجهاز</a>
+      <p>ينتهي الرابط: {new Date(access.expiresAt).toLocaleString("ar-SA-u-nu-latn")}</p><a className="btn btn-secondary" href={access.url} target="_blank" rel="noopener noreferrer">فتح العرض في هذا الجهاز</a>
       <button className="btn btn-primary" onClick={()=>navigator.clipboard.writeText(new URL(access.url,window.location.origin).href)}>نسخ رابط العرض</button></div></div>}
     <LetterTeams view={view}/>
     {view.phase==="LOBBY"&&<section className="panel"><h2>الفريقان جاهزان</h2><p>سيختار الخادم الحروف من الأسئلة المنشورة فقط.</p><button className="btn btn-primary" disabled={busy} onClick={()=>send({type:"START"})}>ابدأ اللعبة</button></section>}
