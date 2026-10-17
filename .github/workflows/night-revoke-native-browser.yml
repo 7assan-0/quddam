@@ -1,0 +1,139 @@
+name: Night revoke native PG17 + independent browser (owner gated)
+on:
+  pull_request:
+    types: [labeled]
+permissions:
+  contents: read
+
+jobs:
+  native-revoke-and-browser:
+    if: ${{ github.event.label.name == 'night-native-revoke-approved' && github.event.pull_request.head.ref == 'test/night-revoke-native-browser-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    concurrency:
+      group: night-revoke-${{ github.event.pull_request.head.sha }}
+      cancel-in-progress: false
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quddam_night_ci
+          POSTGRES_PASSWORD: synthetic-only-revoke-pg17-ci-password
+          POSTGRES_DB: night_mvp_revoke_ci
+        ports:
+          - 55471:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam_night_ci -d night_mvp_revoke_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_POOL_MAX: '10'
+      NIGHT_MVP_SYNTHETIC: '1'
+      ENABLE_NIGHT_OF_QUDDAM: 'true'
+      DATABASE_URL: postgresql://quddam_night_ci:synthetic-only-revoke-pg17-ci-password@127.0.0.1:55471/night_mvp_revoke_ci
+      NIGHT_MVP_ENV_FILE: /tmp/quddam-night-revoke-private/database.private.json
+      NIGHT_MVP_OUTPUT: /tmp/quddam-night-revoke-private
+      APP_URL: http://127.0.0.1:3100
+      BASE_URL: http://127.0.0.1:3100
+      AUTH_RATE_LIMIT_SECRET: synthetic-night-revoke-ci-secret-0123456789abcdef
+      AUTH_TRUST_PROXY: 'false'
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind run to one exact immutable source head
+        env:
+          EXACT_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+          test "$(node -v)" = v24.19.0
+          echo "NIGHT_REVOCATION_HEAD=$EXACT_SHA"
+      - name: Clean install and code generation
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Full shared Night and Shillatak unit regression on integration candidate
+        # Unit tests have their own origin/feature mocks; the loopback app URL is
+        # only for later native HTTP and Chromium. Keep security checks enabled.
+        run: |
+          env -u APP_URL -u BASE_URL -u ENABLE_NIGHT_OF_QUDDAM npm run test -- --maxWorkers=1 --retry=0
+      - name: Create 0600 out-of-checkout DB fixture and verify brand-new native PostgreSQL17
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$NIGHT_MVP_OUTPUT"
+          chmod 700 "$NIGHT_MVP_OUTPUT"
+          printf '{"DATABASE_URL":"%s"}\n' "$DATABASE_URL" > "$NIGHT_MVP_ENV_FILE"
+          chmod 600 "$NIGHT_MVP_ENV_FILE"
+          node <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{
+            const db=new Client({connectionString:process.env.DATABASE_URL});
+            await db.connect();
+            try{
+              const r=await db.query("SELECT current_database() AS name, current_setting('server_version_num')::int AS version, (SELECT count(*)::int FROM pg_tables WHERE schemaname='public') AS tables");
+              const row=r.rows[0];
+              if(row.name!=='night_mvp_revoke_ci'||row.version<170000||row.version>=180000||row.tables!==0) throw Error('Not a brand-new isolated PostgreSQL17 database');
+              console.log('SYNTHETIC_NATIVE_PG17_EMPTY_DATABASE_VERIFIED');
+            }finally{await db.end()}
+          })().catch(()=>{console.error('Isolated database identity failed'); process.exitCode=1});
+          NODE
+      - name: Deploy original migrations once; seed only isolated synthetic Night fixtures
+        run: |
+          npm run db:migrate
+          npm exec -- prisma migrate status
+          node --import tsx scripts/night-mvp-fixtures.ts --seed
+      - name: Prove both native lock queue orderings with two simultaneous RSVPs
+        run: node --import tsx scripts/night-revoke-pg17.ts
+      - name: Compile and provision real Chromium
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+          npx playwright install --with-deps chromium
+      - name: Run actual app on loopback and use three independent browser contexts
+        run: |
+          set -euo pipefail
+          node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3100 > "$NIGHT_MVP_OUTPUT/next.private.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 90); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:3100/login; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          node scripts/night-revoke-browser.mjs
+      - name: Verify sanitized native and browser receipts refer to same source
+        env:
+          EXACT_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),path=require('node:path');
+          const dir=process.env.NIGHT_MVP_OUTPUT;
+          const native=JSON.parse(fs.readFileSync(path.join(dir,'revoke-pg17','receipt.json')));
+          const browser=JSON.parse(fs.readFileSync(path.join(dir,'revoke-browser','receipt.json')));
+          if(native.sourceHead!==process.env.EXACT_SHA||browser.sourceHead!==process.env.EXACT_SHA||native.status!=='PASSED'||browser.status!=='PASSED'||native.races.length!==2||native.races.some(x=>x.distinctBackendCount!==4||x.lockWaiters!==3)||browser.actualChromiumContexts!==3) throw Error('Exact head or full native/browser acceptance mismatch');
+          const summary={sourceHead:process.env.EXACT_SHA,synthetic:true,nativePostgres17:true,nativeChecks:native.checks.length,ordering:native.races,realChromiumContexts:browser.actualChromiumContexts,realHttpChecks:browser.checks.length,status:'PASSED'};
+          fs.writeFileSync(path.join(dir,'night-revocation-summary.json'),JSON.stringify(summary,null,2)+'\n',{mode:0o600,flag:'wx'});
+          console.log('NIGHT_REVOKE_ACCEPTANCE='+JSON.stringify(summary));
+          NODE
+      - name: Retain only sanitized result counts without secrets, logs, raw receipts or browser storage
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: night-revocation-synthetic-summary-${{ github.run_id }}
+          path: /tmp/quddam-night-revoke-private/night-revocation-summary.json
+          if-no-files-found: warn
+          retention-days: 7

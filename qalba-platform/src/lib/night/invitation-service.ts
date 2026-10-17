@@ -53,6 +53,31 @@ export async function createInvitation(ownerId: string, nightId: string,
   return { path: `/night/invite/${code}`, scheduledAt: result.scheduledAt.toISOString(),
     timezone: result.timezone, expiresAt: result.expiresAt.toISOString() };
 }
+/**
+ * Owner-only irreversible revocation using the existing DB-approved "closed" status.
+ * Uses the same Night -> Invitation lock order
+ * as RSVP and START, so a concurrent RSVP is either committed before revocation
+ * or rejected after it. Preserve historical guest responses and vote aggregates.
+ * Never store/recover the raw bearer or create a replacement implicitly.
+ */
+export async function revokeInvitation(ownerId: string, nightId: string) {
+  enabled();
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(nightId)) throw new InviteInputError("السهرة غير موجودة", 404);
+  return db().$transaction(async tx => {
+    await tx.$queryRawUnsafe('SELECT "id" FROM "NightSession" WHERE "id"=$1 FOR UPDATE', nightId);
+    const night = await tx.nightSession.findUnique({ where: { id: nightId }, select: { ownerId: true } });
+    if (!night || night.ownerId !== ownerId) throw new InviteInputError("السهرة غير موجودة", 404);
+    const invite = await tx.nightInvitation.findUnique({ where: { nightId }, select: { id: true } });
+    if (!invite) throw new InviteInputError("الدعوة غير موجودة", 404);
+    await tx.$queryRawUnsafe('SELECT "id" FROM "NightInvitation" WHERE "id"=$1 FOR UPDATE', invite.id);
+    const current = await tx.nightInvitation.findUnique({ where: { id: invite.id }, select: { status: true } });
+    if (!current) throw new InviteInputError("الدعوة غير موجودة", 404);
+    if (current.status === "open")
+      await tx.nightInvitation.update({ where: { id: invite.id }, data: { status: "closed" } });
+    // Idempotent retry after a lost successful DELETE response.
+    return { revoked: current.status === "open" || current.status === "closed" };
+  }, { timeout: 12_000 });
+}
 export async function ownerInvitation(ownerId: string, nightId: string) {
   enabled();
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(nightId)) throw new InviteInputError("السهرة غير موجودة", 404);
@@ -62,7 +87,7 @@ export async function ownerInvitation(ownerId: string, nightId: string) {
   if (!night || night.ownerId !== ownerId) throw new InviteInputError("السهرة غير موجودة", 404);
   const inv = night.invitation;
   if (!inv) return { exists: false as const };
-  return { exists: true as const, scheduledAt: inv.scheduledAt.toISOString(), timezone: inv.timezone,
+  return { exists: true as const, status: inv.status, scheduledAt: inv.scheduledAt.toISOString(), timezone: inv.timezone,
     coming: inv.guests.filter(g => g.rsvp === "YES").length, declined: inv.guests.filter(g => g.rsvp === "NO").length,
     votes: night.games.map(slot => ({ game: slot.gameSlug, title: nightGameTitle(slot.gameSlug), count: inv.guests.filter(g => g.rsvp === "YES" && g.gameVote === slot.gameSlug).length })),
     /** Link is intentionally unavailable after one-time creation; only a hash is retained. */
@@ -71,7 +96,7 @@ export async function ownerInvitation(ownerId: string, nightId: string) {
 export async function getPublicInvitation(code: string, capability?: string, now = new Date()) {
   enabled();
   const invite = await db().nightInvitation.findUnique({ where: { tokenHash: codeHash(code) }, include });
-  if (!invite) throw new InviteInputError("الدعوة غير موجودة", 404);
+  if (!invite || invite.status === "closed") throw new InviteInputError("الدعوة غير موجودة", 404);
   return { id: invite.id, view: project(invite, now, capability),
     cookieName: attendeeCookieName(invite.id), expiresAt: invite.expiresAt };
 }

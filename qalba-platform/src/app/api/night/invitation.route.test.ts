@@ -2,21 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const m = vi.hoisted(() => ({
-  user: vi.fn(), create: vi.fn(), owner: vi.fn(), publicGet: vi.fn(), respond: vi.fn(),
+  user: vi.fn(), create: vi.fn(), owner: vi.fn(), revoke: vi.fn(), publicGet: vi.fn(), respond: vi.fn(),
 }));
 vi.mock("@/lib/auth/session", () => ({ currentUser: m.user }));
 vi.mock("@/lib/night/invitation-service", () => ({
-  createInvitation: m.create, ownerInvitation: m.owner,
+  createInvitation: m.create, ownerInvitation: m.owner, revokeInvitation: m.revoke,
   getPublicInvitation: m.publicGet, respondToInvitation: m.respond,
 }));
-import { POST as ownerPost, GET as ownerGet } from "./[id]/invitation/route";
+import { POST as ownerPost, GET as ownerGet, DELETE as ownerDelete } from "./[id]/invitation/route";
 import { POST as guestPost, GET as guestGet } from "./invite/[code]/route";
 
 const ownerContext = { params: Promise.resolve({ id: "night-1" }) };
 const guestContext = { params: Promise.resolve({ code: "a".repeat(64) }) };
 const schedule = { scheduledAt: "2026-11-01T18:00:00.000+03:00", timezone: "Asia/Riyadh" };
 const vote = { name: "نواف", rsvp: "YES", gameVote: "top-list" };
-function request(path: string, method: "GET" | "POST", body?: unknown, origin = "http://localhost:3000", cookie?: string) {
+function request(path: string, method: "GET" | "POST" | "DELETE", body?: unknown, origin = "http://localhost:3000", cookie?: string) {
   return new NextRequest(`http://localhost:3000${path}`, {
     method, headers: { origin, host: "localhost:3000", ...(cookie ? { cookie } : {}),
       ...(method === "POST" ? { "content-type": "application/json" } : {}) },
@@ -32,6 +32,7 @@ beforeEach(() => {
   m.create.mockResolvedValue({ path: `/night/invite/${"a".repeat(64)}`, scheduledAt: "2026-11-01T15:00:00.000Z",
     timezone: "Asia/Riyadh" });
   m.owner.mockResolvedValue({ exists: false });
+  m.revoke.mockResolvedValue({ revoked: true });
   m.publicGet.mockResolvedValue({ id: "invite-1", expiresAt: new Date("2026-11-02T15:00:00.000Z"), cookieName: "quddam_night_rsvp_invite-1",
     view: { open: true, games: [{ game: "top-list", votes: 0 }], coming: 0, declined: 0, mine: null } });
   m.respond.mockResolvedValue({ cookieName: "quddam_night_rsvp_invite-1", cookieValue: "b".repeat(64),
@@ -62,6 +63,22 @@ describe("planning-only Night HTTP boundaries", () => {
     expect(m.create).toHaveBeenCalledWith("owner-1", "night-1", schedule);
     expect((await ownerGet(request(ownerPath, "GET"), ownerContext)).status).toBe(200);
     expect(m.owner).toHaveBeenCalledWith("owner-1", "night-1");
+  });
+  it("DELETE is feature-gated, same-origin, authenticated and private without a body", async () => {
+    vi.stubEnv("ENABLE_NIGHT_OF_QUDDAM", "false");
+    expect((await ownerDelete(request(ownerPath, "DELETE"), ownerContext)).status).toBe(404);
+    vi.stubEnv("ENABLE_NIGHT_OF_QUDDAM", "true");
+    expect((await ownerDelete(request(ownerPath, "DELETE", undefined, "https://other.invalid"), ownerContext)).status).toBe(403);
+    m.user.mockResolvedValueOnce(null);
+    expect((await ownerDelete(request(ownerPath, "DELETE"), ownerContext)).status).toBe(401);
+    expect(m.revoke).not.toHaveBeenCalled();
+    const deleted = await ownerDelete(request(ownerPath, "DELETE"), ownerContext);
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ revoked: true });
+    expect(deleted.headers.get("cache-control")).toBe("private, no-store");
+    expect(deleted.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(m.revoke).toHaveBeenCalledTimes(1);
+    expect(m.revoke).toHaveBeenCalledWith("owner-1", "night-1");
   });
   it("public link shows aggregate planning data only; same-origin is required to mutate", async () => {
     const read = await guestGet(request(guestPath, "GET"), guestContext);

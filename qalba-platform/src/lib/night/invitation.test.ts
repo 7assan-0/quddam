@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { digestCapability, invitationResponse, inviteCodePattern, inviteInputSchema,
   MAX_INVITE_ATTENDEES, normalizeAttendeeName, rsvpInputSchema, validateSchedule, validVote } from "./invitation";
-import { createInvitation, respondToInvitation } from "./invitation-service";
+import { createInvitation, getPublicInvitation, respondToInvitation, revokeInvitation } from "./invitation-service";
 const serviceDb = vi.hoisted(() => ({ transaction: vi.fn(), findInvitation: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: () => ({
   $transaction: serviceDb.transaction,
@@ -76,6 +76,42 @@ describe("Night invitation service validation and replay boundaries", () => {
     serviceDb.transaction.mockReset(); serviceDb.findInvitation.mockReset();
   });
   afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
+  it("revokes under Night→Invitation locks exactly once and retains existing responses", async () => {
+    let status = "open";
+    const locks: string[] = [];
+    const update = vi.fn(async () => { status = "closed"; });
+    const guests = [{ name: "ضيف سابق", rsvp: "YES", gameVote: "top-list" }];
+    serviceDb.transaction.mockImplementation(async callback => callback({
+      $queryRawUnsafe: vi.fn(async (sql: string) => { locks.push(sql.includes('"NightSession"') ? "NightSession" : "NightInvitation"); }),
+      nightSession: { findUnique: vi.fn(async () => ({ ownerId: "owner" })) },
+      nightInvitation: {
+        findUnique: vi.fn(async ({ where }) => "nightId" in where ? { id: "invitation" } : { status }),
+        update,
+      },
+      nightInviteGuest: { deleteMany: vi.fn(() => { throw Error("Guest data must not be deleted"); }) },
+    }));
+    expect(await revokeInvitation("owner", "night")).toEqual({ revoked: true });
+    expect(locks).toEqual(["NightSession", "NightInvitation"]);
+    expect(update).toHaveBeenCalledWith({ where: { id: "invitation" }, data: { status: "closed" } });
+    expect(guests).toHaveLength(1);
+    expect(await revokeInvitation("owner", "night")).toEqual({ revoked: true });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+  it("does not allow a non-owner or missing invitation to revoke", async () => {
+    const update = vi.fn();
+    serviceDb.transaction.mockImplementation(async callback => callback({
+      $queryRawUnsafe: vi.fn(),
+      nightSession: { findUnique: vi.fn(async () => ({ ownerId: "actual-owner" })) },
+      nightInvitation: { findUnique: vi.fn(async () => null), update },
+    }));
+    await expect(revokeInvitation("other", "night")).rejects.toMatchObject({ status: 404 });
+    await expect(revokeInvitation("actual-owner", "night")).rejects.toMatchObject({ status: 404 });
+    expect(update).not.toHaveBeenCalled();
+  });
+  it("does not reveal revoked bearer links through public invitation reads", async () => {
+    serviceDb.findInvitation.mockResolvedValue({ id: "invitation", status: "closed" });
+    await expect(getPublicInvitation("a".repeat(64))).rejects.toMatchObject({ status: 404 });
+  });
   it("rechecks the minimum schedule after the Night lock has been acquired", async () => {
     vi.useFakeTimers(); vi.setSystemTime(now);
     serviceDb.transaction.mockImplementation(async callback => callback({
