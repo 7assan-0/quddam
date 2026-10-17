@@ -54,7 +54,8 @@ export async function createInvitation(ownerId: string, nightId: string,
     timezone: result.timezone, expiresAt: result.expiresAt.toISOString() };
 }
 /**
- * Owner-only irreversible revocation using the existing DB-approved "closed" status.\n * Uses the same Night -> Invitation lock order
+ * Owner-only irreversible revocation using the existing DB-approved "closed" status.
+ * Uses the same Night -> Invitation lock order
  * as RSVP and START, so a concurrent RSVP is either committed before revocation
  * or rejected after it. Preserve historical guest responses and vote aggregates.
  * Never store/recover the raw bearer or create a replacement implicitly.
