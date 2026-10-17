@@ -1,6 +1,6 @@
 /** Category Board owns only rules. Database reads and writes belong to its service. */
 export const BOARD_VALUES = [200, 400, 600] as const;
-export const BOARD_TILES_PER_VALUE = 4;
+export const BOARD_TILES_PER_VALUE = 2;
 export const BOARD_CELLS_PER_CATEGORY = BOARD_VALUES.length * BOARD_TILES_PER_VALUE;
 export const BOARD_TOTAL_CELLS = 6 * BOARD_CELLS_PER_CATEGORY;
 export type PowerSlug = "double" | "shield" | "remove-two" | "extra-time" | "challenge";
@@ -52,14 +52,14 @@ function ensure(condition: unknown, message: string): asserts condition {
 
 export function initialBoardState(categories: BoardState["categories"], teamIds: string[], cells: BoardCell[],
   questionSnapshots: Record<string, BoardQuestion>, timerSeconds = 30): BoardState {
-  // Only new 72-cell sessions call this constructor. Existing persisted 18-cell
+  // Only new 36-cell sessions call this constructor. Existing persisted 18-cell
   // sessions remain readable and playable through the backward-compatible OPEN.
-  ensure(categories.length === 6 && teamIds.length === 2 && cells.length === BOARD_TOTAL_CELLS, "إعداد اللوحة غير مكتمل: يلزم ٧٢ سؤالًا");
+  ensure(categories.length === 6 && teamIds.length === 2 && cells.length === BOARD_TOTAL_CELLS, "إعداد اللوحة غير مكتمل: يلزم ٣٦ سؤالًا");
   ensure(new Set(cells.map(cell => cell.key)).size === cells.length, "مفاتيح خانات اللوحة مكررة");
   ensure(new Set(cells.map(cell => cell.questionId)).size === cells.length, "سؤال مكرر في اللوحة");
   ensure(categories.every(category => BOARD_VALUES.every(value =>
     cells.filter(cell => cell.categoryId === category.id && cell.value === value).length === BOARD_TILES_PER_VALUE)),
-    "يلزم أربع خانات مستقلة من كل مستوى لكل فئة");
+    "يلزم خانتان مستقلتان من كل مستوى لكل فئة");
   ensure(cells.every((cell) => questionSnapshots[cell.questionId]), "نصوص الأسئلة غير مكتملة");
   return { schemaVersion: 1, started: false, paused: false, completed: false, endedEarly: false,
     categories, teamIds, turnTeamId: teamIds[0], cells, questionSnapshots, active: null,
@@ -181,7 +181,7 @@ export function decideBoard(state: BoardState, command: BoardCommand, now: Date,
   ensure(!next.paused, "المباراة متوقفة. استأنفها أولًا");
   if (command.type === "OPEN") {
     ensure(!next.active, "أكمل السؤال المفتوح أولًا");
-    // Legacy 18-cell match clients can still send category/value; 72-cell
+    // Legacy 18-cell match clients can still send category/value; 36-cell
     // matches MUST name the exact tile so equally valued cells cannot collide.
     const matches = "cellKey" in command && command.cellKey
       ? next.cells.filter(item => item.key === command.cellKey)
