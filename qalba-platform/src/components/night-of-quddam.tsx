@@ -138,9 +138,20 @@ export function NightOfQuddam({ initial }: { initial: NightView }) {
     {error && <p role="alert" className="form-error">{error}</p>}
     {uncertain && <button className="btn btn-secondary" data-testid="night-retry" disabled={busy} onClick={() => { const command = pending.current; if (command) void send(command.op); }}>{busy ? "جارٍ التحقق…" : "إعادة محاولة الأمر المعلّق"}</button>}
 
-    {view.phase === "completed" && <section className="panel lightning-final" data-testid="night-champion" aria-labelledby="night-champion-title"><span className="eyebrow">اكتمل مشوار الليلة</span><h2 id="night-champion-title">{champions.length > 1 ? "أبطال الليلة" : "بطل الليلة"}</h2><p>{champions.map(team => team.name).join(" و ")}</p>{champions.map(team => <p key={team.id}><strong>{team.name}: {view.totals[team.id]} نقاط للسهرة</strong></p>)}{champions.length > 1 && <p>تعادل في مجموع نقاط السهرة. كلهم أبطال الليلة!</p>}<p>بعد اعتماد نتائج المباريات الثلاث المكتملة.</p></section>}
+    {view.phase === "completed" && <section className="panel night-champion" data-testid="night-champion" aria-labelledby="night-champion-title">
+      <span className="night-crown" aria-hidden="true">♛</span><span className="eyebrow">اكتمل مشوار الليلة</span>
+      <h2 id="night-champion-title">{champions.length > 1 ? "أبطال الليلة" : "بطل الليلة"}</h2>
+      <p className="night-winner-name">{champions.map(team => team.name).join(" و ")}</p>
+      <strong className="night-winner-total">{champions.map(team => view.totals[team.id]).join(" · ")} <small>نقطة</small></strong>
+      {champions.length > 1 && <p>تعادل يستاهل الاحتفال! كلهم أبطال الليلة.</p>}
+      <div className="night-ranking-bars" aria-label="ترتيب الفرق">{view.ranking.map((team, index) => <div className="night-ranking-row" key={team.id}><div><strong>{index + 1}. {team.name}</strong><b>{team.points}</b></div><div className="night-ranking-track"><span className={`night-ranking-fill night-team-${view.teams.findIndex(item => item.id === team.id)}`} style={{ width: `${Math.max(0, Math.min(100, team.points / Math.max(1, ...view.ranking.map(item => item.points)) * 100))}%` }} /></div></div>)}</div>
+      <div className="night-completed-badges" aria-label="الألعاب المكتملة">{view.games.map(game => <span key={game.game}>✓ {game.title}</span>)}</div>
+      <div className="night-champion-actions"><Link className="btn btn-primary" href="/night/new">سهرة جديدة</Link><a className="btn btn-secondary" href={`/api/night/${encodeURIComponent(view.id)}/share-card`} download="quddam-night.png" data-testid="night-share-card">شارك النتيجة</a><a className="btn btn-outline night-details-link" href="#night-details">التفاصيل</a></div>
+      <p className="night-tv-note">المضيف: ابدأ سهرة جديدة من جوالك</p>
+    </section>}
     {view.phase === "ended" && <section className="panel" data-testid="night-ended"><h2>انتهت السهرة قبل الاكتمال</h2><p>النتائج المعتمدة محفوظة أدناه، ولم يُعلن بطل لليلة غير مكتملة. إغلاق السهرة لا يلغي مباراة قائمة ولا يعيد الرصيد المستهلك.</p></section>}
 
+    <details className="night-details" id="night-details" open={view.phase !== "completed" ? true : undefined}><summary>التفاصيل · نقاط السهرة ونتائج المباريات</summary>
     <section className="panel" aria-labelledby="night-board-title" style={{ marginBlock: "1rem" }}><h2 id="night-board-title">نقاط السهرة</h2><div style={{ overflowX: "auto" }}><table className="bluff-leaderboard" data-testid="night-leaderboard"><caption className="visually-hidden">مجموع نقاط السهرة لكل فريق</caption><thead><tr><th scope="col">الترتيب</th><th scope="col">الفريق</th><th scope="col">نقاط السهرة</th></tr></thead><tbody>{view.ranking.map(team => <tr key={team.id} data-team={team.id}><td>{1 + view.ranking.filter(other => other.points > team.points).length}</td><th scope="row">{team.name}</th><td data-testid="night-total">{team.points}</td></tr>)}</tbody></table></div><p className="form-note">الأول: ٣ نقاط · الثاني: نقطتان · الثالث: نقطة. التعادل يمنح الفرق المتعادلة نقاط المركز نفسه، ويُتجاوز عدد المراكز المشغولة.</p></section>
 
     {view.phase === "preparing" && <NightInvitationSetup nightId={view.id} />}
@@ -154,15 +165,14 @@ export function NightOfQuddam({ initial }: { initial: NightView }) {
 
     {view.results.length > 0 && <section className="panel" data-testid="night-results" aria-labelledby="night-results-title"><h2 id="night-results-title">نتائج المباريات المعتمدة</h2><div className="history-list">{view.results.map((result, index) => <article className="info-card" key={result.sourceSessionId} data-game={result.game}><h3>{index + 1}. {nightGameTitle(result.game)}</h3>{result.placements.map((placement, place) => <p key={place}>المركز {1 + result.placements.slice(0, place).reduce((sum, group) => sum + group.teamIds.length, 0)}: {placement.teamIds.map(id => view.teams.find(team => team.id === id)?.name ?? "فريق").join(" و ")}</p>)}<ul>{view.teams.map(team => <li key={team.id}>{team.name}: {result.points[team.id]} نقاط للسهرة</li>)}</ul></article>)}</div></section>}
 
+    </details>
     {recap && <section className="panel" data-testid="night-highlights" aria-labelledby="night-highlights-title" style={{ marginBlock: "1rem" }}>
       <span className="eyebrow">مبنية على النتائج المعتمدة فقط</span><h2 id="night-highlights-title">هايلايتس السهرة</h2>
       <ul>{recap.facts.map(fact => <li key={fact}>{fact}</li>)}</ul>
       {recap.games.map((game, i) => <p key={`${game.title}-${i}`}><strong>{game.title}:</strong> تصدّر {game.firstNames.join(" و ")}</p>)}
-      {view.phase === "completed" && <><p>احفظوا صورة نتيجة الليلة وشاركوها بأنفسكم مع الشلة.</p>
-        <a className="btn btn-secondary" href={`/api/night/${encodeURIComponent(view.id)}/share-card`} download="quddam-night.png" data-testid="night-share-card">احفظ بطاقة بطل الليلة (PNG)</a>
-        <p className="form-note">الصورة خاصة بحساب منظم السهرة؛ لا تضع فيها رابط دعوة أو بيانات خاصة. لا يتم نشرها تلقائيًا.</p></>}
+      {view.phase === "completed" && <p className="form-note">بطاقة المشاركة خاصة بمنظّم السهرة، ولا تُنشر تلقائيًا.</p>}
     </section>}
-    <div className="utility-links" style={{ marginBlock: "1rem" }}><Link className="btn btn-secondary" href="/games">قائمة الألعاب</Link>{(view.phase === "completed" || view.phase === "ended") && <Link className="btn btn-primary" href="/night/new">ابدأ سهرة جديدة</Link>}{(view.phase === "playing" || view.phase === "preparing") && !confirmEnd && <button className="btn btn-danger" data-testid="night-end" disabled={locked} onClick={() => setConfirmEnd(true)}>إنهاء السهرة مبكرًا</button>}</div>
+    <div className="utility-links" style={{ marginBlock: "1rem" }}><Link className="btn btn-secondary" href="/games">قائمة الألعاب</Link>{view.phase === "ended" && <Link className="btn btn-primary" href="/night/new">ابدأ سهرة جديدة</Link>}{(view.phase === "playing" || view.phase === "preparing") && !confirmEnd && <button className="btn btn-danger" data-testid="night-end" disabled={locked} onClick={() => setConfirmEnd(true)}>إنهاء السهرة مبكرًا</button>}</div>
     {confirmEnd && <section className="panel" role="group" aria-labelledby="night-end-title"><h2 id="night-end-title">إنهاء السهرة قبل الاكتمال؟</h2><p>ستبقى النتائج المعتمدة محفوظة، ولن يُعلن بطل. لا يلغي هذا مباراة قائمة ولا يعيد الرصيد المستهلك.</p><div className="utility-links"><button className="btn btn-danger" data-testid="night-end-confirm" disabled={locked} onClick={() => void send("END")}>نعم، أنهِ السهرة</button><button className="btn btn-secondary" disabled={locked} onClick={() => setConfirmEnd(false)}>متابعة السهرة</button></div></section>}
   </div>;
 }
