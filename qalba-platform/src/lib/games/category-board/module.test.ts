@@ -87,7 +87,7 @@ describe("Category Board decisions", () => {
     expect(decideBoard(paused, { type: "TIMER_START" }, now).state.active?.deadlineAt).toBe("2026-01-01T12:00:40.000Z");
   });
 
-  it("ends only after all 72 distinct cells, then permits undo of the last result", () => {
+  it("ends only after all 36 distinct cells, then permits undo of the last result", () => {
     let state = decideBoard(fixture(), { type: "START" }, now).state;
     expect(state.cells).toHaveLength(BOARD_TOTAL_CELLS);
     expect(new Set(state.cells.map(cell => cell.questionId)).size).toBe(BOARD_TOTAL_CELLS);
