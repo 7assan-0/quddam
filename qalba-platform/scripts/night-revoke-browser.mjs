@@ -54,7 +54,11 @@ try {
   assert.ok(identity.rows[0].version >= 170000 && identity.rows[0].version < 180000);
   const balance = (await pool.query('SELECT balance FROM "CreditWallet" WHERE "userId"=$1', [fixture.ownerId])).rows[0].balance;
   const beforeDebits = (await pool.query('SELECT count(*)::int AS n FROM "GameCredit" WHERE "userId"=$1 AND delta=-1', [fixture.ownerId])).rows[0].n;
-  browser = await chromium.launch({ headless: true });
+  const chrome = process.env.CHROME_EXECUTABLE;
+  assert.ok(chrome && isAbsolute(chrome));
+  assert.match(execFileSync(chrome, ["--version"], { encoding: "utf8" }).trim(), /^Google Chrome/);
+  browser = await chromium.launch({ executablePath: chrome, headless: true,
+    ...(process.env.NIGHT_MVP_CHROME_NO_SANDBOX === "1" ? { args: ["--no-sandbox"] } : {}) });
   const owner = await browser.newContext({ viewport: { width: 1440, height: 960 }, timezoneId: "Asia/Riyadh" });
   await owner.addCookies([{ name: "qalba_session", value: fixture.ownerToken, url: origin.href, httpOnly: true, secure: false, sameSite: "Lax" }]);
   const host = await owner.newPage();
