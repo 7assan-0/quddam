@@ -42,7 +42,6 @@ jobs:
       DATABASE_URL: postgresql://quddam_beta_ci:synthetic-only-integrated-ci-password@127.0.0.1:55472/night_mvp_beta_integrated_ci
       NIGHT_MVP_ENV_FILE: /tmp/quddam-beta-integration/database.private.json
       NIGHT_MVP_OUTPUT: /tmp/quddam-beta-integration
-      APP_URL: http://127.0.0.1:3000
       BASE_URL: http://127.0.0.1:3000
       NIGHT_MVP_CHROME_NO_SANDBOX: '1'
       NIGHT_PHASE4_NATIVE_RUN: integrated-night-native
@@ -114,6 +113,8 @@ jobs:
           "$chrome" --version | grep '^Google Chrome'
           echo "CHROME_EXECUTABLE=$chrome" >> "$GITHUB_ENV"
       - name: Built app on loopback; real complete Night -> Shillatak -> 8-guest Room browser journeys
+        env:
+          APP_URL: http://127.0.0.1:3000
         run: |
           set -euo pipefail
           node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000 > "$NIGHT_MVP_OUTPUT/integrated-next.private.log" 2>&1 &
