@@ -91,7 +91,8 @@ describe("Shillatak pure privacy and immutable result bridge", () => {
     expect(() => completedSnapshot(version, stable)).toThrow(expect.objectContaining({ code: "INVALID_NIGHT_RECEIPT" }));
     const changed = completed();
     changed.games[0].resultReceipt.scores.reverse();
-    const { digest: _digest, ...unsigned } = changed.games[0].resultReceipt;
+    const { digest: acceptedDigest, ...unsigned } = changed.games[0].resultReceipt;
+    expect(acceptedDigest).toBe(changed.games[0].resultDigest);
     changed.games[0].resultReceipt.digest = jsonDigest(unsigned);
     changed.games[0].resultDigest = changed.games[0].resultReceipt.digest;
     expect(() => completedSnapshot(changed, stable)).toThrow(expect.objectContaining({ code: "INVALID_NIGHT_RECEIPT" }));
