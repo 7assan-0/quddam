@@ -77,7 +77,8 @@ describe("planning-only Night HTTP boundaries", () => {
     expect(await deleted.json()).toEqual({ revoked: true });
     expect(deleted.headers.get("cache-control")).toBe("private, no-store");
     expect(deleted.headers.get("referrer-policy")).toBe("no-referrer");
-    expect(m.revoke).toHaveBeenCalledExactlyOnceWith("owner-1", "night-1");
+    expect(m.revoke).toHaveBeenCalledTimes(1);
+    expect(m.revoke).toHaveBeenCalledWith("owner-1", "night-1");
   });
   it("public link shows aggregate planning data only; same-origin is required to mutate", async () => {
     const read = await guestGet(request(guestPath, "GET"), guestContext);
