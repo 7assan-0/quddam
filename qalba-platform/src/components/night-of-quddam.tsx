@@ -26,7 +26,7 @@ function commandFailure(status: number) {
   return "تعذر تنفيذ الأمر. تحقّق من اكتمال المباراة وتوفر الألعاب والرصيد، ثم أعد المحاولة.";
 }
 
-export function NightOfQuddam({ initial }: { initial: NightView }) {
+export function NightOfQuddam({ initial, tvMode = false }: { initial: NightView; tvMode?: boolean }) {
   const router = useRouter();
   const [view, setView] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -132,7 +132,7 @@ export function NightOfQuddam({ initial }: { initial: NightView }) {
   const locked = busy || uncertain;
   const champions = view.phase === "completed" ? view.teams.filter(team => view.winnerIds.includes(team.id)) : [];
 
-  return <div className="shell" data-testid="night-dashboard" data-phase={view.phase} data-version={view.version}>
+  return <div className="shell" data-testid="night-dashboard" data-tv-mode={tvMode && view.phase === "completed" ? "true" : undefined} data-phase={view.phase} data-version={view.version}>
     <div className="page-title"><span className="eyebrow">ليلتكم، لعبة وراء لعبة</span><h1>ليلة قدّام</h1><p data-testid="night-status" role="status">{PHASE_LABEL[view.phase]} · اكتملت {view.results.length} من {view.games.length} ألعاب</p></div>
     {connection && <p role="status" className="form-note">{connection}</p>}
     {error && <p role="alert" className="form-error">{error}</p>}
@@ -146,7 +146,7 @@ export function NightOfQuddam({ initial }: { initial: NightView }) {
       {champions.length > 1 && <p>تعادل يستاهل الاحتفال! كلهم أبطال الليلة.</p>}
       <div className="night-ranking-bars" aria-label="ترتيب الفرق">{view.ranking.map((team, index) => <div className="night-ranking-row" key={team.id}><div><strong>{index + 1}. {team.name}</strong><b>{team.points}</b></div><div className="night-ranking-track"><span className={`night-ranking-fill night-team-${view.teams.findIndex(item => item.id === team.id)}`} style={{ width: `${Math.max(0, Math.min(100, team.points / Math.max(1, ...view.ranking.map(item => item.points)) * 100))}%` }} /></div></div>)}</div>
       <div className="night-completed-badges" aria-label="الألعاب المكتملة">{view.games.map(game => <span key={game.game}>✓ {game.title}</span>)}</div>
-      <div className="night-champion-actions"><Link className="btn btn-primary" href="/night/new">سهرة جديدة</Link><a className="btn btn-secondary" href={`/api/night/${encodeURIComponent(view.id)}/share-card`} download="quddam-night.png" data-testid="night-share-card">شارك النتيجة</a><button className="btn btn-outline night-details-link" type="button" onClick={() => { const details = document.getElementById("night-details") as HTMLDetailsElement | null; const results = document.getElementById("night-results-fold") as HTMLDetailsElement | null; if (details) { details.open = true; details.scrollIntoView({ block: "start", behavior: "smooth" }); } if (results) results.open = true; }}>التفاصيل</button></div>
+      <div className="night-champion-actions"><Link className="btn btn-primary" href="/night/new">سهرة جديدة</Link><a className="btn btn-secondary" href={`/api/night/${encodeURIComponent(view.id)}/share-card`} download="quddam-night.png" data-testid="night-share-card">شارك النتيجة</a><Link className="btn btn-outline" href={`/night/${encodeURIComponent(view.id)}?tv=1`} data-testid="night-tv-link">عرض التلفزيون</Link><button className="btn btn-outline night-details-link" type="button" onClick={() => { const details = document.getElementById("night-details") as HTMLDetailsElement | null; const results = document.getElementById("night-results-fold") as HTMLDetailsElement | null; if (details) { details.open = true; details.scrollIntoView({ block: "start", behavior: "smooth" }); } if (results) results.open = true; }}>التفاصيل</button></div>
       <p className="night-tv-note">المضيف: ابدأ سهرة جديدة من جوالك</p>
     </section>}
     {view.phase === "ended" && <section className="panel" data-testid="night-ended"><h2>انتهت السهرة قبل الاكتمال</h2><p>النتائج المعتمدة محفوظة أدناه، ولم يُعلن بطل لليلة غير مكتملة. إغلاق السهرة لا يلغي مباراة قائمة ولا يعيد الرصيد المستهلك.</p></section>}
