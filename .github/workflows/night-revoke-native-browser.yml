@@ -36,8 +36,8 @@ jobs:
       NIGHT_MVP_SYNTHETIC: '1'
       ENABLE_NIGHT_OF_QUDDAM: 'true'
       DATABASE_URL: postgresql://quddam_night_ci:synthetic-only-revoke-pg17-ci-password@127.0.0.1:55471/night_mvp_revoke_ci
-      NIGHT_MVP_ENV_FILE: ${{ runner.temp }}/night-revoke-private/database.private.json
-      NIGHT_MVP_OUTPUT: ${{ runner.temp }}/night-revoke-private
+      NIGHT_MVP_ENV_FILE: /tmp/quddam-night-revoke-private/database.private.json
+      NIGHT_MVP_OUTPUT: /tmp/quddam-night-revoke-private
       APP_URL: http://127.0.0.1:3100
       BASE_URL: http://127.0.0.1:3100
       AUTH_RATE_LIMIT_SECRET: synthetic-night-revoke-ci-secret-0123456789abcdef
@@ -129,6 +129,6 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: night-revocation-synthetic-summary-${{ github.run_id }}
-          path: ${{ runner.temp }}/night-revoke-private/night-revocation-summary.json
+          path: /tmp/quddam-night-revoke-private/night-revocation-summary.json
           if-no-files-found: warn
           retention-days: 7
