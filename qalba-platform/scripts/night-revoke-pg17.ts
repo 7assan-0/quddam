@@ -107,12 +107,12 @@ async function main() {
       ], "two-rsvp-first");
       assert.ok(result.every(x => x.ok), "both early RSVPs and final revocation must commit");
       const saved = await db().nightInvitation.findUniqueOrThrow({ where: { nightId: inv.night.id }, include: { guests: true } });
-      assert.equal(saved.status, "revoked");
+      assert.equal(saved.status, "closed");
       assert.equal(saved.guests.length, 2);
       assert.equal(new Set(saved.guests.map(g => g.nameKey)).size, 2);
       const owner = await ownerInvitation(fixture.ownerId, inv.night.id);
       assert.equal(owner.exists, true); if (!owner.exists) throw Error("missing invitation");
-      assert.equal(owner.status, "revoked"); assert.equal(owner.coming, 2);
+      assert.equal(owner.status, "closed"); assert.equal(owner.coming, 2);
       assert.equal(owner.votes.find(v => v.game === "top-list")?.count, 2);
       await assert.rejects(() => getPublicInvitation(inv.code), error => (error as { status?: number }).status === 404);
       await assert.rejects(() => respondToInvitation(inv.code, yes("ضيف متأخر"), cap()),
@@ -132,13 +132,13 @@ async function main() {
         if (!outcome.ok) assert.equal((outcome.error as { status?: number }).status, 409);
       }
       const saved = await db().nightInvitation.findUniqueOrThrow({ where: { nightId: inv.night.id }, include: { guests: true } });
-      assert.equal(saved.status, "revoked"); assert.equal(saved.guests.length, 0);
+      assert.equal(saved.status, "closed"); assert.equal(saved.guests.length, 0);
       assert.deepEqual(await revokeInvitation(fixture.ownerId, inv.night.id), { revoked: true });
-      assert.equal((await db().nightInvitation.findUniqueOrThrow({ where: { nightId: inv.night.id } })).status, "revoked");
+      assert.equal((await db().nightInvitation.findUniqueOrThrow({ where: { nightId: inv.night.id } })).status, "closed");
       await assert.rejects(() => getPublicInvitation(inv.code), error => (error as { status?: number }).status === 404);
       const summary = await ownerInvitation(fixture.ownerId, inv.night.id);
       assert.equal(summary.exists, true); if (!summary.exists) throw Error("missing summary");
-      assert.equal(summary.coming, 0); assert.equal(summary.status, "revoked");
+      assert.equal(summary.coming, 0); assert.equal(summary.status, "closed");
     });
     await check("foreign-owner-denied-and-no-credit-or-source-game-side-effects", async () => {
       const inv = await newInvite();
