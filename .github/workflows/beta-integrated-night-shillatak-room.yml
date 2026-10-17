@@ -73,18 +73,19 @@ jobs:
           chmod 700 "$NIGHT_MVP_OUTPUT"
           printf '{"DATABASE_URL":"%s"}\n' "$DATABASE_URL" > "$NIGHT_MVP_ENV_FILE"
           chmod 600 "$NIGHT_MVP_ENV_FILE"
+          echo 'EXACT_SHA_AND_PRIVATE_FIXTURE_FILE_VERIFIED'
+      - name: Clean lockfile install and generated Prisma client
+        run: |
+          npm ci --include=dev --no-audit --no-fund
           node <<'NODE'
           const {Client}=require('pg'); (async()=>{
             const c=new Client({connectionString:process.env.DATABASE_URL}); await c.connect();
             try { const {rows:[r]}=await c.query("SELECT current_database() AS name, current_setting('server_version_num')::int AS version, (SELECT count(*)::int FROM pg_tables WHERE schemaname='public') AS tables");
               if(r.name!=='night_mvp_beta_integrated_ci'||r.version<170000||r.version>=180000||r.tables!==0) throw Error('Not the new dedicated empty PostgreSQL17 fixture');
-              console.log('INTEGRATED_SOURCE_AND_EMPTY_NATIVE_PG17_VERIFIED');
+              console.log('EMPTY_NATIVE_POSTGRES17_VERIFIED');
             } finally { await c.end(); }
           })().catch(()=>{ console.error('Database identity verification failed'); process.exitCode=1; });
           NODE
-      - name: Clean lockfile install and generated Prisma client
-        run: |
-          npm ci --include=dev --no-audit --no-fund
           npm run db:generate
       - name: Full regression, TypeScript, lint and single production build
         run: |
