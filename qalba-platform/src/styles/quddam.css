@@ -239,3 +239,6 @@ body:has(.night-champion) .night-results-fold{display:none}
   .display-mode .display-column{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
   .display-mode .display-column h2{font-size:13px;overflow-wrap:anywhere}
 }
+
+/* Keep compact controls touch-sized without changing their existing spacing or colors. */
+.btn-small{min-height:44px}
