@@ -5,6 +5,11 @@ on:
     branches: [ui/simplify-20261017]
     paths:
       - '.github/workflows/integration-ui-diagnostics.yml'
+      - '.github/workflows/ui-accessibility-pr25.yml'
+      - '.github/workflows/ui-final-night-visual-pr25.yml'
+      - 'qalba-platform/src/**'
+      - 'qalba-platform/tests/e2e/ui-simplify-accessibility.spec.ts'
+      - 'qalba-platform/scripts/night-phase4-chrome.mjs'
 permissions:
   contents: read
 jobs:
