@@ -1,5 +1,5 @@
-import { formatNumber } from "@/lib/format-number";
 "use client";
+import { formatNumber } from "@/lib/format-number";
 import { TeamMarker } from "./team-marker";
 import { Brand } from "./brand";
 import { useEffect, useState } from "react";
