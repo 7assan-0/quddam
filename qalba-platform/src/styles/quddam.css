@@ -222,3 +222,15 @@ body:has(.night-champion) .night-dashboard>.page-title,
 body:has(.night-champion) .night-dashboard>.panel:has([data-testid="night-games"]),
 body:has(.night-champion) .night-results-fold{display:none}
 }
+
+/* Balanced desktop hero: featured board beside two stacked games, no orphaned card. */
+@media(min-width:701px){
+.quddam-featured-games{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-items:stretch}
+.quddam-featured-games>.game-card-hero{grid-column:1;grid-row:1 / span 2}
+.quddam-featured-games>.game-card:not(.game-card-hero){grid-column:2}
+}
+@media(max-width:700px){.quddam-featured-games>.game-card-hero,.quddam-featured-games>.game-card:not(.game-card-hero){grid-column:auto;grid-row:auto}}
+@media(min-width:1700px){
+body:has(.night-champion) [data-testid="night-dashboard"]>.page-title,
+body:has(.night-champion) [data-testid="night-dashboard"]>.panel:has([data-testid="night-games"]){display:none}
+}
