@@ -1,8 +1,0 @@
-"use client";
-import { CreateCopy } from "./cta-copy";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-export function LightningSetup() {
-  const router = useRouter(), [teams, setTeams] = useState<[string, string]>(["الفريق أ", "الفريق ب"]), [busy, setBusy] = useState(false), [error, setError] = useState("");
-  return <div className="shell"><div className="page-title"><h1>البرق</h1><p>السؤال للجميع. أول جرس صالح يقبله الخادم يملك فرصة الإجابة!</p></div><form className="panel social-form" onSubmit={async e => { e.preventDefault(); setBusy(true); setError(""); try { const r = await fetch("/api/lightning", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ teams }) }), data = await r.json(); if (!r.ok) throw new Error(data.error); router.push(`/lightning/host/${data.id}`); } catch (e) { setError(e instanceof Error ? e.message : "تعذر الإنشاء"); setBusy(false); } }}><h2>جهّزوا الفريقين</h2>{teams.map((name, i) => <label key={i}>اسم الفريق {i === 0 ? "أ · البرتقالي" : "ب · السماوي"}<input value={name} maxLength={60} minLength={2} required onChange={e => setTeams(old => i === 0 ? [e.target.value, old[1]] : [old[0], e.target.value])} /></label>)}<p>١٥ سؤالًا · إجابة خلال ٨ ثوانٍ · سرقة خلال ٥ ثوانٍ</p><p>الصحيح +٢ · السرقة +١. تحتاجون جوالًا واحدًا لكل فريق.</p><p>تُخصم لعبة واحدة عند البدء. الإعادة داخل الجلسة مجانية.</p><p className="muted">أولوية الجرس حسب وصول الطلبات للخادم؛ سرعة الشبكة قد تؤثر على النتيجة.</p>{error && <p role="alert">{error}</p>}<button className="btn btn-primary" disabled={busy}><CreateCopy previous="أنشئ المباراة"/></button></form></div>;
-}

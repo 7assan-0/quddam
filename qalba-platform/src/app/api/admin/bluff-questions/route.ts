@@ -1,9 +1,0 @@
-import {NextRequest,NextResponse} from "next/server";
-import {currentUser} from "@/lib/auth/session";
-import {forbidden,parseJson,requireSameOrigin} from "@/lib/http";
-import {bluffResponse,privateHeaders} from "@/lib/games/bluff/http";
-import {db} from "@/lib/db";
-import {questionSchema} from "@/lib/games/bluff/validation";
-import {BluffError} from "@/lib/games/bluff/module";
-export async function GET(request:NextRequest){try{if((await currentUser())?.role!=="ADMIN")return forbidden();const q=(request.nextUrl.searchParams.get("q")??"").trim().slice(0,100),categoryId=(request.nextUrl.searchParams.get("categoryId")??"").slice(0,100),status=request.nextUrl.searchParams.get("status"),difficulty=request.nextUrl.searchParams.get("difficulty");return NextResponse.json(await db().bluffQuestion.findMany({where:{...(q?{question:{contains:q,mode:"insensitive"}}:{}),...(categoryId?{categoryId}:{}),...(["DRAFT","PUBLISHED","ARCHIVED"].includes(status??"")?{status:status as "DRAFT"|"PUBLISHED"|"ARCHIVED"}:{}),...(["EASY","MEDIUM","HARD"].includes(difficulty??"")?{difficulty:difficulty as "EASY"|"MEDIUM"|"HARD"}:{})},orderBy:{createdAt:"desc"},take:500}),{headers:privateHeaders});}catch(error){return bluffResponse(error);}}
-export async function POST(request:NextRequest){if(!requireSameOrigin(request))return forbidden();try{if((await currentUser())?.role!=="ADMIN")return forbidden();const input=await parseJson(request,questionSchema);const row=await db().$transaction(async tx=>{await tx.$queryRawUnsafe('SELECT "id" FROM "Category" WHERE "id"=$1 FOR SHARE',input.categoryId);const category=await tx.category.findUnique({where:{id:input.categoryId}});if(!category||input.status==="PUBLISHED"&&!category.active)throw new BluffError("اختر فئة موجودة وفعالة للنشر",400);return tx.bluffQuestion.create({data:input});});return NextResponse.json(row,{status:201,headers:privateHeaders});}catch(error){return bluffResponse(error);}}
