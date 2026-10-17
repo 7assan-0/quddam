@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   candidate-structure:
-    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-followup-20261017' }}
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-focused-browser-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -50,7 +50,7 @@ jobs:
           NODE
 
   original-seed-browser:
-    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-followup-20261017' }}
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-focused-browser-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     defaults:
@@ -63,6 +63,8 @@ jobs:
       PUBLIC_WELCOME_CREDITS_ENABLED: 'true'
       DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect_generate_only
       E2E_REPORT_FILE: playwright-report/survey-original-65-20261017.json
+      E2E_WARMUP_GROUP: survey-history
+      DEBUG: pw:webserver
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
