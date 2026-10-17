@@ -96,6 +96,7 @@ try {
   assert.equal(firstLoad.status(), 200);
   await expect(firstPage.getByTestId("night-public-invitation")).toBeVisible();
   await firstPage.getByLabel("اسمك في الدعوة (بدون بيانات شخصية)").fill("ضيف موجود قبل الإلغاء");
+  await firstPage.getByRole("radio", { name: "توب 100", exact: true }).check();
   const responsePromise = firstPage.waitForResponse(r => r.request().method() === "POST" && new URL(r.url()).pathname === guestApi);
   await firstPage.getByTestId("night-rsvp-submit").click();
   const accepted = await responsePromise;
