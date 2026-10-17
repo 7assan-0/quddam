@@ -31,7 +31,7 @@ describe('M14 authored content boundary',()=>{
   const categories=[...new Set(rows.map(row=>row.categoryId))];
   const complete=categories.filter(categoryId=>[200,400,600].every(pointValue=>rows.some(row=>row.categoryId===categoryId&&row.pointValue===pointValue)));
   expect(complete.length).toBeGreaterThanOrEqual(6);
-  // 72 distinct published questions are enough for one match; the separate
+  // 72 distinct authored questions form a four-per-tier pool for varied 36-cell matches; the separate
   // editorial 96-per-category target remains a warning until authored.
   expect(rows.length).toBe(72);
   for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBe(4);
