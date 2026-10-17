@@ -147,7 +147,7 @@ export function BoardHost({ initial }: { initial: View }) {
     {judgmentFeedback && <div className={`judgment-feedback judgment-feedback--${judgmentFeedback}`} role="status">{judgmentFeedback === "correct" ? "✓ إجابة صحيحة!" : "✕ إجابة غير صحيحة"}</div>}
     {view.status !== "COMPLETED" && <RoomHostPanel sessionId={view.id} />}
 
-    {view.status === "LOBBY" && <section className="panel host-intro"><span className="eyebrow">كل شيء جاهز</span><h2>١٨ سؤالًا ينتظرونكم</h2><p>الفريق الأول يختار السؤال. المضيف يكشف الإجابة ويحكم يدويًا، والنتيجة تحفظ تلقائيًا.</p><button className="btn btn-primary" disabled={busy} onClick={() => send({ type: "START" })}>{busy ? "جارٍ البدء..." : "ابدأ المباراة"}</button></section>}
+    {view.status === "LOBBY" && <section className="panel host-intro"><span className="eyebrow">كل شيء جاهز</span><h2>{format(view.cells.length)} سؤالًا ينتظرونكم</h2><p>الفريق الأول يختار السؤال. المضيف يكشف الإجابة ويحكم يدويًا، والنتيجة تحفظ تلقائيًا.</p><button className="btn btn-primary" disabled={busy} onClick={() => send({ type: "START" })}>{busy ? "جارٍ البدء..." : "ابدأ المباراة"}</button></section>}
 
     {view.status === "COMPLETED" && <section className="panel victory"><span className="eyebrow">{view.endedEarly ? "انتهت المباراة مبكرًا" : "انتهت اللوحة"}</span><h2>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل يستاهل إعادة!"}</h2>
       <p>اللعبة محفوظة في حساب المضيف. مباراة جديدة تعطي الأولوية للأسئلة التي لم تظهر له من قبل.</p>
@@ -193,11 +193,16 @@ export function BoardHost({ initial }: { initial: View }) {
 
       {!active && view.canUndo && <div className="host-actions after-round"><span>حُفظت الجولة. اختروا السؤال التالي.</span></div>}
       <section className="board-section"><div className="section-head"><div><span className="eyebrow">اللوحة</span><h2>{active ? "السؤال المفتوح" : "اختاروا السؤال التالي"}</h2></div><p>القيم الأعلى أصعب، والخانة المستخدمة تختفي من اللعب.</p></div>
-        <div className="board-grid">{view.categories.map((category) => <div className="board-column" key={category.id}><h3>{category.title}</h3>{[200, 400, 600].map((value) => {
-          const cell = view.cells.find((item) => item.categoryId === category.id && item.value === value);
-          return <button key={value} className={`board-cell ${cell?.completed ? "used" : ""}`} disabled={busy || view.status === "PAUSED" || Boolean(active) || cell?.completed}
-            aria-label={`${category.title} ${value}${cell?.completed ? " مستخدم" : ""}`} onClick={() => send({ type: "OPEN", categoryId: category.id, value })}>{cell?.completed ? "✓" : format(value)}</button>;
-        })}</div>)}</div></section>
+        <div className="board-grid">{view.categories.map(category => <div className="board-column" key={category.id}><h3>{category.title}</h3>
+          {view.cells.filter(cell => cell.categoryId === category.id).map(cell => {
+            const numberInLevel = view.cells.filter(item => item.categoryId === category.id && item.value === cell.value)
+              .findIndex(item => item.key === cell.key) + 1;
+            const label = `${category.title} ${cell.value}${numberInLevel > 1 ? ` سؤال ${numberInLevel}` : ""}`;
+            return <button key={cell.key} className={`board-cell ${cell.completed ? "used" : ""}`}
+              disabled={busy || view.status === "PAUSED" || Boolean(active) || cell.completed}
+              aria-label={`${label}${cell.completed ? " مستخدم" : ""}`}
+              onClick={() => send({ type: "OPEN", cellKey: cell.key })}>{cell.completed ? "✓" : format(cell.value)}</button>;
+          })}</div>)}</div></section>
     </>}
   </div>;
 }
