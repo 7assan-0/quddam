@@ -55,7 +55,7 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "تعذّر إلغاء الدعوة.");
       setLink("");
-      setSummary(old => old?.exists ? { ...old, status: "revoked" } : old);
+      setSummary(old => old?.exists ? { ...old, status: "closed" } : old);
       setNotice("أُلغي رابط الدعوة. بقيت إحصاءات الردود القديمة محفوظة، ولا يقبل الرابط ردودًا جديدة.");
     } catch { setNotice("تعذّر تأكيد الإلغاء. حدّث الحالة قبل إعادة المحاولة."); }
     finally { setBusy(false); }
@@ -84,7 +84,7 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       <ul>{summary.votes?.map(v => <li key={v.game}>{v.title}: {v.count} صوت</li>)}</ul>
       <button className="btn btn-outline" type="button" disabled={refreshing} aria-busy={refreshing}
         onClick={() => void refresh()}>تحديث الحضور والتصويت</button>
-      {summary.status === "revoked" && <p role="status" className="form-note">الدعوة ملغاة؛ الرابط القديم غير صالح. نتائج الحضور السابقة للعرض فقط.</p>}
+      {summary.status === "closed" && <p role="status" className="form-note">الدعوة ملغاة؛ الرابط القديم غير صالح. نتائج الحضور السابقة للعرض فقط.</p>}
       {summary.status === "open" && <button className="btn btn-danger" type="button"
         disabled={busy} onClick={() => void revoke()}>إلغاء رابط الدعوة نهائيًا</button>}
       {summary.status === "open" && (link ? <><label htmlFor="night-invite-link">رابط الدعوة — انسخه قبل مغادرة الصفحة</label>
