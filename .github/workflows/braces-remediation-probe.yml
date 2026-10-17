@@ -1,0 +1,139 @@
+name: Braces remediation paths and production closure (no waiver)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/braces-remediation-probe.yml'
+permissions:
+  contents: read
+jobs:
+  latest-fast-glob-probe:
+    if: ${{ github.event.pull_request.head.ref == 'security/braces-path-containment-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Check exact source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Try newer fast-glob without committed changes
+        run: |
+          npm pkg set 'overrides.fast-glob=3.3.3'
+          npm install --package-lock-only --ignore-scripts --no-fund --no-audit
+          npm ci --include=dev --no-fund --no-audit
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const lock=require('./package-lock.json');
+          assert.equal(lock.packages['node_modules/fast-glob'].version,'3.3.3');
+          const fg=lock.packages['node_modules/fast-glob'];
+          const micromatch=lock.packages['node_modules/micromatch'];
+          const braces=lock.packages['node_modules/braces'];
+          console.log('TRIAL_GRAPH='+JSON.stringify({fastGlob:fg.version,fastGlobDeps:fg.dependencies,micromatch:micromatch?.version,micromatchDeps:micromatch?.dependencies,braces:braces?.version,bracesDev:braces?.dev}));
+          NODE
+      - name: Record complete trial audit, with strict advisory assertions
+        run: |
+          set +e
+          npm audit --json > braces-latest-glob-audit.json
+          audit_exit=$?
+          set -e
+          AUDIT_EXIT="$audit_exit" node <<'NODE'
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          const a=JSON.parse(fs.readFileSync('braces-latest-glob-audit.json','utf8'));
+          assert.ok(a.metadata&&a.vulnerabilities&&!a.error,'npm audit API must be readable');
+          const advisories=[...new Set(Object.values(a.vulnerabilities).flatMap(x=>x.via.filter(v=>typeof v==='object').map(v=>v.url)))];
+          console.log('TRIAL_AUDIT_EXIT='+process.env.AUDIT_EXIT);
+          console.log('TRIAL_FINDINGS='+JSON.stringify(Object.entries(a.vulnerabilities).map(([name,v])=>({name,severity:v.severity}))));
+          console.log('TRIAL_ADVISORIES='+JSON.stringify(advisories));
+          if(advisories.some(v=>String(v).includes('GHSA-vfj7-8cjw-p6xm'))) console.log('BRACES_REMAINS_OPEN: latest fast-glob override did not remediate');
+          if(advisories.length===0) console.log('CANDIDATE_NEEDS_SEPARATE_EXACT_HEAD_FULL_REGRESSION');
+          NODE
+      - name: Attach unaltered trial evidence
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: braces-fast-glob-probe-${{ github.run_id }}
+          path: |
+            qalba-platform/package.json
+            qalba-platform/package-lock.json
+            qalba-platform/braces-latest-glob-audit.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  production-closure:
+    if: ${{ github.event.pull_request.head.ref == 'security/braces-path-containment-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Check exact source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Clean production-only install, physically exclude braces
+        env:
+          DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect
+        run: |
+          npm ci --omit=dev --no-fund --no-audit
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const pkg=require('./package.json');
+          assert.equal(pkg.dependencies.next,'16.4.2');
+          assert.equal(pkg.devDependencies['eslint-config-next'],'16.4.2');
+          assert.equal(require('./node_modules/next/package.json').version,'16.4.2');
+          assert.equal(require('./node_modules/@prisma/client/package.json').version,'7.10.0');
+          console.log('Production-only installed runtime package versions verified');
+          NODE
+          if find node_modules -type f -path '*/braces/package.json' -print -quit | grep -q .; then
+            echo 'FAIL: braces physically present in production-only install'
+            exit 1
+          fi
+          echo 'PASS: no braces package in production-only dependency directory'
+          npm ls braces --omit=dev --all
+          npm audit --omit=dev --audit-level=moderate
+          git diff --exit-code -- package.json package-lock.json
+
+  strict-full-audit-still-blocks:
+    if: ${{ github.event.pull_request.head.ref == 'security/braces-path-containment-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Check exact source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Strict full audit — no exception, no suppression
+        run: |
+          npm ci --include=dev --no-fund --no-audit
+          npm audit --audit-level=moderate
