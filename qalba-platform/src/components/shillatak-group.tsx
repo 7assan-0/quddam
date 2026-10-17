@@ -1,4 +1,5 @@
 "use client";
+import { formatNumber } from "@/lib/format-number";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore } from "react";
@@ -60,7 +61,7 @@ export function ShillatakGroup({ initial }: { initial: View }) {
   }
   return <div className="shell" data-testid="shillatak-group">
     <div className="page-title"><span className="eyebrow">مجموعة خاصة · للأعضاء فقط</span><h1>{group.name}</h1>
-      <p>{group.status === "active" ? "شلّة نشطة" : "شلّة مؤرشفة للقراءة فقط"} · {group.members.length} أعضاء · {group.nights.length} سهرات مكتملة</p>
+      <p>{group.status === "active" ? "شلّة نشطة" : "شلّة مؤرشفة للقراءة فقط"} · {formatNumber(group.members.length)} أعضاء · {formatNumber(group.nights.length)} سهرات مكتملة</p>
       <p className="form-note">توقيت عرض المواعيد: {displayTimeZone}</p>
     </div>
     {error && <p role="alert" className="form-error">{error}</p>}
@@ -73,15 +74,15 @@ export function ShillatakGroup({ initial }: { initial: View }) {
         <th scope="col">المركز</th><th scope="col">الفريق الثابت</th><th scope="col">بطولات الليلة</th>
         <th scope="col">النقاط التراكمية</th><th scope="col">السهرات</th>
       </tr></thead><tbody>{group.leaderboard.map(team => <tr key={team.id}>
-        <td>{team.rank}</td><th scope="row">{team.name}</th><td>{team.wins}</td><td>{team.points}</td><td>{team.played}</td>
+        <td>{formatNumber(team.rank)}</td><th scope="row">{team.name}</th><td>{formatNumber(team.wins)}</td><td>{formatNumber(team.points)}</td><td>{formatNumber(team.played)}</td>
       </tr>)}</tbody></table>
       <p className="form-note">كل فريق متعادل في المركز الأول يُحتسب له فوز في السهرة نفسها. هذه إحصاءات فرق وليست انتصارات شخصية لأعضاء الشلّة.</p>
     </section>
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>سجل السهرات</h2>
       {group.nights.length === 0 && <p>لم تُربط سهرة مكتملة بهذه الشلّة بعد.</p>}
       <div className="history-list">{group.nights.map(night => <article key={night.id} className="history-row">
-        <div><strong>سهرة {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(night.recordedAt))}</strong>
-          {night.teams.map(team => <p key={team.id}>{team.name}: {team.points} نقاط {team.champion ? "· بطل الليلة" : ""}</p>)}</div>
+        <div><strong>سهرة {new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(night.recordedAt))}</strong>
+          {night.teams.map(team => <p key={team.id}>{team.name}: {formatNumber(team.points)} نقاط {team.champion ? "· بطل الليلة" : ""}</p>)}</div>
       </article>)}</div>
     </section>
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>أعضاء الشلّة</h2>
@@ -99,14 +100,14 @@ export function ShillatakGroup({ initial }: { initial: View }) {
       <h3>الدعوات النشطة</h3>
       {group.activeInvites.length === 0 && <p>لا توجد روابط عضوية نشطة.</p>}
       {group.activeInvites.map(invite => <div className="history-row" key={invite.id}>
-        <span>دعوة تنتهي {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(invite.expiresAt))}</span>
+        <span>دعوة تنتهي {new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: displayTimeZone }).format(new Date(invite.expiresAt))}</span>
         <button className="btn btn-danger" disabled={busy} onClick={() => void command({ op: "REVOKE", inviteId: invite.id })}>إلغاء الدعوة</button>
       </div>)}
       <h3>إضافة سهرة مكتملة إلى لوحة الشرف</h3>
       <p>نربط السهرة صراحةً إذا كنت مالكها، واكتملت ألعابها الثلاث، وطابق اسمَا الفريقين الفريقين الثابتين هنا. لا يُخصم رصيد عند الربط.</p>
       {group.eligibleNights.length === 0 && <p>لا توجد سهرات مؤهلة غير مرتبطة ضمن أحدث 20 سهرة.</p>}
       {group.eligibleNights.map(night => <div className="history-row" key={night.id}>
-        <span>سهرة مكتملة · {new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeZone: displayTimeZone }).format(new Date(night.createdAt))}</span>
+        <span>سهرة مكتملة · {new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium", timeZone: displayTimeZone }).format(new Date(night.createdAt))}</span>
         <button className="btn btn-primary" disabled={busy} onClick={() => void command({ op: "ATTACH", nightId: night.id })}>سجّل النتيجة</button>
       </div>)}
       <h3>أرشفة الشلّة</h3><p>توقف الدعوات وربط السهرات، وتحفظ السجل للقراءة. ليست حذفًا للبيانات.</p>
