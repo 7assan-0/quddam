@@ -151,3 +151,21 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 :is(.social-timer,.question-timer>span,.display-timer,.forbidden-timer strong,.court-timer,.ordering-timer,.lightning-round-head .timer,.lightning-phone .timer) { color:var(--color-spark-text); }
 .score-feedback,.display-victory::before { color:var(--color-spark-text); }
 .btn-undo { color:var(--color-accent-turquoise); }
+
+/* Simplified one-line mobile navigation; desktop navigation is unchanged. */
+.mobile-nav-actions{display:none}
+@media(max-width:700px){
+.header-inner{min-height:64px;flex-wrap:nowrap!important;padding-block:8px!important;gap:8px}
+.header .nav,.header .nav-actions{display:none!important}
+.header .quddam-brand{font-size:1.3rem;gap:6px}
+.header .quddam-mark{width:32px;height:32px}
+.mobile-nav-actions{display:flex;align-items:center;gap:8px;margin-inline-start:auto;min-width:0}
+.mobile-play{background:var(--color-accent-gold)!important;color:var(--neutral-900)!important;border-color:transparent!important;min-width:64px}
+.mobile-balance{font-size:.75rem;color:var(--neutral-200);white-space:nowrap;text-decoration:underline;text-underline-offset:3px;min-height:44px;display:grid;place-items:center}
+.mobile-menu{position:relative}
+.mobile-menu>summary{list-style:none;cursor:pointer;display:grid;place-items:center;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:1.3rem}
+.mobile-menu>summary::-webkit-details-marker{display:none}
+.mobile-menu>nav{display:grid;position:absolute;inset-inline-end:0;inset-block-start:calc(100% + 8px);width:min(260px,calc(100vw - 28px));max-height:calc(100dvh - 80px);overflow:auto;z-index:var(--z-overlay);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:8px;box-shadow:var(--shadow-lg)}
+.mobile-menu>nav>a,.mobile-menu>nav>button{display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:8px 12px;width:100%;border-radius:var(--radius-sm)}
+.mobile-menu>nav>a:hover{background:var(--neutral-700)}
+}
