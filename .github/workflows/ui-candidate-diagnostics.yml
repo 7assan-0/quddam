@@ -35,14 +35,14 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
-          ref: ceccd1a692c553f0acf97af5184eb22824ed0ba0
+          ref: ec116926156f132048f920a51958bd04c524a602
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24.19.0'
           package-manager-cache: false
       - name: Assert exact UI source
-        run: test "$(git rev-parse HEAD)" = "ceccd1a692c553f0acf97af5184eb22824ed0ba0"
+        run: test "$(git rev-parse HEAD)" = "ec116926156f132048f920a51958bd04c524a602"
       - name: Locked install and synthetic DB preparation
         run: |
           npm ci --include=dev --no-audit --no-fund
@@ -51,6 +51,8 @@ jobs:
           npm run db:seed:content
       - name: Full unit suite (visible diagnostics, no retry)
         id: unit
+        env:
+          APP_URL: http://localhost:3000
         run: npm run test -- --maxWorkers=1 --retry=0 --reporter=verbose
       - name: ESLint
         if: always()
