@@ -151,8 +151,14 @@ try {
   await expect(page.locator(".credit-panel .stat")).toHaveText("3");
   await expect(page.getByText("لم تبدأ أي مباراة بعد.", { exact: false })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 }); await audit(page, "mobile-profile-empty");
-  await page.getByRole("button", { name: "خروج", exact: true }).click();
-  await expect(page.getByRole("link", { name: "دخول", exact: true })).toBeVisible();
+  // The simplified responsive header places logout in the collapsed mobile navigation.
+  const profileMobileMenu = page.locator(".mobile-menu");
+  await profileMobileMenu.locator("summary").click();
+  await expect(profileMobileMenu).toHaveAttribute("open", "");
+  await profileMobileMenu.getByRole("button", { name: "خروج", exact: true }).click();
+  await expect(page).toHaveURL(origin.href);
+  // Verify the session really ended, not merely that the mobile menu changed.
+  await page.goto("/profile"); await expect(page).toHaveURL(/\/login/);
   await page.goto("/login");
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill(email);
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
