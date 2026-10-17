@@ -61,7 +61,7 @@ async function main() {
   async function race(nightId: string, calls: [() => Promise<unknown>, () => Promise<unknown>, () => Promise<unknown>], ordering: string) {
     const barrier = await pool.connect();
     let released = false;
-    let pending: Promise<Settled>[] = [];
+    const pending: Promise<Settled>[] = [];
     try {
       await barrier.query("BEGIN");
       const barrierPid = (await barrier.query<{ pid: number }>("SELECT pg_backend_pid() AS pid")).rows[0].pid;
