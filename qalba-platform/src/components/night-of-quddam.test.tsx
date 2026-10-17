@@ -66,7 +66,7 @@ describe("Night owner interface preserves completion and authority boundaries", 
 
   it("explains the bounded three-game selection, complete rounds and existing credit behavior", () => {
     const html = renderToStaticMarkup(<NightOfQuddamSetup/>);
-    expect(html).toContain("ثلاث ألعاب على الأقل");
+    expect(html).toContain("ثلاث ألعاب محددة");
     for (const game of NIGHT_GAMES) expect(html).toContain(`data-game="${game.game}"`);
     expect(html).toContain("خمس جولات كاملة"); expect(html).toContain("سبع جولات كاملة");
     expect(html).toContain("إنشاء السهرة والتنقل بين مبارياتها لا يخصمان رصيدًا");

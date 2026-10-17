@@ -1,4 +1,5 @@
 "use client";
+import { formatNumber } from "@/lib/format-number";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 type Entry = { id: string; name: string; status: string; role: string; members: number; nights: number };
@@ -38,14 +39,14 @@ export function ShillatakHome({ initial }: { initial: Entry[] }) {
         <input className="input" id="shilla-team-b" maxLength={60} minLength={2} required value={teamB}
           onChange={event => setTeamB(event.target.value)} placeholder="مثلاً: الموج" /></div>
         <p className="form-note">اربط لاحقًا سهرات مكتملة بأسماء الفريقين نفسيهما. لا ننسب فوز الفريق تلقائيًا إلى عضو بعينه.</p>
-        <button className="btn btn-primary" disabled={busy || !name.trim() || !teamA.trim() || !teamB.trim()}>
-          {busy ? "جارٍ الإنشاء…" : "إنشاء الشلّة"}</button>
+        <button className="btn btn-primary" aria-describedby="shilla-create-help" disabled={busy || !name.trim() || !teamA.trim() || !teamB.trim()}>
+          {busy ? "جارٍ الإنشاء…" : "إنشاء الشلّة"}</button><p id="shilla-create-help" className="form-note" role="status">{!name.trim() ? "أدخلوا اسم الشلّة" : !teamA.trim() || !teamB.trim() ? "سمّوا الفريقين للمتابعة" : ""}</p>
       </form>
     </section>
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>شللك الخاصة</h2>
-      {groups.length === 0 && <div className="shilla-empty"><strong>مكان شلّتك جاهز ✨</strong><p>ما انضمّيت لأي شلّة حتى الآن. سمّوا شلّتكم وفريقينكم فوق، وخلو الفوز القادم ينحفظ هنا.</p></div>}
+      {groups.length === 0 && <div className="shilla-empty"><strong>مكان شلّتك جاهز</strong><p>ما انضمّيتوا لأي شلّة حتى الآن. سمّوا شلّتكم وفريقينكم فوق، وخلو الفوز القادم ينحفظ هنا.</p></div>}
       <div className="history-list">{groups.map(group => <article className="history-row" key={group.id}>
-        <span><strong>{group.name}</strong> · {group.role === "OWNER" ? "المنظّم" : "عضو"} · {group.status === "archived" ? "مؤرشفة" : "نشطة"}<p>{group.members} أعضاء · {group.nights} سهرات مكتملة مسجلة</p></span>
+        <span><strong>{group.name}</strong> · {group.role === "OWNER" ? "المنظّم" : "عضو"} · {group.status === "archived" ? "مؤرشفة" : "نشطة"}<p>{formatNumber(group.members)} أعضاء · {formatNumber(group.nights)} سهرات مكتملة مسجلة</p></span>
         <Link className="btn btn-secondary" href={`/shillatak/${group.id}`}>لوحة الشرف</Link>
       </article>)}</div>
     </section>

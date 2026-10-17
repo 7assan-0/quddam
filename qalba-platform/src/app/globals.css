@@ -8,6 +8,7 @@ body { margin:0; background:var(--night); color:var(--ink); font-family:var(--fo
 button,input,select,textarea { font:inherit; }
 button { cursor:pointer; }
 button:disabled { opacity:.5; cursor:not-allowed; }
+.btn-primary:disabled,.btn-primary:disabled:hover { opacity:1; background:var(--neutral-600); color:var(--neutral-200); border-color:var(--neutral-500); box-shadow:none; transform:none; }
 :is(a,button,input,select,textarea,summary,[tabindex]):focus-visible { outline:3px solid var(--color-accent-turquoise); outline-offset:3px; }
 a { color:inherit; text-decoration:none; }
 ::selection { background:var(--lime); color:var(--night); }

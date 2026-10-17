@@ -17,7 +17,7 @@ export function SocialPlayer({ initial }: { initial: SocialView }) {
   const roleVisible = view.phase === "ROLE_REVEAL" || revealedKey === roleKey;
   return <main className="shell social-page social-player" data-phase={view.phase}><div className="page-title"><span className="eyebrow">خارج الجو · الجولة {view.round || 1}</span><h1>حيّاك يا {view.participants.find(p => p.id === self.id)?.name}</h1><p>رمز الغرفة: <strong dir="ltr">{view.code}</strong></p></div>
     {connection && <p className="muted" role="status">{connection}</p>}{error && <p className="form-error" role="alert">{error}</p>}
-    {view.phase === "LOBBY" && <section className="panel"><h2>انتظروا بقية اللاعبين</h2><p>{view.participants.length} / ١٢ انضموا · تبدأ اللعبة عند قرار المضيف.</p></section>}
+    {view.phase === "LOBBY" && <section className="panel"><h2>انتظروا بقية اللاعبين</h2><p>{view.participants.length} / 12 انضموا · تبدأ اللعبة عند قرار المضيف.</p></section>}
     {view.phase !== "LOBBY" && <section className="panel social-role" aria-label="دورك الخاص"><span className="eyebrow">بطاقتك الخاصة</span>
       {roleVisible ? <><h2>{self.role === "OUTSIDER" ? "أنت خارج الجو" : "أنت تعرف الكلمة"}</h2>
         <p>{self.role === "OUTSIDER" ? "راقب الحديث وحاول تخمين الكلمة دون أن ينكشف أمرك." : "ناقشوا الموضوع دون نطق الكلمة مباشرة."}</p>
