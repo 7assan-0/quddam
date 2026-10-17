@@ -66,3 +66,77 @@ jobs:
       - name: Production build (synthetic env)
         if: always()
         run: npm run build
+
+      - name: Install isolated Chromium
+        if: success()
+        run: npx playwright install --with-deps chromium
+      - name: Capture actual synthetic UI and check mobile geometry
+        if: success()
+        env:
+          ENABLE_NIGHT_OF_QUDDAM: 'true'
+          ENABLE_SHILLATAK: 'true'
+        run: |
+          mkdir -p tests/e2e playwright-report/ui-review
+          cat > tests/e2e/qa-ui-review.spec.ts <<'VISUAL_SPEC'
+          import { test, expect } from "@playwright/test";
+          import { mkdir } from "node:fs/promises";
+          const dir = "playwright-report/ui-review";
+          test("actual Quddam UI: responsive pages, game grid and optional TV", async ({ page }) => {
+            test.skip(!process.env.E2E_DATABASE_URL, "Uses disposable synthetic E2E database");
+            await mkdir(dir, { recursive: true });
+            for (const width of [360, 390, 1440]) {
+              await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
+              await page.goto("/");
+              await expect(page.getByRole("heading", { name: /جمعتكم جاهزة/ })).toBeVisible();
+              await page.screenshot({ path: `${dir}/01-home-${width}.png`, fullPage: true });
+              if (width < 400) expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `Home ${width}: no horizontal overflow`).toBeLessThanOrEqual(1);
+            }
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.goto("/register");
+            await page.getByLabel("الاسم").fill("مضيف تجريبي");
+            await page.getByLabel("البريد الإلكتروني").fill(`visual-qa-${Date.now()}@example.test`);
+            await page.getByLabel("كلمة المرور").fill("visual-qa-password-12345");
+            await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+            await page.goto("/games");
+            await expect(page.locator(".game-card")).toHaveCount(10);
+            await page.screenshot({ path: `${dir}/02-library-390.png`, fullPage: true });
+            expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), "Library 390: no horizontal overflow").toBeLessThanOrEqual(1);
+            await page.goto("/shillatak");
+            await expect(page.locator("[data-testid=shillatak-home]")).toBeVisible();
+            await page.screenshot({ path: `${dir}/03-shillatak-390.png`, fullPage: true });
+            await page.goto("/night/new");
+            await page.screenshot({ path: `${dir}/04-night-setup-390.png`, fullPage: true });
+            await page.goto("/games/category-board/new");
+            await expect(page.getByRole("checkbox")).toHaveCount(6);
+            await page.screenshot({ path: `${dir}/05-board-setup-390.png`, fullPage: true });
+            await page.getByLabel("الفريق الأول").fill("فريق المستكشفين المتحمسين أصحاب الاسم الطويل جداً");
+            await page.getByLabel("الفريق الثاني").fill("فريق الأصدقاء المتنافسين المتحمسين من المجلس");
+            for (let i = 0; i < 6; i++) await page.getByRole("checkbox").nth(i).check();
+            await page.getByRole("button", { name: /جهّز اللوحة/ }).click();
+            await expect(page).toHaveURL(/\/play\/[^/]+$/);
+            const id = page.url().split("/").at(-1)!;
+            await page.getByRole("button", { name: "ابدأ المباراة" }).click();
+            await expect(page.locator(".board-column")).toHaveCount(6);
+            for (const width of [360, 390]) {
+              await page.setViewportSize({ width, height: 844 });
+              await page.screenshot({ path: `${dir}/06-board-host-${width}.png`, fullPage: true });
+              expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `Board host ${width}: no horizontal overflow`).toBeLessThanOrEqual(1);
+              const rows = await page.locator(".board-column").evaluateAll(items => items.map(item => Math.round(item.getBoundingClientRect().top)));
+              expect(new Set(rows).size, `Board ${width} should have exactly 2 visible category rows`).toBe(2);
+              expect(rows[0]).toBe(rows[1]); expect(rows[1]).toBe(rows[2]); expect(rows[3]).toBe(rows[4]); expect(rows[4]).toBe(rows[5]);
+            }
+            await page.setViewportSize({ width: 1920, height: 1080 });
+            await page.goto(`/play/${id}/display`);
+            await expect(page.locator(".display-mode")).toBeVisible();
+            await page.screenshot({ path: `${dir}/07-board-tv-1920.png`, fullPage: true });
+          });
+          VISUAL_SPEC
+          npm run test:e2e:db -- tests/e2e/qa-ui-review.spec.ts --workers=1 --retries=0
+      - name: Upload synthetic UI screenshots for visual inspection
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: quddam-ui-screenshots-${{ github.run_id }}
+          path: qalba-platform/playwright-report/ui-review
+          if-no-files-found: warn
+          retention-days: 7
