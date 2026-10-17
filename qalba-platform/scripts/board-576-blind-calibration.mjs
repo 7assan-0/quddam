@@ -6,6 +6,7 @@
  *   node scripts/board-576-blind-calibration.mjs --analyze /private/output/responses.csv
  */
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
 
@@ -67,7 +68,9 @@ if(cmd==="--self-test"){ console.log(JSON.stringify({status:"PASS",humanResponse
 else if(cmd==="--plan") {
   const dir=resolve(process.argv[3]??""); assert.ok(process.argv[3],"Provide a private output directory");
   mkdirSync(dir,{recursive:true,mode:0o700});
-  const ordered=[...assignments].sort((a,b)=>Number(a.session)-Number(b.session)||a.group.localeCompare(b.group)||a.participant_id.localeCompare(b.participant_id)||a.tier.localeCompare(b.tier)||Number(a.question_id.split("-").at(-1))-Number(b.question_id.split("-").at(-1)));
+  // Pseudorandomise each participant/session pack independently; do not present easy/medium/hard in blocks.
+  const shuffleKey=row=>createHash("sha256").update("QUDDAM-BLIND-PILOT-V1|"+row.participant_id+"|"+row.session+"|"+row.question_id).digest("hex");
+  const ordered=[...assignments].sort((a,b)=>Number(a.session)-Number(b.session)||a.group.localeCompare(b.group)||a.participant_id.localeCompare(b.participant_id)||shuffleKey(a).localeCompare(shuffleKey(b)));
   writeFileSync(join(dir,"blind-assignments.csv"),csvWrite(cols.slice(0,5),ordered),{mode:0o600});
   writeFileSync(join(dir,"responses-EMPTY.csv"),csvWrite(cols,ordered.map(r=>({...r,correct:"",seconds_elapsed:"",judge_flag:""}))),{mode:0o600});
   console.log(JSON.stringify({status:"NOT_RUN",questionCount:576,anonymousAssignmentCount:3456,output:dir,note:"Blank responses: do not claim this is a completed human pilot"}));
