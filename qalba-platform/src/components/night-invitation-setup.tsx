@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invitationLocalInstant } from "@/lib/night/invitation-time";
 
-type Summary = { exists: boolean; scheduledAt?: string; timezone?: string;
+type Summary = { exists: boolean; status?: string; scheduledAt?: string; timezone?: string;
   coming?: number; declined?: number; votes?: { game: string; title: string; count: number }[] };
 export function NightInvitationSetup({ nightId }: { nightId: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -37,11 +37,27 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       if (!response.ok) { setNotice(data.error ?? "تعذر إنشاء الدعوة."); return; }
       // Intentionally only held in this browser tab; the database stores its hash.
       setLink(new URL(data.invitation.path, location.origin).href);
-      setSummary({ exists: true, scheduledAt: data.invitation.scheduledAt,
+      setSummary({ exists: true, status: "open", scheduledAt: data.invitation.scheduledAt,
         timezone: data.invitation.timezone, coming: 0, declined: 0,
         votes: [{ game: "top-list", title: "توب 100", count: 0 }, { game: "ordering-challenge", title: "رتّبها", count: 0 }, { game: "survey-show", title: "قالوا الناس", count: 0 }] });
       setNotice("تم إنشاء رابط الدعوة. انسخه الآن واحتفظ به؛ لا يمكن استرجاع نص الرابط من قاعدة البيانات.");
     } catch { setNotice("تعذر إنشاء الدعوة. لا تعاود الطلب قبل تحديث حالة الدعوة."); }
+    finally { setBusy(false); }
+  }
+  async function revoke() {
+    if (busy || summary?.status !== "open" ||
+      !window.confirm("إلغاء رابط دعوة السهرة نهائيًا؟ لن يستطيع أحد فتحه أو الرد عليه، ولن يُنشأ رابط بديل تلقائيًا.")) return;
+    setBusy(true); setNotice("");
+    try {
+      const response = await fetch(`/api/night/${nightId}/invitation`, {
+        method: "DELETE", credentials: "same-origin", cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "تعذّر إلغاء الدعوة.");
+      setLink("");
+      setSummary(old => old?.exists ? { ...old, status: "revoked" } : old);
+      setNotice("أُلغي رابط الدعوة. بقيت إحصاءات الردود القديمة محفوظة، ولا يقبل الرابط ردودًا جديدة.");
+    } catch { setNotice("تعذّر تأكيد الإلغاء. حدّث الحالة قبل إعادة المحاولة."); }
     finally { setBusy(false); }
   }
   async function refresh() {
@@ -68,13 +84,16 @@ export function NightInvitationSetup({ nightId }: { nightId: string }) {
       <ul>{summary.votes?.map(v => <li key={v.game}>{v.title}: {v.count} صوت</li>)}</ul>
       <button className="btn btn-outline" type="button" disabled={refreshing} aria-busy={refreshing}
         onClick={() => void refresh()}>تحديث الحضور والتصويت</button>
-      {link ? <><label htmlFor="night-invite-link">رابط الدعوة — انسخه قبل مغادرة الصفحة</label>
+      {summary.status === "revoked" && <p role="status" className="form-note">الدعوة ملغاة؛ الرابط القديم غير صالح. نتائج الحضور السابقة للعرض فقط.</p>}
+      {summary.status === "open" && <button className="btn btn-danger" type="button"
+        disabled={busy} onClick={() => void revoke()}>إلغاء رابط الدعوة نهائيًا</button>}
+      {summary.status === "open" && (link ? <><label htmlFor="night-invite-link">رابط الدعوة — انسخه قبل مغادرة الصفحة</label>
         <input id="night-invite-link" className="form-input" dir="ltr" readOnly value={link} style={{ width: "100%" }} />
         <button className="btn btn-secondary" type="button" onClick={() => {
           void navigator.clipboard.writeText(link).then(() => setNotice("تم نسخ الرابط؛ شاركه مع الأشخاص المقصودين فقط."),
             () => setNotice("حدد الرابط في الحقل وانسخه يدويًا."));
         }}>نسخ رابط الدعوة</button></> :
-        <p className="form-note">للدعوة رابط سري سبق إنشاؤه. حفاظًا على خصوصيته لم يُخزَّن نصّه؛ استخدم نسختك المحفوظة. لا تنشئ دعوة ثانية لنفس السهرة.</p>}
+        <p className="form-note">للدعوة رابط سري سبق إنشاؤه. حفاظًا على خصوصيته لم يُخزَّن نصّه؛ استخدم نسختك المحفوظة. لا تنشئ دعوة ثانية لنفس السهرة.</p>)}
     </> : summary && !summary.exists ? <>
       <label htmlFor="night-invite-time">موعد السهرة (بحسب توقيت جهازك)</label>
       <input id="night-invite-time" type="datetime-local" className="form-input"
