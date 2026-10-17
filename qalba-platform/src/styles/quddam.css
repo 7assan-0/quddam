@@ -193,3 +193,9 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 .night-transition-scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,680px)}
 .night-transition-team{display:grid;gap:4px;min-width:0;padding:16px;border-radius:var(--radius-md);border-block-start:5px solid var(--team-a);background:var(--neutral-800)}.night-transition-team.night-team-1{border-block-start-color:var(--team-b)}.night-transition-team strong{overflow-wrap:anywhere}.night-transition-team b{font:700 clamp(2rem,5vw,3.5rem) var(--font-numeral)}.night-transition-team small{color:var(--neutral-200)}
 .night-next-button{width:min(100%,420px);min-height:60px;background:var(--color-accent-gold);color:var(--neutral-900)}
+
+/* Front page: one featured game and optional deeper discovery. */
+.quddam-featured-games .game-card-hero{grid-column:span 2;border-color:var(--color-accent-gold);background:var(--neutral-800)}
+.game-card-hero .game-card-copy :is(h2,h3){font-size:clamp(2rem,4vw,3.2rem)}.game-card-hero .btn-primary,.game-card-hero .btn-secondary{background:var(--color-accent-gold);color:var(--neutral-900);border-color:transparent}
+.more-games{margin-block:var(--space-5) var(--space-8)}.more-games>summary{cursor:pointer;display:flex;align-items:center;min-height:48px;font-weight:700;padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius-md)}.more-games[open]>summary{margin-bottom:var(--space-4)}
+@media(max-width:700px){.quddam-featured-games{grid-template-columns:1fr}.quddam-featured-games .game-card-hero{grid-column:auto}}
