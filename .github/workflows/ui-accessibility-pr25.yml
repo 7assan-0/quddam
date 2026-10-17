@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   measured-accessibility:
-    if: ${{ github.event.pull_request.head.ref == 'ui/simplify-20261017' }}
+    if: ${{ (github.event.pull_request.head.ref == 'ui/simplify-20261017' || github.event.pull_request.head.ref == 'integration/pr34-seven-visual-fixes-20261018') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     defaults:

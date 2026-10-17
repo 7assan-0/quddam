@@ -59,7 +59,7 @@ const fingerprint = async client => {
 
 const original = await connect("quddam_arm64_ci");
 try {
-  const baseline = await fingerprint(original);
+  await fingerprint(original);
   if (phase === "before-backup") {
     await original.query("BEGIN");
     try {

@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format-number";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@/lib/auth/session";
@@ -37,6 +38,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <div className="mobile-nav-actions"><Link className="btn btn-primary btn-small mobile-play" href={user ? "/games" : "/#games"}>العب</Link>{user && <Link className="mobile-balance" href="/profile" aria-label={mobileBalance === null ? "الرصيد غير متاح، افتح الملف الشخصي" : `رصيدك: ${mobileBalance} ألعاب`}>{mobileBalance === null ? "رصيدك" : <>رصيدك: <b dir="ltr">{mobileBalance}</b></>}</Link>}<details className="mobile-menu"><summary aria-label="افتح قائمة التنقل">☰</summary><nav aria-label="قائمة الجوال"><Link href={user ? "/games" : "/#games"}>الألعاب</Link>{process.env.ENABLE_NIGHT_OF_QUDDAM === "true" && <Link href="/night">ليلة قدّام</Link>}<Link href="/join">انضم لغرفة</Link><Link href="/#how">كيف نلعب</Link>{user ? <><Link href="/games">مكتبتي</Link><Link href="/profile">حسابي ورصيدي</Link><LogoutButton /></> : <><Link href="/login">دخول</Link><Link href="/register">حساب جديد</Link></>}</nav></details></div>
     </div></header>
     <main id="main-content" tabIndex={-1}>{children}</main>
-    <footer className="footer"><div className="shell footer-inner"><span><Brand /> © {new Date().getFullYear()}</span><span>اللعب يبدأ من هنا · <Link href="/privacy">الخصوصية</Link></span></div></footer>
+    <footer className="footer"><div className="shell footer-inner"><span><Brand /> © {formatNumber(new Date().getFullYear(), { useGrouping: false })}</span><span>اللعب يبدأ من هنا · <Link href="/privacy">الخصوصية</Link></span></div></footer>
   </body></html>;
 }

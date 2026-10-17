@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@/lib/format-number";
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -72,20 +73,21 @@ export function NightOfQuddamSetup() {
 
   const locked = busy || uncertain;
   return <div className="shell" data-testid="night-setup">
-    <div className="page-title"><span className="eyebrow">ليلة قدّام</span><h1>جهّزوا سهرتكم</h1><p>ثلاث ألعاب على الأقل. تتوفر في النسخة الأولى هذه الألعاب الثلاث مع فريقين ثابتين طوال الليلة.</p></div>
+    <div className="page-title"><span className="eyebrow">ليلة قدّام</span><h1>جهّزوا سهرتكم</h1><p>ثلاث ألعاب محددة، وفريقان ثابتان طوال الليلة.</p></div>
     <form className="panel" onSubmit={event => void create(event)} aria-busy={busy}>
       <fieldset disabled={locked} style={{ border: 0, padding: 0, minWidth: 0 }}><legend><h2>اختاروا ترتيب الألعاب</h2></legend>
-        <p id="night-order-help">الألعاب الثلاث مختارة. غيّروا ترتيبها بأزرار التقديم والتأخير قبل إنشاء السهرة.</p>
+        <p id="night-order-help">الألعاب الثلاث مختارة. غيّروا ترتيبها بأزرار التقديم والتأخير قبل إنشاء السهرة.</p><p className="form-note">تُخصم لعبة واحدة عند بدء كل مباراة فقط.</p>
         <ol className="history-list" data-testid="night-game-order" aria-describedby="night-order-help">
           {games.map((slug, index) => {
             const game = NIGHT_GAMES.find(choice => choice.game === slug)!;
-            return <li className="item" key={slug} data-game={slug} style={{ flexWrap: "wrap" }}><div><h3>{game.title}</h3><p>{GAME_CONSTRAINTS[slug]}</p><p>تُخصم لعبة واحدة عند بدء هذه المباراة.</p></div><div className="item-actions"><button className="btn btn-secondary" type="button" disabled={index === 0} aria-label={`قدّم ${game.title} في ترتيب السهرة`} onClick={() => move(index, -1)}>تقديم</button><button className="btn btn-secondary" type="button" disabled={index === games.length - 1} aria-label={`أخّر ${game.title} في ترتيب السهرة`} onClick={() => move(index, 1)}>تأخير</button></div></li>;
+            return <li className="item" key={slug} data-game={slug} style={{ flexWrap: "wrap" }}><div><h3>{game.title}</h3><p>{GAME_CONSTRAINTS[slug]}</p></div><div className="item-actions"><button className="btn btn-secondary" type="button" disabled={index === 0} aria-label={`قدّم ${game.title} في ترتيب السهرة`} onClick={() => move(index, -1)}>تقديم</button><button className="btn btn-secondary" type="button" disabled={index === games.length - 1} aria-label={`أخّر ${game.title} في ترتيب السهرة`} onClick={() => move(index, 1)}>تأخير</button></div></li>;
           })}
         </ol>
       </fieldset>
       <fieldset disabled={locked} style={{ border: 0, padding: 0, minWidth: 0 }}><legend><h2>الفريقان</h2></legend><div className="profile-grid">{teams.map((name, index) => <div className="field" key={index}><label htmlFor={`night-team-${index}`}>اسم الفريق {index === 0 ? "أ" : "ب"}</label><input className="input" id={`night-team-${index}`} data-testid={index === 0 ? "night-team-a" : "night-team-b"} value={name} required minLength={2} maxLength={60} autoComplete="off" onChange={event => setTeams(current => index === 0 ? [event.target.value, current[1]] : [current[0], event.target.value])}/></div>)}</div></fieldset>
-      <p className="form-note">إنشاء السهرة والتنقل بين مبارياتها لا يخصمان رصيدًا. بدء كل مباراة يستهلك لعبة واحدة وفق النظام الحالي؛ تتطلب الليلة ثلاث ألعاب من الرصيد. نتائج السهرة تُقرأ من المباريات المكتملة ولا تُدخل هنا يدويًا.</p>
-      <p className="form-note">أكملوا كل جولات كل مباراة بالترتيب، ثم اضغطوا «أكمل المباراة». إنهاء المباراة مبكرًا أو إعادة المباراة نفسها لا يُعتمد ضمن هذه السهرة. يمكن إنهاء السهرة غير المكتملة دون إعلان بطل.</p>
+      <p className="form-note">تحتاج الليلة رصيد {formatNumber(3)} ألعاب.</p>
+      <ul className="night-setup-rules"><li>إنشاء السهرة والتنقل بين مبارياتها لا يخصمان رصيدًا.</li><li>أكملوا كل جولات المباراة، ثم اضغطوا «أكمل المباراة».</li><li>النتائج تُقرأ تلقائيًا؛ الإنهاء المبكر وإعادة المباراة لا يُعتمدان.</li></ul>
+      <details><summary>تفاصيل إضافية</summary><p>يمكن إنهاء السهرة غير المكتملة دون إعلان بطل.</p></details>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="utility-links"><button className="btn btn-primary" data-testid="night-create" type="submit" disabled={busy || games.length !== 3}>{busy ? "جارٍ إنشاء السهرة…" : uncertain ? "إعادة محاولة إنشاء السهرة" : "أنشئ السهرة"}</button><Link className="btn btn-secondary" href="/night">العودة</Link></div>
     </form>
