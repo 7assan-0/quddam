@@ -151,8 +151,17 @@ try {
   await expect(page.locator(".credit-panel .stat")).toHaveText("3");
   await expect(page.getByText("لم تبدأ أي مباراة بعد.", { exact: false })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 }); await audit(page, "mobile-profile-empty");
-  await page.getByRole("button", { name: "خروج", exact: true }).click();
-  await expect(page.getByRole("link", { name: "دخول", exact: true })).toBeVisible();
+  // At mobile width the authenticated logout control lives inside the collapsed mobile menu.
+  // Exercise the actual accessible mobile control and verify that the signed-in session is gone.
+  await page.locator(".mobile-menu > summary").click();
+  const logoutResponsePromise = page.waitForResponse(response =>
+    new URL(response.url()).pathname === "/api/auth/logout" && response.request().method() === "POST");
+  await page.locator(".mobile-menu nav").getByRole("button", { name: "خروج", exact: true }).click();
+  const logoutResponse = await logoutResponsePromise;
+  assert.equal(logoutResponse.status(), 200);
+  await page.goto("/games");
+  await expect(page).toHaveURL(/\/login/);
+  check("Mobile-menu logout revokes session and protects authenticated library");
   await page.goto("/login");
   await page.getByLabel("البريد الإلكتروني", { exact: true }).fill(email);
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
