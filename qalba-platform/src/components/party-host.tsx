@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format-number";
 "use client";
 import { TeamMarker } from "./team-marker";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import type { PartyAction } from "@/lib/games/party/types";
 
 type View = Awaited<ReturnType<typeof getPartySession>>;
 type Entry = { text: string; value: number };
-const number = (n: number) => new Intl.NumberFormat("ar-SA-u-nu-latn").format(n);
+
 export function PartyHost({ initial }: { initial: View }) {
   const [view, setView] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
   const [teamId, setTeamId] = useState(initial.teams[0]?.id ?? ""), [playerId, setPlayerId] = useState(initial.players[0]?.id ?? ""), [value, setValue] = useState(""), [clock, setClock] = useState(Date.now());
@@ -25,8 +26,8 @@ export function PartyHost({ initial }: { initial: View }) {
   const selector = <select className="input" aria-label="اختر الفريق" value={teamId} onChange={e => setTeamId(e.target.value)}>{view.teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}</select>;
   const playerSelector = <select className="input" aria-label="اختر اللاعب" value={playerId} onChange={e => setPlayerId(e.target.value)}>{view.players.map(player => <option key={player.id} value={player.id}>{player.name}</option>)}</select>;
   const answerField = <input className="input" aria-label="إجابة أو تخمين" value={value} maxLength={300} onChange={e => setValue(e.target.value)} placeholder="اكتب الإجابة هنا" />;
-  const scores = <div className="display-scores" aria-label="النتائج">{view.teams.map((team, index) => <div className="display-team" key={team.id} style={{ borderColor: team.color }}><span><TeamMarker position={index} color={team.color} />{team.name}</span><strong>{number(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{number(player.score)}</strong></div>)}</div>;
-  return <div className="shell section party-host"><div className="page-title"><span className="eyebrow">{view.title} · الجولة {number(Math.min(state.index + 1, state.cards.length))}</span><h1>{phase === "DONE" ? "النتيجة النهائية" : "اقلبوا النتيجة"}</h1></div>
+  const scores = <div className="display-scores" aria-label="النتائج">{view.teams.map((team, index) => <div className="display-team" key={team.id} style={{ borderColor: team.color }}><span><TeamMarker position={index} color={team.color} />{team.name}</span><strong>{formatNumber(team.score)}</strong></div>)}{view.players.map(player => <div className="display-team" key={player.id}><span>{player.name}</span><strong>{formatNumber(player.score)}</strong></div>)}</div>;
+  return <div className="shell section party-host"><div className="page-title"><span className="eyebrow">{view.title} · الجولة {formatNumber(Math.min(state.index + 1, state.cards.length))}</span><h1>{phase === "DONE" ? "النتيجة النهائية" : "اقلبوا النتيجة"}</h1></div>
     {scores}<div className="utility-links"><Link className="btn btn-secondary" href="/games">مكتبة الألعاب</Link><Link className="btn btn-secondary" href={`/play/${view.id}/display`} target="_blank">شاشة العرض</Link>
       {view.status === "LOBBY" && button("ابدأ المباراة", { type: "START" })}
       {active && (phase.startsWith("PAUSED:") ? button("استئناف", { type: "RESUME" }) : button("إيقاف مؤقت", { type: "PAUSE" }))}
@@ -46,7 +47,7 @@ export function PartyHost({ initial }: { initial: View }) {
         {view.slug === "fastest-mind" && Array.isArray(card.options) && <div className="display-options">{(card.options as string[]).map(option => <span key={option}>{option}</span>)}</div>}
         {(view.slug === "top-list" || view.slug === "survey-show") && <div className="display-options">{(card.options as Entry[]).map((entry, index) => <span key={index}>{state.found.includes(index) || state.revealed ? `${entry.text} · ${entry.value}` : "؟"}</span>)}</div>}
         {state.revealed && <p className="answer-reveal">الإجابة: {card.answer}</p>}
-        <div className="party-actions">{button(state.deadlineAt ? "أوقف المؤقت" : "شغّل المؤقت", { type: "TIMER" }, !["QUESTION", "SUBMIT", "VOTE", "ARGUE"].includes(phase))}<strong>الوقت {number(remaining)} ث</strong>{view.slug === "fastest-mind" && state.deadlineAt && remaining <= 0 && button("انتهى الوقت", { type: "TIMEOUT" })}</div>
+        <div className="party-actions">{button(state.deadlineAt ? "أوقف المؤقت" : "شغّل المؤقت", { type: "TIMER" }, !["QUESTION", "SUBMIT", "VOTE", "ARGUE"].includes(phase))}<strong>الوقت {formatNumber(remaining)} ث</strong>{view.slug === "fastest-mind" && state.deadlineAt && remaining <= 0 && button("انتهى الوقت", { type: "TIMEOUT" })}</div>
         {view.slug === "bluff" && <div className="party-actions">{phase === "SUBMIT" && <>{playerSelector}{answerField}{button("سجّل الإجابة المموهة", { type: "FAKE", playerId, value }, !value.trim())}<p>{Object.keys(state.fakes).length} من {state.playerIds.length} أجابوا</p>{button("ابدأ التصويت", { type: "VOTING" }, Object.keys(state.fakes).length !== state.playerIds.length)}</>}
           {phase === "VOTE" && <>{playerSelector}<select className="input" aria-label="اختر الإجابة" value={value} onChange={e => setValue(e.target.value)}><option value="">اختر إجابة</option><option value="correct">{card.answer}</option>{Object.entries(state.fakes).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select>{button("سجّل التصويت", { type: "VOTE", playerId, value }, !value)}<p>{Object.keys(state.votes).length} من {state.playerIds.length} صوتوا</p>{button("اعرض النتيجة", { type: "RESULT" }, Object.keys(state.votes).length !== state.playerIds.length)}</>}
         </div>}
