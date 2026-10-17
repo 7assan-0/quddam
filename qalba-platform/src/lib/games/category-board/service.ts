@@ -29,7 +29,7 @@ export async function createBoardSession(hostId: string, input: { categoryIds: s
   const eligible = await eligibleBoardCategories();
   if (input.categoryIds.length !== 6 || new Set(input.categoryIds).size !== 6 ||
     !input.categoryIds.every((id) => eligible.some((category) => category.id === id))) {
-    throw new GameRuleError("اختر ست فئات لديها أربعة أسئلة منشورة وصالحة على الأقل لكل مستوى: ٢٠٠ و٤٠٠ و٦٠٠", 400);
+    throw new GameRuleError("اختر ست فئات لديها سؤالان منشوران وصالحان على الأقل لكل مستوى: ٢٠٠ و٤٠٠ و٦٠٠", 400);
   }
   if (input.teamNames[0].trim() === input.teamNames[1].trim()) throw new GameRuleError("اختر اسمين مختلفين للفريقين", 400);
   const game = await db().gameType.findUniqueOrThrow({ where: { slug: "category-board" } });
@@ -45,7 +45,7 @@ export async function createBoardSession(hostId: string, input: { categoryIds: s
   const cells = input.categoryIds.flatMap(categoryId => BOARD_VALUES.flatMap(value => {
     const bucket = questions.filter(q => q.categoryId === categoryId && q.pointValue === value);
     if (bucket.length < BOARD_TILES_PER_VALUE)
-      throw new GameRuleError("فئة ناقصة: يلزم أربعة أسئلة مختلفة لكل مستوى. حدّث الصفحة وحاول مجددًا", 409);
+      throw new GameRuleError("فئة ناقصة: يلزم سؤالان مختلفان لكل مستوى. حدّث الصفحة وحاول مجددًا", 409);
     return Array.from({ length: BOARD_TILES_PER_VALUE }, (_, slot) => {
       const chosen = selectQuestion(bucket, history, usedInSession);
       if (!chosen) throw new GameRuleError("محتوى إحدى الفئات لم يعد متاحًا. حدّث الصفحة وحاول مجددًا", 409);
