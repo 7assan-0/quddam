@@ -259,7 +259,7 @@ try {
   step = "library-night-entry"; checkpoint();
   await page.goto(new URL("/games", origin).href);
   step = "library-ten-official-games"; checkpoint();
-  await expect(page.getByRole("article")).toHaveCount(10);
+  await expect(page.locator(".quddam-games .game-card")).toHaveCount(10);
   step = "night-home-navigation"; checkpoint();
   await page.locator(".library-balance").getByRole("link", { name: "ليلة قدّام", exact: true }).click();
   await expect(page.getByTestId("night-home")).toBeVisible();
