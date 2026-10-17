@@ -31,10 +31,12 @@ describe('M14 authored content boundary',()=>{
   const categories=[...new Set(rows.map(row=>row.categoryId))];
   const complete=categories.filter(categoryId=>[200,400,600].every(pointValue=>rows.some(row=>row.categoryId===categoryId&&row.pointValue===pointValue)));
   expect(complete.length).toBeGreaterThanOrEqual(6);
-  // Existing seed quality policy warns when any playable bucket lacks a
-  // second question. Preserve that authored-bank quality without capping it.
-  for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBeGreaterThanOrEqual(2);
-  expect(auditBank('category-board',rows)).toMatchObject({duplicatesFound:0,capacity:'PASS',errors:[],warnings:[]});
+  // 72 distinct published questions are enough for one match; the separate
+  // editorial 96-per-category target remains a warning until authored.
+  expect(rows.length).toBe(72);
+  for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBe(4);
+  expect(auditBank('category-board',rows)).toMatchObject({duplicatesFound:0,capacity:'WARN',errors:[]});
+  expect(auditBank('category-board',rows).warnings.some(issue=>issue.code==='BOARD_96_BANK_NOT_YET_READY')).toBe(true);
  });
  it('blocking database errors fail the command even with clean definitions',()=>{expect(contentValidationExitCode({blockingErrors:0},{blockingErrors:1})).toBe(1);expect(contentValidationExitCode({blockingErrors:1},{blockingErrors:0})).toBe(1);});
  it('warnings remain successful while blocking errors fail',()=>{expect(contentValidationExitCode({blockingErrors:0},null)).toBe(0);});
