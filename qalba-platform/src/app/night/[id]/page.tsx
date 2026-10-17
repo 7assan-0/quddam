@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth/session";
 import { NightOfQuddam } from "@/components/night-of-quddam";
 import { getNightView, NightServiceError } from "@/lib/night/service";
 
-export default async function NightSessionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NightSessionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tv?: string }> }) {
   if (process.env.ENABLE_NIGHT_OF_QUDDAM !== "true") notFound();
   const user = await requireUser();
   const { id } = await params;
@@ -13,5 +13,6 @@ export default async function NightSessionPage({ params }: { params: Promise<{ i
     if (error instanceof NightServiceError && [403, 404].includes(error.status)) notFound();
     throw error;
   }
-  return <NightOfQuddam key={night.id} initial={night} />;
+  const tvMode = (await searchParams).tv === "1" && night.phase === "completed";
+  return <NightOfQuddam key={night.id} initial={night} tvMode={tvMode} />;
 }

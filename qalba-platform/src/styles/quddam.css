@@ -151,3 +151,82 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 :is(.social-timer,.question-timer>span,.display-timer,.forbidden-timer strong,.court-timer,.ordering-timer,.lightning-round-head .timer,.lightning-phone .timer) { color:var(--color-spark-text); }
 .score-feedback,.display-victory::before { color:var(--color-spark-text); }
 .btn-undo { color:var(--color-accent-turquoise); }
+
+/* Simplified one-line mobile navigation; desktop navigation is unchanged. */
+.mobile-nav-actions{display:none}
+@media(max-width:700px){
+.header-inner{min-height:64px;flex-wrap:nowrap!important;padding-block:8px!important;gap:8px}
+.header .nav,.header .nav-actions{display:none!important}
+.header .quddam-brand{font-size:1.3rem;gap:6px}
+.header .quddam-mark{width:32px;height:32px}
+.mobile-nav-actions{display:flex;align-items:center;gap:8px;margin-inline-start:auto;min-width:0}
+.mobile-play{background:var(--color-accent-gold)!important;color:var(--neutral-900)!important;border-color:transparent!important;min-width:64px}
+.mobile-balance{font-size:.75rem;color:var(--neutral-200);white-space:nowrap;text-decoration:underline;text-underline-offset:3px;min-height:44px;display:grid;place-items:center}
+.mobile-menu{position:relative}
+.mobile-menu>summary{list-style:none;cursor:pointer;display:grid;place-items:center;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:1.3rem}
+.mobile-menu>summary::-webkit-details-marker{display:none}
+.mobile-menu>nav{display:grid;position:absolute;inset-inline-end:0;inset-block-start:calc(100% + 8px);width:min(260px,calc(100vw - 28px));max-height:calc(100dvh - 80px);overflow:auto;z-index:var(--z-overlay);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:8px;box-shadow:var(--shadow-lg)}
+.mobile-menu>nav>a,.mobile-menu>nav>button{display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:8px 12px;width:100%;border-radius:var(--radius-sm)}
+.mobile-menu>nav>a:hover{background:var(--neutral-700)}
+}
+
+/* Night champion: celebration first, reports remain available on demand. */
+.night-champion{text-align:center;display:grid;justify-items:center;gap:var(--space-3);padding:clamp(24px,4vw,56px)}
+.night-crown{font-size:clamp(3rem,7vw,5rem);color:var(--color-accent-gold);line-height:1}
+.night-champion h2{font-size:clamp(2.7rem,6vw,5.5rem);margin:0}
+.night-winner-name{font-family:var(--font-display);font-size:clamp(2.4rem,7vw,6rem);line-height:1.3;overflow-wrap:anywhere;margin:0}
+.night-winner-total{font:700 clamp(3rem,8vw,6.5rem)/1 var(--font-numeral);color:var(--color-accent-gold)}
+.night-winner-total small{font:700 1rem var(--font-arabic)}
+.night-ranking-bars{width:min(100%,720px);display:grid;gap:var(--space-3);text-align:start;margin-block:var(--space-4)}
+.night-ranking-row>div:first-child{display:flex;justify-content:space-between;gap:12px;min-width:0}.night-ranking-row strong{overflow-wrap:anywhere}
+.night-ranking-track{height:16px;border-radius:var(--radius-pill);background:var(--neutral-600);overflow:hidden;margin-top:6px}
+.night-ranking-fill{display:block;height:100%;border-radius:inherit;background:var(--team-a)}.night-team-1{background:var(--team-b)}.night-team-2{background:var(--team-d)}
+.night-completed-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.night-completed-badges span{padding:6px 12px;border:1px solid var(--neutral-500);border-radius:var(--radius-pill);font-size:.875rem}
+.night-champion-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:var(--space-4)}
+.night-champion-actions .btn-primary{background:var(--color-accent-gold);color:var(--neutral-900)}
+.night-tv-note{display:none}.night-details{margin-block:var(--space-4)}.night-details>summary{cursor:pointer;min-height:44px;padding:12px;border:1px solid var(--line);border-radius:var(--radius-md);font-weight:700}
+@media(min-width:1700px){body:has([data-tv-mode="true"] .night-champion) .header,body:has([data-tv-mode="true"] .night-champion) .footer{display:none}body:has([data-tv-mode="true"] .night-champion) .night-champion-actions,body:has([data-tv-mode="true"] .night-champion) .night-details,body:has([data-tv-mode="true"] .night-champion) [data-testid="night-highlights"],body:has([data-tv-mode="true"] .night-champion) [data-testid="night-games"],body:has([data-tv-mode="true"] .night-champion) .utility-links{display:none}[data-tv-mode="true"] .night-tv-note{display:block;font-size:1.3rem;color:var(--neutral-200)}}
+
+.night-transition{text-align:center;display:grid;justify-items:center;gap:var(--space-4)}
+.night-progress{display:flex;align-items:start;justify-content:center;gap:clamp(12px,3vw,40px);padding:0;margin:var(--space-3) 0;list-style:none;width:100%}
+.night-progress li{display:grid;justify-items:center;gap:4px;min-width:0;flex:1;max-width:160px}.night-progress span{font-size:clamp(2rem,5vw,3.2rem);color:var(--color-accent-gold);line-height:1}.night-progress small{color:var(--neutral-200);font-size:.85rem;overflow-wrap:anywhere}
+.night-transition-scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,680px)}
+.night-transition-team{display:grid;gap:4px;min-width:0;padding:16px;border-radius:var(--radius-md);border-block-start:5px solid var(--team-a);background:var(--neutral-800)}.night-transition-team.night-team-1{border-block-start-color:var(--team-b)}.night-transition-team strong{overflow-wrap:anywhere}.night-transition-team b{font:700 clamp(2rem,5vw,3.5rem) var(--font-numeral)}.night-transition-team small{color:var(--neutral-200)}
+.night-next-button{width:min(100%,420px);min-height:60px;background:var(--color-accent-gold);color:var(--neutral-900)}
+
+/* Front page: one featured game and optional deeper discovery. */
+.quddam-featured-games .game-card-hero{grid-column:span 2;border-color:var(--color-accent-gold);background:var(--neutral-800)}
+.game-card-hero .game-card-copy :is(h2,h3){font-size:clamp(2rem,4vw,3.2rem)}.game-card-hero .btn-primary,.game-card-hero .btn-secondary{background:var(--color-accent-gold);color:var(--neutral-900);border-color:transparent}
+.more-games{margin-block:var(--space-5) var(--space-8)}.more-games>summary{cursor:pointer;display:flex;align-items:center;min-height:48px;font-weight:700;padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius-md)}.more-games[open]>summary{margin-bottom:var(--space-4)}
+@media(max-width:700px){.quddam-featured-games{grid-template-columns:1fr}.quddam-featured-games .game-card-hero{grid-column:auto}}
+
+/* Six board categories visible at once on phones (3 x 2, no horizontal scroll). */
+@media(max-width:650px){
+.host-game .board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow-x:visible;padding-bottom:0;gap:8px}
+.host-game .board-column{min-width:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(44px,auto);gap:3px}
+.host-game .board-column h3{font-size:clamp(.75rem,2.8vw,1rem);line-height:1.35;min-height:48px;overflow-wrap:anywhere;padding:4px}
+.host-game .board-cell{min-width:0;min-height:44px;font-size:clamp(.85rem,3.3vw,1.2rem);padding:2px}
+.host-game .team-score{min-width:0;gap:5px;padding:8px;flex-wrap:wrap}
+.host-game .team-score>div{min-width:0;flex:1 1 60%;overflow:hidden}
+.host-game .team-score strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:normal;word-break:normal;line-height:1.4}
+.host-game .team-score b{font-size:1.5rem}
+}
+
+.shilla-team-dot{display:inline-block;vertical-align:middle;width:14px;height:14px;border-radius:50%;margin-inline-end:6px;border:2px solid var(--color-bg)}.shilla-team-dot-a{background:var(--team-a)}.shilla-team-dot-b{background:var(--team-b)}
+.shilla-empty{padding:var(--space-6);border:1px dashed var(--neutral-500);border-radius:var(--radius-md);background:var(--neutral-800);text-align:center}.shilla-empty strong{font-size:1.25rem}.shilla-empty p{color:var(--neutral-200);margin-block-end:0}
+.score-editor-details{margin-block:var(--space-5);border:1px solid var(--line);border-radius:var(--radius-md);padding:8px 12px}.score-editor-details>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.score-editor-details .score-editor{margin:12px 0}
+
+/* TV presentation hides host-only controls and the verbose history, not the celebration. */
+@media(min-width:1700px){
+[data-tv-mode="true"]>.page-title,
+[data-tv-mode="true"]>.panel:has([data-testid="night-games"]),
+[data-tv-mode="true"] .night-results-fold{display:none}
+}
+
+/* Balanced desktop hero: featured board beside two stacked games, no orphaned card. */
+@media(min-width:701px){
+.quddam-featured-games:has(>.game-card-hero){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-items:stretch}
+.quddam-featured-games>.game-card-hero{grid-column:1;grid-row:1 / span 2}
+.quddam-featured-games:has(>.game-card-hero)>.game-card:not(.game-card-hero){grid-column:2}
+}
+@media(max-width:700px){.quddam-featured-games>.game-card-hero,.quddam-featured-games>.game-card:not(.game-card-hero){grid-column:auto;grid-row:auto}}

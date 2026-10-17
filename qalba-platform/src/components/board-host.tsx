@@ -1,6 +1,5 @@
 "use client";
 import { TeamMarker } from "./team-marker";
-import { RematchCopy } from "./cta-copy";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -151,10 +150,10 @@ export function BoardHost({ initial }: { initial: View }) {
 
     {view.status === "COMPLETED" && <section className="panel victory"><span className="eyebrow">{view.endedEarly ? "انتهت المباراة مبكرًا" : "انتهت اللوحة"}</span><h2>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل يستاهل إعادة!"}</h2>
       <p>اللعبة محفوظة في حساب المضيف. مباراة جديدة تعطي الأولوية للأسئلة التي لم تظهر له من قبل.</p>
-      {scoreEditor}<div className="host-actions"><Link className="btn btn-primary" href={`/games/category-board/new?rematch=${view.id}`}><RematchCopy previous="إعادة المباراة"/></Link>
+      <div className="host-actions"><Link className="btn btn-primary" href={`/games/category-board/new?rematch=${view.id}`}>جولة ثانية؟ قدّام!</Link>
         <button className="btn btn-secondary" disabled={displayBusy} onClick={openTv}>فتح شاشة العرض</button>
         {view.displayAccess.active && <button className="btn btn-outline" disabled={displayBusy} onClick={revokeTv}>إلغاء رابط العرض</button>}
-        <button className="btn btn-outline" disabled={busy || !view.canUndo} onClick={() => send({ type: "UNDO" })}>تراجع عن آخر تغيير</button></div></section>}
+        <button className="btn btn-outline" disabled={busy || !view.canUndo} onClick={() => send({ type: "UNDO" })}>تراجع عن آخر تغيير</button></div><details className="score-editor-details"><summary>تعديل النقاط</summary>{scoreEditor}</details></section>}
 
     {(view.status === "IN_PROGRESS" || view.status === "PAUSED") && <>
       <section className="host-toolbar" aria-label="إدارة المباراة"><div className="host-actions">

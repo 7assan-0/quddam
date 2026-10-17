@@ -42,6 +42,20 @@ describe("Night owner interface preserves completion and authority boundaries", 
     expect(html).not.toContain('data-testid="night-end"');
   });
 
+  it("keeps owner controls on large ordinary desktop, and gates TV presentation explicitly", () => {
+    const complete = fixture("completed", 3);
+    const owner = renderToStaticMarkup(<NightOfQuddam initial={complete}/>);
+    expect(owner).not.toContain('data-tv-mode="true"');
+    expect(owner).toContain('data-testid="night-tv-link"');
+    expect(owner).toContain('/night/night-1?tv=1');
+    expect(owner).toContain('data-testid="night-share-card"');
+    const tv = renderToStaticMarkup(<NightOfQuddam initial={complete} tvMode/>);
+    expect(tv).toContain('data-tv-mode="true"');
+    expect(tv).toContain('data-testid="night-champion"');
+    const unfinished = renderToStaticMarkup(<NightOfQuddam initial={fixture("playing", 1)} tvMode/>);
+    expect(unfinished).not.toContain('data-tv-mode="true"');
+  });
+
   it("shows verified highlights and a private share card only after complete results", () => {
     const complete = renderToStaticMarkup(<NightOfQuddam initial={fixture("completed", 3)}/>);
     expect(complete).toContain('data-testid="night-highlights"');

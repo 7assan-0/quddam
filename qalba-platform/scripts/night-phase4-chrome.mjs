@@ -259,7 +259,7 @@ try {
   step = "library-night-entry"; checkpoint();
   await page.goto(new URL("/games", origin).href);
   step = "library-ten-official-games"; checkpoint();
-  await expect(page.getByRole("article")).toHaveCount(10);
+  await expect(page.locator(".quddam-games .game-card")).toHaveCount(10);
   step = "night-home-navigation"; checkpoint();
   await page.locator(".library-balance").getByRole("link", { name: "ليلة قدّام", exact: true }).click();
   await expect(page.getByTestId("night-home")).toBeVisible();
@@ -397,6 +397,16 @@ try {
     check(`game-${index + 1}-result-imported-from-completed-canonical-engine`);
     check(`game-${index + 1}-exactly-one-credit-and-zero-night-debits`, await wallet() === before - index - 1);
     await captureNight(page, `0${index + 2}-after-game`);
+    if (index < 2) {
+      // Genuine persisted Night transition on both phone and desktop, no fake responses.
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await expect(page.getByTestId("night-transition")).toBeVisible();
+        check(`transition-${index + 1}-no-overflow-${width}`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        await page.getByTestId("night-transition").screenshot({ path: join(evidence, `transition-${index + 1}-${width}.png`) });
+      }
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
     await page.reload();
     const restored = await nightRead(page, id);
     assert.deepEqual(restored.teams, imported.teams);
@@ -448,9 +458,31 @@ try {
   check("anonymous-share-card-http-denied", (await anonymousCard.request.get(new URL(`/api/night/${id}/share-card`, origin).href)).status() === 401);
   await anonymousCard.close();
   await captureNight(page, "05-champion");
+  step = "completed-night-owner-desktop-vs-explicit-tv"; checkpoint();
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(new URL(`/night/${id}`, origin).href);
+  await expect(page.getByTestId("night-champion")).toBeVisible();
+  await expect(page.locator(".header")).toBeVisible();
+  await expect(page.locator(".night-champion-actions")).toBeVisible();
+  await expect(page.locator(".night-tv-note")).toBeHidden();
+  await page.getByTestId("night-champion").screenshot({ path: join(evidence, "champion-owner-1920.png") });
+  await page.getByTestId("night-tv-link").click();
+  await expect(page.getByTestId("night-dashboard")).toHaveAttribute("data-tv-mode", "true");
+  check("explicit-tv-url", new URL(page.url()).searchParams.get("tv") === "1");
+  await expect(page.locator(".header")).toBeHidden();
+  await expect(page.locator(".night-champion-actions")).toBeHidden();
+  await expect(page.locator(".night-tv-note")).toBeVisible();
+  await page.getByTestId("night-champion").screenshot({ path: join(evidence, "champion-tv-1920.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(new URL(`/night/${id}`, origin).href);
+  await expect(page.getByTestId("night-champion")).toBeVisible();
+  check("champion-phone-no-horizontal-overflow", await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await page.getByTestId("night-champion").screenshot({ path: join(evidence, "champion-owner-390.png") });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  check("ordinary-wide-screen-retains-owner-controls");
   step = "end-an-unfinished-night-through-the-real-ui"; checkpoint();
   const balanceBeforeEnding = await wallet();
-  await page.getByRole("link", { name: "ابدأ سهرة جديدة", exact: true }).click();
+  await page.getByRole("link", { name: /^(?:ابدأ )?سهرة جديدة$/ }).click();
   await expect(page.getByTestId("night-setup")).toBeVisible();
   const extra = await clickMutation(page, page.getByTestId("night-create"), "/api/night", 201);
   await expect(page.getByTestId("night-dashboard")).toHaveAttribute("data-phase", "preparing");

@@ -15,8 +15,8 @@ export const dynamic = "force-dynamic";
 /** Arabic word order must be explicit: Satori ignores direction:rtl for text. */
 function CardText({ text, style }: { text: string; style?: CSSProperties }) {
   return <div lang="ar" data-card-rtl="true" style={{ display: "flex", flexDirection: "row-reverse",
-    flexWrap: "wrap", alignItems: "center", alignContent: "flex-start", columnGap: 7,
-    width: "100%", lineHeight: 1.35, ...style }}>
+    flexWrap: "wrap", alignItems: "center", alignContent: "flex-start", columnGap: 3,
+    width: "auto", maxWidth: "100%", lineHeight: 1.25, ...style }}>
     {cardTextRuns(text).map((run, index) => <span key={index} style={{ maxWidth: "100%", wordBreak: "break-all" }}>{run}</span>)}
   </div>;
 }
@@ -36,24 +36,24 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const fallbackUsed = recap.ranking.some(team => localCardName(team.name) !== team.name);
     const championLength = championNames.join(" و ").length;
     const maxNameLength = Math.max(...recap.ranking.map(team => localCardName(team.name).length));
-    const championFontSize = championLength > 240 ? 12 : championLength > 120 ? 22 : 30;
-    const rowFontSize = maxNameLength > 240 ? 12 : maxNameLength > 120 ? 18 : 25;
+    const championFontSize = championLength > 240 ? 12 : championLength > 120 ? 24 : 42;
+    const rowFontSize = maxNameLength > 240 ? 12 : maxNameLength > 120 ? 20 : 29;
     const image = new ImageResponse(
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column",
-        padding: 48, background: "#0A2B22", color: "#FFFDF5", fontFamily: "Local Lalezar",
+        padding: "34px 48px", background: "#0A2B22", color: "#FFFDF5", fontFamily: "Local Lalezar",
         direction: "rtl", justifyContent: "space-between" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <CardText text="قدّام · ليلة تستاهل تنعاد" style={{ fontSize: 30, color: "#FFD21F" }}/>
-          <CardText text={recap.championNames.length > 1 ? "أبطال الليلة" : "بطل الليلة"} style={{ fontSize: 46 }}/>
+          <CardText text={recap.championNames.length > 1 ? "أبطال الليلة" : "بطل الليلة"} style={{ fontSize: 56 }}/>
           <CardText text={championNames.join(" و ")} style={{ fontSize: championFontSize, color: "#FFD21F" }}/>
           <CardText text={`النتيجة النهائية بعد ${recap.played} ألعاب مكتملة`} style={{ fontSize: 21, color: "#C7D8D0" }}/>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {recap.ranking.map(team =>
             <div key={team.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row-reverse",
-              background: "#153E32", borderRadius: 12, padding: "10px 18px", fontSize: rowFontSize, gap: 18 }}>
-              <CardText text={`${1 + recap.ranking.filter(other => other.points > team.points).length}. ${localCardName(team.name)}`} style={{ maxWidth: 850, lineHeight: 1.3 }}/>
-              <CardText text={`${team.points} نقاط`} style={{ color: "#FFD21F", width: 100, flexShrink: 0 }}/>
+              background: "#153E32", borderRadius: 12, padding: "10px 18px", fontSize: rowFontSize, gap: 12 }}>
+              <CardText text={`${1 + recap.ranking.filter(other => other.points > team.points).length}. ${localCardName(team.name)}`} style={{ flex: 1, minWidth: 0, lineHeight: 1.25 }}/>
+              <CardText text={`${team.points} نقاط`} style={{ color: "#FFD21F", flexShrink: 0, fontSize: rowFontSize }}/>
             </div>)}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", color: "#D5E9DF", fontSize: 18 }}>
