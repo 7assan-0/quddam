@@ -1,0 +1,99 @@
+name: PR16 selector parser compatibility probe (owner-label only)
+on:
+  pull_request:
+    types: [labeled]
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: ${{ github.event.label.name == 'pr16-selector-probe-approved' && github.event.pull_request.head.ref == 'security/pr16-audit-remediation-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      # Prisma generate validates URL presence but never connects to this nonexistent DB.
+      DATABASE_URL: postgresql://probe:probe@127.0.0.1:65432/never_connect_ci
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Identify exact source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          node -v
+          npm -v
+          echo "SOURCE_SHA=$EXPECTED_SHA"
+      - name: Resolve candidate lockfile in workspace, never auto-push
+        run: |
+          cp package-lock.json /tmp/pr16-original-lock.json
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cmp /tmp/pr16-original-lock.json package-lock.json || { echo "Committed lockfile differs from npm's resolution"; exit 1; }
+          node <<'NODE'
+          const fs=require('node:fs'), crypto=require('node:crypto');
+          const old=JSON.parse(fs.readFileSync('/tmp/pr16-original-lock.json','utf8')), after=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const keys=new Set([...Object.keys(old.packages),...Object.keys(after.packages)]);
+          const changes=[...keys].sort().filter(k=>JSON.stringify(old.packages[k])!==JSON.stringify(after.packages[k])).map(k=>({key:k,before:old.packages[k]??null,after:after.packages[k]??null}));
+          console.log('LOCK_DELTA_JSON_START'); console.log(JSON.stringify({lockVersion:after.lockfileVersion,changes})); console.log('LOCK_DELTA_JSON_END');
+          console.log('LOCK_SHA256='+crypto.createHash('sha256').update(fs.readFileSync('package-lock.json')).digest('hex'));
+          fs.writeFileSync('pr16-lock-delta.json',JSON.stringify({lockVersion:after.lockfileVersion,changes},null,2)+'\n');
+          NODE
+      - name: Clean lockfile install and dependency graph
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm ls postcss-selector-parser tailwindcss postcss-nested braces --all --json > pr16-dependency-tree.json || true
+          npm ls postcss-selector-parser --all
+          node -e "const p=require('./node_modules/postcss-selector-parser/package.json'); if(p.version!=='7.1.6') process.exit(1);"
+      - name: Verify patched advisory eliminated and production audit clean
+        run: |
+          npm audit --omit=dev --json > pr16-production-audit.json
+          set +e
+          npm audit --json > pr16-full-audit.json
+          audit_exit=$?
+          set -e
+          echo "FULL_AUDIT_EXIT=$audit_exit (braces remains unpatched; not suppressed)"
+          node <<'NODE'
+          const report=require('./pr16-full-audit.json');
+          const findings=Object.entries(report.vulnerabilities??{});
+          console.log('FULL_AUDIT_FINDINGS='+JSON.stringify(findings.map(([name,item])=>({name,severity:item.severity,via:item.via.map(v=>typeof v==='string'?v:v.url)}))));
+          const selector=findings.filter(([name,item])=>name==='postcss-selector-parser'||item.via.some(v=>typeof v!=='string'&&String(v.url).includes('GHSA-rj75-hqrm-r3gf')));
+          if(selector.length) throw new Error('Patched selector parser still audited');
+          const braces=findings.find(([name])=>name==='braces');
+          if(!braces) console.log('BRACES_ADVISORY_NO_LONGER_PRESENT_IN_LIVE_AUDIT');
+          else console.log('BRACES_ADVISORY_REMAINS_DISCLOSED');
+          const others=findings.filter(([name,item])=>item.via.some(v=>typeof v!=='string'&&String(v.url).includes('GHSA-rj75-hqrm-r3gf')));
+          if(others.length) throw new Error('Selector advisory propagated');
+          NODE
+      - name: Full existing regression gates
+        run: |
+          npm run db:generate
+          npm run test -- --maxWorkers=1 --retry=0
+          node node_modules/next/dist/bin/next typegen
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Save scoped diagnostic evidence and candidate lock
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: pr16-selector-candidate-${{ github.run_id }}
+          path: |
+            qalba-platform/package.json
+            qalba-platform/package-lock.json
+            qalba-platform/pr16-lock-delta.json
+            qalba-platform/pr16-production-audit.json
+            qalba-platform/pr16-full-audit.json
+            qalba-platform/pr16-dependency-tree.json
+          if-no-files-found: warn
+          retention-days: 7
