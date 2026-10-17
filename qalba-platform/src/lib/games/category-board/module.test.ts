@@ -87,6 +87,22 @@ describe("Category Board decisions", () => {
     expect(decideBoard(paused, { type: "TIMER_START" }, now).state.active?.deadlineAt).toBe("2026-01-01T12:00:40.000Z");
   });
 
+  it("stays in progress after 18 cells and completes only after all 36", () => {
+    let state = decideBoard(fixture(), { type: "START" }, now).state;
+    expect(state.cells).toHaveLength(36);
+    const tiles = [...state.cells];
+    for (const [index, cell] of tiles.entries()) {
+      state = decideBoard(state, { type: "OPEN", cellKey: cell.key }, now).state;
+      state = decideBoard(state, { type: "SKIP" }, now).state;
+      if (index === 17) {
+        expect(state.completed).toBe(false);
+        expect(state.cells.filter(item => item.completed)).toHaveLength(18);
+      }
+      if (index < 35) expect(state.completed).toBe(false);
+    }
+    expect(state.completed).toBe(true);
+    expect(new Set(tiles.map(cell => cell.questionId)).size).toBe(36);
+  });
   it("ends only after all 36 distinct cells, then permits undo of the last result", () => {
     let state = decideBoard(fixture(), { type: "START" }, now).state;
     expect(state.cells).toHaveLength(BOARD_TOTAL_CELLS);
