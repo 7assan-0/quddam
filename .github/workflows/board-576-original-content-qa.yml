@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   source-quality:
-    if: ${{ github.event.pull_request.head.ref == 'content/board-576-original-curation-20261017' }}
+    if: ${{ github.event.pull_request.head.ref == 'content/board-576-final-gates-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     defaults:
@@ -61,7 +61,7 @@ jobs:
           echo "BOARD_576_SOURCE_BINDING_PASS"
 
   native-postgres17-seed:
-    if: ${{ github.event.pull_request.head.ref == 'content/board-576-original-curation-20261017' }}
+    if: ${{ github.event.pull_request.head.ref == 'content/board-576-final-gates-20261017' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     services:
