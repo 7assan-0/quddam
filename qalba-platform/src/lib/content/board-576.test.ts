@@ -80,6 +80,41 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
       expect(cells[12]).toBe("");
     }
   });
+  it("retains fact-corrected source rows and never reintroduces the known incorrect science premise", () => {
+    const confirmed: ReadonlyArray<readonly [number, string, string]> = [
+      [169, "ما المدينة الساحلية الواقعة جنوب الدمام والمعروفة بكورنيشها على الخليج العربي؟", "الخبر"],
+      [220, "ما اسم موقع اليونسكو السعودي الذي يجمع نقوش جبل أم سنمان في جبة وجبلي المنجور وراط في الشويمس؟", "الفنون الصخرية في منطقة حائل"],
+      [259, "ما اسم الخط الذي يجب أن تعبره الكرة كاملة بين القائمين وتحت العارضة حتى يُحتسب الهدف؟", "خط المرمى"],
+      [269, "ما اسم المخالفة عند تدخل لاعب في اللعب وهو في موضع متقدم غير مشروع لحظة لمس زميله الكرة وفق شروط القانون 11؟", "التسلل"],
+      [393, "ما اسم الطاقة التي يطلقها بخار الماء إلى الوسط عند تكاثفه إلى سائل عند درجة حرارة ثابتة؟", "الحرارة الكامنة للتكاثف"],
+      [465, "ما اسم بروتوكول الأوامر المصمم لوحدات التخزين غير المتطايرة المتصلة غالبًا عبر PCIe؟", "NVMe"],
+      [524, "ما اسم تقليل مساحة الهجوم بإيقاف الخدمات غير الضرورية وإزالة الإعدادات الافتراضية غير الآمنة؟", "تحصين النظام"],
+      [552, "ما اسم الثغرة الناتجة عن تغيّر حالة المورد بين التحقق من صلاحية استخدامه ولحظة استعماله؟", "TOCTOU"],
+      [562, "ما المصطلح المختصر لرمز يُحسب من رسالة ومفتاح سري مشترك للتحقق من أصالة المصدر وسلامة البيانات؟", "MAC"],
+    ];
+    for (const [id, question, answer] of confirmed) {
+      expect(boardSamples[id - 1][1], "question seed-category-" + id).toBe(question);
+      expect(boardSamples[id - 1][2], "answer seed-category-" + id).toBe(answer);
+    }
+    expect(boardSamples[392][1]).not.toContain("تقل فيها الطاقة الحركية");
+  });
+  it("synchronizes the assistant screening ledger while withholding all independent editorial and playtest approvals", () => {
+    const csv = readFileSync(new URL("../../../content-review/2026-10-17/Board_576_Item_Review.csv", import.meta.url), "utf8");
+    const lines = csv.trimEnd().split(/\r?\n/);
+    const parse = (line: string) => [...line.matchAll(/"((?:[^"]|"")*)"(?:,|$)/g)].map(m => m[1].replace(/""/g, '"'));
+    const keys = parse(lines[0]), records = lines.slice(1).map(line => Object.fromEntries(parse(line).map((v, i) => [keys[i], v])));
+    expect(records).toHaveLength(576);
+    expect(records.filter(row => row.assistant_correction_note)).toHaveLength(23);
+    expect(records.filter(row => row.review_priority === "HIGH" && row.difficulty_review === "RECOMMENDED_TIER_RECHECK")).toHaveLength(30);
+    for (const row of records) {
+      expect(row.assistant_screening).toBe("ASSISTANT_SCREENED_NOT_INDEPENDENT");
+      expect(row.editorial_status).toBe("PENDING_INDEPENDENT_ITEM_REVIEW");
+      expect(row.factual_review).toBe("PENDING_INDEPENDENT_FACTCHECK");
+      expect(row.spoken_playtest).toBe("NOT_RUN");
+      expect(row.reviewer).toBe("");
+      expect(row.reviewed_at).toBe("");
+    }
+  });
   it("passes the real source validation (not just a synthetic standalone CSV tally)", () => {
     const rows = sourceBanks()["category-board"];
     expect(rows).toHaveLength(576);
