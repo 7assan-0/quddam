@@ -10,7 +10,7 @@ import { remainingOnClient, serverOffsetMs } from "@/lib/games/category-board/cl
 import { DISPLAY_COMPLETED_GRACE_MS, displayWatchFinished } from "@/lib/games/category-board/display-policy";
 
 type View = Awaited<ReturnType<typeof getBoardSession>>;
-const number = (value: number) => new Intl.NumberFormat("ar-SA-u-nu-latn").format(value);
+import { formatNumber } from "@/lib/format-number";
 
 export function BoardDisplay({ initial, displayToken }: { initial: View; displayToken?: string }) {
   const [view, setView] = useState(initial);
@@ -40,7 +40,7 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
         viewRef.current = current;
         const increased = current.teams.find((team) => team.score > (previous.teams.find((prior) => prior.id === team.id)?.score ?? team.score));
         const message = current.lastCommandType === "CORRECT" && increased
-          ? `إجابة صحيحة · +${number(increased.score - (previous.teams.find((team) => team.id === increased.id)?.score ?? 0))}`
+          ? `إجابة صحيحة · +${formatNumber(increased.score - (previous.teams.find((team) => team.id === increased.id)?.score ?? 0))}`
           : current.lastCommandType === "WRONG" && current.active?.phase === "STEAL" ? "إجابة خاطئة · فرصة سرقة"
           : current.lastCommandType === "WRONG" ? "إجابة خاطئة"
           : current.lastCommandType === "EDIT_SCORE" ? "تعديل النقاط" : "";
@@ -91,27 +91,27 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
   const winners = view.teams.filter((item) => item.score === Math.max(...view.teams.map((entry) => entry.score)));
   const seconds = active ? Math.ceil((clock ? remainingOnClient(active.deadlineAt, active.remainingMs, clock, serverOffset) : active.remainingMs) / 1000) : 0;
   return <div className="display-mode" aria-label="شاشة عرض لوحة التحدي">
-    <div className="display-top"><div><span className="display-brand"><Brand/></span><span className="display-caption">لوحة التحدي · الجولة {number(view.round)}</span></div>
+    <div className="display-top"><div><span className="display-brand"><Brand/></span><span className="display-caption">لوحة التحدي · {view.round === 0 ? "قبل الجولة الأولى" : `الجولة ${formatNumber(view.round)}`}</span></div>
       <div className="display-status">{view.status === "PAUSED" ? "المباراة متوقفة" : view.status === "COMPLETED" ? "النتيجة النهائية" : view.status === "LOBBY" ? "في انتظار البداية" : "المباراة مستمرة"}</div>
       <button className="display-fullscreen" onClick={toggleFullscreen}>{fullscreen ? "الخروج من ملء الشاشة" : "ملء الشاشة"}</button></div>
     {connection && <p className="display-connection" role="status">{connection}</p>}
     {feedback && <p className="display-connection" role="status">{feedback}</p>}
     <div className="display-scores">{view.teams.map((item) => <div key={item.id} className={`display-team ${item.id === activeTeamId && view.status !== "COMPLETED" ? "display-team--active" : ""}`} style={{ borderColor: item.color }}><div><span><TeamMarker position={item.position} color={item.color} />{item.name}</span>{item.id === activeTeamId && view.status !== "COMPLETED" && <small className="display-team-status">الدور الآن</small>}</div><AnimatedScore value={item.score} /></div>)}</div>
     {view.status === "COMPLETED" ? <section className="display-center display-victory"><span>انتهت المباراة</span><h1>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل!"}</h1><p>{view.endedEarly ? "النتيجة عند إنهاء المضيف للمباراة" : "اكتملت أسئلة اللوحة"}</p></section>
-      : active ? <section className={`display-center display-question ${active.phase === "STEAL" ? "display-feedback-wrong" : ""}`}><div className="display-question-top"><span>{view.categories.find((category) => category.id === active.categoryId)?.title} · {number(active.value ?? 0)} نقطة{active.double ? " ×٢" : ""}</span><span>{active.phase === "STEAL" ? `إجابة غير صحيحة · فرصة السرقة · ${team?.name}` : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${team?.name}`}</span></div>
+      : active ? <section className={`display-center display-question ${active.phase === "STEAL" ? "display-feedback-wrong" : ""}`}><div className="display-question-top"><span>{view.categories.find((category) => category.id === active.categoryId)?.title} · {formatNumber(active.value ?? 0)} نقطة{active.double ? " ×{formatNumber(2)}" : ""}</span><span>{active.phase === "STEAL" ? `إجابة غير صحيحة · فرصة السرقة · ${team?.name}` : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${team?.name}`}</span></div>
           <h1>{active.question}</h1>{active.type === "IMAGE" && active.imageUrl && (
             // Question media uses admin-controlled URLs from varied hosts.
             // eslint-disable-next-line @next/next/no-img-element
             <img className="display-image" src={active.imageUrl} alt="صورة السؤال" />)}
           {active.options && <div className="display-options">{active.options.map((option, index) => <span key={`${index}-${String(option)}`}>{String(option)}</span>)}</div>}
           {active.revealed && <div className="display-answer">الإجابة: <strong>{active.answer}</strong></div>}
-          <div className={`display-timer ${seconds <= 5 ? "urgent" : ""}`}>{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : `الوقت ${number(seconds)} ث`}</div>
+          <div className={`display-timer ${seconds <= 5 ? "urgent" : ""}`}>{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : `الوقت ${formatNumber(seconds)} ث`}</div>
         </section>
         : <section className="display-center display-wait"><span>{view.status === "PAUSED" ? "ننتظر المضيف" : view.status === "LOBBY" ? "استعدوا للعب" : `الدور على ${view.teams.find((item) => item.id === view.turnTeamId)?.name}`}</span><h1>{view.status === "LOBBY" ? "جهزوا فرقكم" : "اختاروا السؤال التالي"}</h1></section>}
     <div className="display-grid" aria-label="لوحة الأسئلة">{view.categories.map(category => <div className="display-column" key={category.id}><h2>{category.title}</h2>
       {view.cells.filter(cell => cell.categoryId === category.id).map(cell =>
         <div className={`display-cell ${cell.completed ? "done" : ""}`} key={cell.key}>
-          {cell.completed ? "✓" : number(cell.value)}
+          {cell.completed ? "✓" : formatNumber(cell.value)}
         </div>)}</div>)}</div>
   </div>;
 }
