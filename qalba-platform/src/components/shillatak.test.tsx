@@ -51,7 +51,8 @@ describe("Shillatak interface authority and private membership boundaries", () =
   });
   it("provides an empty home state and labelled existing-brand creation fields", () => {
     const html = renderToStaticMarkup(<ShillatakHome initial={[]} />);
-    expect(html).toContain("ما انضمّيت لأي شلّة");
+    expect(html).toContain("مكان شلّتك جاهز");
+    expect(html).toContain("سمّوا شلّتكم وفريقينكم فوق");
     for (const name of ["shilla-name", "shilla-team-a", "shilla-team-b"]) {
       expect(html).toContain(`for="${name}"`); expect(html).toContain(`id="${name}"`);
     }

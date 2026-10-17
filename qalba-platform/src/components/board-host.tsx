@@ -1,9 +1,8 @@
 "use client";
 import { TeamMarker } from "./team-marker";
-import { RematchCopy } from "./cta-copy";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { getBoardSession } from "@/lib/games/category-board/service";
 import type { BoardCommand, PowerSlug } from "@/lib/games/category-board/module";
 import { QuestionReportForm } from "@/components/question-report-form";
@@ -20,6 +19,7 @@ const descriptions: Record<PowerSlug, string> = {
 
 export function BoardHost({ initial }: { initial: View }) {
   const [view, setView] = useState(initial);
+  const viewRef = useRef(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [scoreAmount, setScoreAmount] = useState(100);
@@ -31,6 +31,14 @@ export function BoardHost({ initial }: { initial: View }) {
   const displayDialog = useRef<HTMLDialogElement>(null);
   const [judgmentFeedback, setJudgmentFeedback] = useState<"correct" | "wrong" | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyView = useCallback((next: View, sentAt: number) => {
+    // TV-access refreshes can overlap a judgment. A delayed read must never
+    // reopen a completed cell or replace a newer authoritative score.
+    if (next.id !== viewRef.current.id || !Number.isSafeInteger(next.version) || next.version < viewRef.current.version) return;
+    viewRef.current = next;
+    setServerOffset(serverOffsetMs(next.serverNow, localNowMs(), sentAt));
+    setView(next);
+  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setClock(Date.now()), 250);
     return () => window.clearInterval(timer);
@@ -39,7 +47,7 @@ export function BoardHost({ initial }: { initial: View }) {
   async function refresh() {
     const sentAt = localNowMs();
     const response = await fetch(`/api/games/category-board/${view.id}`, { cache: "no-store" });
-    if (response.ok) { const current: View = await response.json(); setServerOffset(serverOffsetMs(current.serverNow, localNowMs(), sentAt)); setView(current); }
+    if (response.ok) { const current: View = await response.json(); applyView(current, sentAt); }
   }
   async function openTv() {
     if (displayBusy) return;
@@ -92,8 +100,7 @@ export function BoardHost({ initial }: { initial: View }) {
         if (response.status === 409) await refresh();
         throw new Error(result.error ?? "تعذّر تنفيذ الأمر");
       }
-      setServerOffset(serverOffsetMs(result.session.serverNow, localNowMs(), sentAt));
-      setView(result.session);
+      applyView(result.session, sentAt);
       if (action.type === "CORRECT" || action.type === "WRONG") {
         if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
         setJudgmentFeedback(action.type === "CORRECT" ? "correct" : "wrong");
@@ -139,14 +146,14 @@ export function BoardHost({ initial }: { initial: View }) {
     {judgmentFeedback && <div className={`judgment-feedback judgment-feedback--${judgmentFeedback}`} role="status">{judgmentFeedback === "correct" ? "✓ إجابة صحيحة!" : "✕ إجابة غير صحيحة"}</div>}
     {view.status !== "COMPLETED" && <RoomHostPanel sessionId={view.id} />}
 
-    {view.status === "LOBBY" && <section className="panel host-intro"><span className="eyebrow">كل شيء جاهز</span><h2>١٨ سؤالًا ينتظرونكم</h2><p>الفريق الأول يختار السؤال. المضيف يكشف الإجابة ويحكم يدويًا، والنتيجة تحفظ تلقائيًا.</p><button className="btn btn-primary" disabled={busy} onClick={() => send({ type: "START" })}>{busy ? "جارٍ البدء..." : "ابدأ المباراة"}</button></section>}
+    {view.status === "LOBBY" && <section className="panel host-intro"><span className="eyebrow">كل شيء جاهز</span><h2>{format(view.cells.length)} سؤالًا ينتظرونكم</h2><p>الفريق الأول يختار السؤال. المضيف يكشف الإجابة ويحكم يدويًا، والنتيجة تحفظ تلقائيًا.</p><button className="btn btn-primary" disabled={busy} onClick={() => send({ type: "START" })}>{busy ? "جارٍ البدء..." : "ابدأ المباراة"}</button></section>}
 
     {view.status === "COMPLETED" && <section className="panel victory"><span className="eyebrow">{view.endedEarly ? "انتهت المباراة مبكرًا" : "انتهت اللوحة"}</span><h2>{winners.length === 1 ? `الفائز: ${winners[0].name}` : "تعادل يستاهل إعادة!"}</h2>
       <p>اللعبة محفوظة في حساب المضيف. مباراة جديدة تعطي الأولوية للأسئلة التي لم تظهر له من قبل.</p>
-      {scoreEditor}<div className="host-actions"><Link className="btn btn-primary" href={`/games/category-board/new?rematch=${view.id}`}><RematchCopy previous="إعادة المباراة"/></Link>
+      <div className="host-actions"><Link className="btn btn-primary" href={`/games/category-board/new?rematch=${view.id}`}>جولة ثانية؟ قدّام!</Link>
         <button className="btn btn-secondary" disabled={displayBusy} onClick={openTv}>فتح شاشة العرض</button>
         {view.displayAccess.active && <button className="btn btn-outline" disabled={displayBusy} onClick={revokeTv}>إلغاء رابط العرض</button>}
-        <button className="btn btn-outline" disabled={busy || !view.canUndo} onClick={() => send({ type: "UNDO" })}>تراجع عن آخر تغيير</button></div></section>}
+        <button className="btn btn-outline" disabled={busy || !view.canUndo} onClick={() => send({ type: "UNDO" })}>تراجع عن آخر تغيير</button></div><details className="score-editor-details"><summary>تعديل النقاط</summary>{scoreEditor}</details></section>}
 
     {(view.status === "IN_PROGRESS" || view.status === "PAUSED") && <>
       <section className="host-toolbar" aria-label="إدارة المباراة"><div className="host-actions">
@@ -185,11 +192,16 @@ export function BoardHost({ initial }: { initial: View }) {
 
       {!active && view.canUndo && <div className="host-actions after-round"><span>حُفظت الجولة. اختروا السؤال التالي.</span></div>}
       <section className="board-section"><div className="section-head"><div><span className="eyebrow">اللوحة</span><h2>{active ? "السؤال المفتوح" : "اختاروا السؤال التالي"}</h2></div><p>القيم الأعلى أصعب، والخانة المستخدمة تختفي من اللعب.</p></div>
-        <div className="board-grid">{view.categories.map((category) => <div className="board-column" key={category.id}><h3>{category.title}</h3>{[200, 400, 600].map((value) => {
-          const cell = view.cells.find((item) => item.categoryId === category.id && item.value === value);
-          return <button key={value} className={`board-cell ${cell?.completed ? "used" : ""}`} disabled={busy || view.status === "PAUSED" || Boolean(active) || cell?.completed}
-            aria-label={`${category.title} ${value}${cell?.completed ? " مستخدم" : ""}`} onClick={() => send({ type: "OPEN", categoryId: category.id, value })}>{cell?.completed ? "✓" : format(value)}</button>;
-        })}</div>)}</div></section>
+        <div className="board-grid">{view.categories.map(category => <div className="board-column" key={category.id}><h3>{category.title}</h3>
+          {view.cells.filter(cell => cell.categoryId === category.id).map(cell => {
+            const numberInLevel = view.cells.filter(item => item.categoryId === category.id && item.value === cell.value)
+              .findIndex(item => item.key === cell.key) + 1;
+            const label = numberInLevel > 1 ? `سؤال ${numberInLevel} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
+            return <button key={cell.key} className={`board-cell ${cell.completed ? "used" : ""}`}
+              disabled={busy || view.status === "PAUSED" || Boolean(active) || cell.completed}
+              aria-label={`${label}${cell.completed ? " مستخدم" : ""}`}
+              onClick={() => send({ type: "OPEN", cellKey: cell.key })}>{cell.completed ? "✓" : format(cell.value)}</button>;
+          })}</div>)}</div></section>
     </>}
   </div>;
 }

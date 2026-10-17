@@ -1,0 +1,67 @@
+name: UI candidate exact-head isolated QA (no deploy)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/ui-candidate-exact-head-qa.yml'
+      - 'qalba-platform/src/components/shillatak.test.tsx'
+permissions:
+  contents: read
+jobs:
+  ui-isolated-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ui_qa
+          POSTGRES_PASSWORD: synthetic-ui-qa-only
+          POSTGRES_DB: ui_qa
+        ports:
+          - 55470:5432
+        options: >-
+          --health-cmd "pg_isready -U ui_qa -d ui_qa"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://ui_qa:synthetic-ui-qa-only@127.0.0.1:55470/ui_qa
+      AUTH_RATE_LIMIT_SECRET: synthetic-ui-check-only-0123456789abcdef
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Assert exact checked-out head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Locked dependencies and isolated database
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+          npm run db:migrate
+          npm run db:seed:content
+      - name: Full unit suite with fixture-owned localhost origin
+        env:
+          APP_URL: http://localhost:3000
+        run: npm run test -- --maxWorkers=1 --retry=0
+      - name: ESLint
+        run: npm run lint
+      - name: Generate route types and TypeScript
+        run: |
+          node node_modules/next/dist/bin/next typegen
+          npm run typecheck
+      - name: Production build under separate synthetic deployment origin
+        env:
+          APP_URL: https://quddam.test
+        run: npm run build

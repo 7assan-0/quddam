@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { consumeGameCredit } from "@/lib/billing/credits";
 import { selectQuestion } from "@/lib/questions/selection";
-import { BOARD_VALUES, decideBoard, GameRuleError, initialBoardState,
+import { BOARD_VALUES, BOARD_TILES_PER_VALUE, decideBoard, GameRuleError, initialBoardState,
   type BoardCommand, type BoardQuestion, type BoardState } from "./module";
 import { displayWindowEndsAt } from "./display-policy";
 
@@ -21,7 +21,7 @@ export async function eligibleBoardCategories() {
       gameTypeId: game.id, status: "PUBLISHED", language: "ar", type: { in: [...supportedTypes] }, pointValue: { in: [...BOARD_VALUES] },
     }, _count: { id: true } }),
   ]);
-  const ready = new Set(counts.filter((item) => item._count.id > 0).map((item) => `${item.categoryId}:${item.pointValue}`));
+  const ready = new Set(counts.filter((item) => item._count.id >= BOARD_TILES_PER_VALUE).map((item) => `${item.categoryId}:${item.pointValue}`));
   return categories.filter((category) => BOARD_VALUES.every((value) => ready.has(`${category.id}:${value}`)));
 }
 
@@ -29,7 +29,7 @@ export async function createBoardSession(hostId: string, input: { categoryIds: s
   const eligible = await eligibleBoardCategories();
   if (input.categoryIds.length !== 6 || new Set(input.categoryIds).size !== 6 ||
     !input.categoryIds.every((id) => eligible.some((category) => category.id === id))) {
-    throw new GameRuleError("اختر ست فئات تتوفر فيها قيم ٢٠٠ و٤٠٠ و٦٠٠", 400);
+    throw new GameRuleError("اختر ست فئات لديها سؤالان منشوران وصالحان على الأقل لكل مستوى: ٢٠٠ و٤٠٠ و٦٠٠", 400);
   }
   if (input.teamNames[0].trim() === input.teamNames[1].trim()) throw new GameRuleError("اختر اسمين مختلفين للفريقين", 400);
   const game = await db().gameType.findUniqueOrThrow({ where: { slug: "category-board" } });
@@ -41,10 +41,17 @@ export async function createBoardSession(hostId: string, input: { categoryIds: s
     db().questionHistory.findMany({ where: { userId: hostId }, select: { questionId: true, lastPlayedAt: true } }),
     db().powerUp.findMany({ where: { gameTypeId: game.id, enabled: true } }),
   ]);
-  const cells = input.categoryIds.flatMap((categoryId) => BOARD_VALUES.map((value) => {
-    const chosen = selectQuestion(questions.filter((q) => q.categoryId === categoryId && q.pointValue === value), history, new Set());
-    if (!chosen) throw new GameRuleError("محتوى إحدى الفئات لم يعد متاحًا. حدّث الصفحة وحاول مجددًا", 409);
-    return { key: `${categoryId}:${value}`, categoryId, value, questionId: chosen.id, completed: false };
+  const usedInSession = new Set<string>();
+  const cells = input.categoryIds.flatMap(categoryId => BOARD_VALUES.flatMap(value => {
+    const bucket = questions.filter(q => q.categoryId === categoryId && q.pointValue === value);
+    if (bucket.length < BOARD_TILES_PER_VALUE)
+      throw new GameRuleError("فئة ناقصة: يلزم سؤالان مختلفان لكل مستوى. حدّث الصفحة وحاول مجددًا", 409);
+    return Array.from({ length: BOARD_TILES_PER_VALUE }, (_, slot) => {
+      const chosen = selectQuestion(bucket, history, usedInSession);
+      if (!chosen) throw new GameRuleError("محتوى إحدى الفئات لم يعد متاحًا. حدّث الصفحة وحاول مجددًا", 409);
+      usedInSession.add(chosen.id);
+      return { key: `${categoryId}:${value}:${slot + 1}`, categoryId, value, questionId: chosen.id, completed: false };
+    });
   }));
   const questionSnapshots: Record<string, BoardQuestion> = {};
   for (const cell of cells) {
@@ -90,7 +97,7 @@ export async function getBoardSession(hostId: string, sessionId: string) {
     displayAccess: { active: Boolean(displayAccess), expiresAt: displayAccess?.expiresAt ?? null },
     lastCommandType: session.commands[0]?.type ?? null,
     startedAt: session.startedAt, endedAt: session.endedAt, round: session.currentRoundNumber,
-    categories: state.categories, cells: state.cells.map(({ categoryId, value, completed }) => ({ categoryId, value, completed })),
+    categories: state.categories, cells: state.cells.map(({ key, categoryId, value, completed }) => ({ key, categoryId, value, completed })),
     teams: session.teams.map(({ id, name, color, score, position }) => ({ id, name, color, score, position })), turnTeamId: state.turnTeamId,
     timerSeconds: state.timerSeconds, endedEarly: state.endedEarly,
     canUndo: Boolean(state.undoStack?.length || state.lastManualScore || (state.lastJudgment && !state.endedEarly)),

@@ -4,13 +4,30 @@ import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
+import { openNativePostgresFixture } from "./e2e-native-postgres.mjs";
 
-const port = 55000 + Math.floor(Math.random() * 1000);
-const database = await PGlite.create();
-const server = new PGLiteSocketServer({ db: database, host: "127.0.0.1", port, maxConnections: 4 });
-await server.start();
-const url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?sslmode=disable`;
-const env = { ...process.env, DATABASE_URL: url, E2E_DATABASE_URL: url, DATABASE_POOL_MAX: "1",
+const nativeFixturePath = process.env.E2E_NATIVE_PG17_FIXTURE;
+if (!nativeFixturePath && process.env.E2E_NATIVE_PG17_REUSE)
+  throw new Error("Native PostgreSQL reuse requires the explicit private synthetic fixture");
+if (process.env.E2E_NATIVE_PG17_REUSE && process.env.E2E_NATIVE_PG17_REUSE !== "1")
+  throw new Error("Native PostgreSQL reuse must be explicitly set to 1");
+let database, server, nativeFixture, url;
+if (nativeFixturePath) {
+  nativeFixture = await openNativePostgresFixture(nativeFixturePath, { reuse: process.env.E2E_NATIVE_PG17_REUSE === "1" });
+  url = nativeFixture.databaseUrl;
+  console.log(`Using guarded synthetic PostgreSQL 17 on loopback; ${nativeFixture.needsInitialization ? "new empty fixture" : "retained fixture, no migration or reseed"}`);
+} else {
+  const port = 55000 + Math.floor(Math.random() * 1000);
+  database = await PGlite.create();
+  server = new PGLiteSocketServer({ db: database, host: "127.0.0.1", port, maxConnections: 4 });
+  await server.start();
+  url = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?sslmode=disable`;
+}
+const env = { ...process.env, DATABASE_URL: url, E2E_DATABASE_URL: url, DATABASE_POOL_MAX: nativeFixture ? "10" : "1",
+  // Provision synthetic browser accounts through the existing welcome policy.
+  // This runner uses only its guarded local fixture or its own in-memory DB;
+  // production eligibility, seeded amounts, prices and debit code stay unchanged.
+  PUBLIC_WELCOME_CREDITS_ENABLED: "true",
   APP_URL: "http://127.0.0.1:3000", AUTH_RATE_LIMIT_SECRET: randomBytes(32).toString("hex"),
   SEED_ADMIN_EMAIL: "admin@example.test", SEED_ADMIN_PASSWORD: "e2e-admin-password-123",
   SEED_USER_EMAIL: "player@example.test", SEED_USER_PASSWORD: "e2e-player-password-123" };
@@ -77,7 +94,8 @@ async function sourceFingerprint() {
     }
   };
   for (const directory of ["src", "prisma", "tests"]) await walk(directory);
-  files.push("package.json", "package-lock.json", "next.config.ts", "playwright.config.ts", "scripts/e2e-warmup.ts");
+  files.push("package.json", "package-lock.json", "next.config.ts", "playwright.config.ts", "scripts/e2e-warmup.ts",
+    "scripts/e2e-with-db.mjs", "scripts/e2e-native-postgres.mjs");
   const hash = createHash("sha256");
   for (const path of files.sort()) hash.update(path).update("\0").update(await readFile(path)).update("\0");
   return { fingerprint: hash.digest("hex"), sourceFiles: files.length };
@@ -101,8 +119,11 @@ function validateReport(report, expectedIds, requireClean = false) {
 }
 
 try {
-  await run("./node_modules/.bin/prisma", ["migrate", "deploy"]);
-  await run("npm", ["run", "db:seed"]);
+  if (!nativeFixture || nativeFixture.needsInitialization) {
+    await run("./node_modules/.bin/prisma", ["migrate", "deploy"]);
+    await run("npm", ["run", "db:seed"]);
+    if (nativeFixture) await nativeFixture.completeInitialization();
+  }
   // The production build also typechecks any generated dev validators retained
   // by prior browser runs. Regenerate dev types instead of validating stale bytes.
   await rm(resolve(".next/dev/types"), {recursive:true, force:true});
@@ -184,6 +205,7 @@ try {
     if (failures.length || totals.skipped || totals.flaky) throw new AggregateError(failures, "Full E2E run was not clean");
   }
 } finally {
-  await server.stop();
-  await database.close();
+  if (nativeFixture) await nativeFixture.close();
+  if (server) await server.stop();
+  if (database) await database.close();
 }

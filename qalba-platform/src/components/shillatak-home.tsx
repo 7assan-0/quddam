@@ -30,20 +30,20 @@ export function ShillatakHome({ initial }: { initial: Entry[] }) {
       <form onSubmit={event => void create(event)}>
         <div className="field"><label htmlFor="shilla-name">اسم الشلّة</label>
         <input className="input" id="shilla-name" maxLength={60} minLength={2} required value={name}
-          onChange={event => setName(event.target.value)} /></div>
-        <div className="field"><label htmlFor="shilla-team-a">الفريق الأول (اسم ثابت)</label>
+          onChange={event => setName(event.target.value)} placeholder="مثلاً: شلّة الخميس" /></div>
+        <div className="field"><label htmlFor="shilla-team-a"><span className="shilla-team-dot shilla-team-dot-a" aria-hidden="true" /> الفريق الأول (اسم ثابت)</label>
         <input className="input" id="shilla-team-a" maxLength={60} minLength={2} required value={teamA}
-          onChange={event => setTeamA(event.target.value)} /></div>
-        <div className="field"><label htmlFor="shilla-team-b">الفريق الثاني (اسم ثابت)</label>
+          onChange={event => setTeamA(event.target.value)} placeholder="مثلاً: البرق" /></div>
+        <div className="field"><label htmlFor="shilla-team-b"><span className="shilla-team-dot shilla-team-dot-b" aria-hidden="true" /> الفريق الثاني (اسم ثابت)</label>
         <input className="input" id="shilla-team-b" maxLength={60} minLength={2} required value={teamB}
-          onChange={event => setTeamB(event.target.value)} /></div>
+          onChange={event => setTeamB(event.target.value)} placeholder="مثلاً: الموج" /></div>
         <p className="form-note">اربط لاحقًا سهرات مكتملة بأسماء الفريقين نفسيهما. لا ننسب فوز الفريق تلقائيًا إلى عضو بعينه.</p>
         <button className="btn btn-primary" disabled={busy || !name.trim() || !teamA.trim() || !teamB.trim()}>
           {busy ? "جارٍ الإنشاء…" : "إنشاء الشلّة"}</button>
       </form>
     </section>
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>شللك الخاصة</h2>
-      {groups.length === 0 && <p>ما انضمّيت لأي شلّة حتى الآن.</p>}
+      {groups.length === 0 && <div className="shilla-empty"><strong>مكان شلّتك جاهز ✨</strong><p>سمّوا شلّتكم وفريقينكم فوق، وخلو الفوز القادم ينحفظ هنا.</p></div>}
       <div className="history-list">{groups.map(group => <article className="history-row" key={group.id}>
         <span><strong>{group.name}</strong> · {group.role === "OWNER" ? "المنظّم" : "عضو"} · {group.status === "archived" ? "مؤرشفة" : "نشطة"}<p>{group.members} أعضاء · {group.nights} سهرات مكتملة مسجلة</p></span>
         <Link className="btn btn-secondary" href={`/shillatak/${group.id}`}>لوحة الشرف</Link>

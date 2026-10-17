@@ -13,7 +13,7 @@ import { questionSchema as ordering } from '../games/ordering/validation';
 import { caseSchema as court } from '../games/court/validation';
 import { contentKey } from './rules';
 export const contentPolicies = {
- 'category-board': {schema:board,minimum:18,fields:'gameTypeId categoryId question answer alternativeAnswers explanation difficulty pointValue type options status language country subcategory imageUrl source'},
+ 'category-board': {schema:board,minimum:36,fields:'gameTypeId categoryId question answer alternativeAnswers explanation difficulty pointValue type options status language country subcategory imageUrl source'},
  'out-of-the-loop': {schema:social,minimum:1,fields:'word categoryId difficulty alternativeAnswers status'},
  'letter-network': {schema:letter,minimum:25,fields:'letter question answer alternativeAnswers categoryId difficulty status'},
  'survey-show': {schema:survey,minimum:5,fields:'question categoryId difficulty status locale sourceType answers'},
@@ -56,9 +56,9 @@ export function auditBank(game:ContentGame,rows:ContentRow[]){
  }
  if(eligible.length<contentPolicies[game].minimum)errors.push({code:'INSUFFICIENT_CONTENT',ids:[]});
  if(game==='category-board'){
-  const validCategories=Object.keys(categories).filter(id=>[200,400,600].every(v=>eligible.some(r=>r.categoryId===id&&r.pointValue===v)));
+  const validCategories=Object.keys(categories).filter(id=>[200,400,600].every(v=>eligible.filter(r=>r.categoryId===id&&r.pointValue===v).length>=2));
   if(validCategories.length<6)errors.push({code:'BOARD_BUCKET_CAPACITY',ids:[]});
-  for(const id of validCategories)if([200,400,600].some(v=>eligible.filter(r=>r.categoryId===id&&r.pointValue===v).length<2))warnings.push({code:'BOARD_REMATCH_REPETITION',ids:[id]});
+  for(const id of validCategories)if([200,400,600].some(v=>eligible.filter(r=>r.categoryId===id&&r.pointValue===v).length<32))warnings.push({code:'BOARD_96_BANK_NOT_YET_READY',ids:[id]});
  }
  if(game==='letter-network'){
   for(const [l,count] of Object.entries(letters))if(count<10)warnings.push({code:'LETTER_REPEATED_PLAY_COVERAGE',ids:[l]});

@@ -23,14 +23,14 @@ export function BoardSetup({ categories, defaults }: { categories: Category[]; d
     } catch (cause) { setError(cause instanceof Error ? cause.message : "تعذّر إنشاء المباراة"); setBusy(false); }
   }
   return <form onSubmit={submit} className="board-setup">
-    <section className="panel"><span className="eyebrow">١ / الفئات</span><h2>ست فئات، ثلاث قيم لكل فئة</h2>
-      <p className="muted">تظهر هنا الفئات التي تضم أسئلة منشورة بقيم ٢٠٠ و٤٠٠ و٦٠٠.</p>
+    <section className="panel"><span className="eyebrow">١ / الفئات</span><h2>ست فئات، ستة أسئلة لكل فئة</h2>
+      <p className="muted">تظهر الفئات التي تضم سؤالين مختلفين ومنشورين على الأقل من كل مستوى (٢٠٠، ٤٠٠، ٦٠٠). المباراة فيها ٣٦ سؤالًا.</p>
       <div className="category-picker">{categories.map((category) => <label key={category.id} className={`category-option ${selected.includes(category.id) ? "selected" : ""}`}>
         <input type="checkbox" checked={selected.includes(category.id)} disabled={busy || (!selected.includes(category.id) && selected.length >= 6)}
           onChange={() => setSelected((old) => old.includes(category.id) ? old.filter((id) => id !== category.id) : [...old, category.id])} />
         <span>{category.title}</span></label>)}</div>
       <p className="form-note">{selected.length} من ٦ فئات مختارة</p>
-      {categories.length < 6 && <p className="form-error">يلزم نشر ثلاث قيم في ست فئات على الأقل. أضف أسئلة من لوحة الإدارة.</p>}
+      {categories.length < 6 && <p className="form-error">يلزم سؤالان على الأقل من كل مستوى في ست فئات. أضف المحتوى الناقص من لوحة الإدارة.</p>}
     </section>
     <section className="panel"><span className="eyebrow">٢ / الفرق</span><h2>سمّوا الفريقين</h2>
       <div className="setup-fields"><div className="field"><label htmlFor="teamA">الفريق الأول</label><input className="input" id="teamA" name="teamA" minLength={2} maxLength={60} required defaultValue={defaults?.teamNames[0] ?? "فريق البرق"} /></div>

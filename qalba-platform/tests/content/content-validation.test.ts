@@ -24,6 +24,20 @@ describe('M14 authored content boundary',()=>{
  it('detects identical Ordering challenges hidden by a different title',()=>{const r=banks['ordering-challenge'][0];expect(auditBank('ordering-challenge',[r,{...r,id:'copy',title:'عنوان آخر'}]).errors.some(e=>e.code==='DUPLICATE_CHALLENGE')).toBe(true);});
  it('Social canonical and alias collision is rejected',()=>{const dto=contentDto('out-of-the-loop',banks['out-of-the-loop'][0]);expect(wordSchema.safeParse({...dto,alternativeAnswers:[dto.word]}).success).toBe(false);expect(uniqueContent(['أحمد','احمد'])).toBe(false);});
  it('authored banks pass with warning separately from blocking errors',()=>{const report=auditContent(banks);expect(report.games).toHaveLength(10);expect(report.blockingErrors).toBe(0);expect(report.warnings).toBeGreaterThan(0);expect(report.games.find(g=>g.game==='ordering-challenge')?.capacity).toBe('WARN');});
+ it('Category Board preserves complete categories, rematch alternatives and distinct authored prompts',()=>{
+  const rows=banks['category-board'].filter(row=>isContentEligible('category-board',row));
+  expect(new Set(rows.map(row=>row.id)).size).toBe(rows.length);
+  expect(new Set(rows.map(row=>contentKey(String(row.question)))).size).toBe(rows.length);
+  const categories=[...new Set(rows.map(row=>row.categoryId))];
+  const complete=categories.filter(categoryId=>[200,400,600].every(pointValue=>rows.some(row=>row.categoryId===categoryId&&row.pointValue===pointValue)));
+  expect(complete.length).toBeGreaterThanOrEqual(6);
+  // 72 distinct authored questions form a four-per-tier pool for varied 36-cell matches; the separate
+  // editorial 96-per-category target remains a warning until authored.
+  expect(rows.length).toBe(72);
+  for(const categoryId of complete)for(const pointValue of [200,400,600])expect(rows.filter(row=>row.categoryId===categoryId&&row.pointValue===pointValue).length).toBe(4);
+  expect(auditBank('category-board',rows)).toMatchObject({duplicatesFound:0,capacity:'WARN',errors:[]});
+  expect(auditBank('category-board',rows).warnings.some(issue=>issue.code==='BOARD_96_BANK_NOT_YET_READY')).toBe(true);
+ });
  it('blocking database errors fail the command even with clean definitions',()=>{expect(contentValidationExitCode({blockingErrors:0},{blockingErrors:1})).toBe(1);expect(contentValidationExitCode({blockingErrors:1},{blockingErrors:0})).toBe(1);});
  it('warnings remain successful while blocking errors fail',()=>{expect(contentValidationExitCode({blockingErrors:0},null)).toBe(0);});
  it('minimum and below-minimum distinguish blocking errors',()=>{expect(auditBank('bluff',banks.bluff.slice(0,5)).errors).toHaveLength(0);expect(auditBank('bluff',banks.bluff.slice(0,4)).errors.some(e=>e.code==='INSUFFICIENT_CONTENT')).toBe(true);});
