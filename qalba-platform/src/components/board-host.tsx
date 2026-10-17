@@ -197,7 +197,7 @@ export function BoardHost({ initial }: { initial: View }) {
           {view.cells.filter(cell => cell.categoryId === category.id).map(cell => {
             const numberInLevel = view.cells.filter(item => item.categoryId === category.id && item.value === cell.value)
               .findIndex(item => item.key === cell.key) + 1;
-            const label = `${category.title} ${cell.value}${numberInLevel > 1 ? ` سؤال ${numberInLevel}` : ""}`;
+            const label = numberInLevel > 1 ? `سؤال ${numberInLevel} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
             return <button key={cell.key} className={`board-cell ${cell.completed ? "used" : ""}`}
               disabled={busy || view.status === "PAUSED" || Boolean(active) || cell.completed}
               aria-label={`${label}${cell.completed ? " مستخدم" : ""}`}
