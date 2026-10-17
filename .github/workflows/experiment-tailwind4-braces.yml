@@ -1,0 +1,117 @@
+name: Isolated Tailwind 4 dependency-removal experiment
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/experiment-tailwind4-braces.yml'
+permissions:
+  contents: read
+jobs:
+  dependency-experiment:
+    if: ${{ github.event.pull_request.head.ref == 'security/experiment-tailwind4-braces-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/not_connected
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind experiment to source head
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          echo "EXPERIMENT_SOURCE_SHA=$EXPECTED_SHA"
+          node -v
+          npm -v
+      - name: Verify original dependency graph before migration
+        run: |
+          node <<'NODE'
+          const lock = require('./package-lock.json');
+          const paths = ['node_modules/braces','node_modules/micromatch','node_modules/@next/eslint-plugin-next','node_modules/eslint-config-next','node_modules/tailwindcss','node_modules/tailwindcss/node_modules/chokidar'];
+          for (const p of paths) console.log('BASE '+p+' '+JSON.stringify({version:lock.packages[p]?.version,dependencies:lock.packages[p]?.dependencies}));
+          if (lock.packages['node_modules/braces']?.version!=='3.0.3') throw Error('unexpected base braces version');
+          NODE
+      - name: Trial dependency replacement — runner workspace only
+        run: |
+          npm install --save-dev --save-exact tailwindcss@4.3.3 @tailwindcss/postcss@4.3.3 --package-lock-only --ignore-scripts --no-fund --no-audit
+          npm ci --include=dev --no-fund --no-audit
+          npm ls tailwindcss @tailwindcss/postcss braces --all || true
+          node <<'NODE'
+          const lock=require('./package-lock.json');
+          const report={tailwind:lock.packages['node_modules/tailwindcss']?.version,plugin:lock.packages['node_modules/@tailwindcss/postcss']?.version,braces:lock.packages['node_modules/braces']?.version,bracesDev:lock.packages['node_modules/braces']?.dev,eslintNext:lock.packages['node_modules/@next/eslint-plugin-next']?.version,eslintFastGlob:lock.packages['node_modules/@next/eslint-plugin-next']?.dependencies?.['fast-glob']};
+          console.log('TRIAL_GRAPH_SUMMARY='+JSON.stringify(report));
+          NODE
+      - name: Capture complete live audit for trial without waiver
+        run: |
+          set +e
+          npm audit --json > tailwind4-full-audit.json
+          audit_status=$?
+          set -e
+          AUDIT_STATUS="$audit_status" node <<'NODE'
+          const fs=require('node:fs');
+          const o=JSON.parse(fs.readFileSync('tailwind4-full-audit.json','utf8'));
+          if(o.error||!o.metadata||!o.vulnerabilities) throw Error('npm audit failed unexpectedly');
+          const findings=Object.entries(o.vulnerabilities);
+          const advisories=[...new Set(findings.flatMap(([,v])=>v.via.filter(x=>typeof x==='object').map(x=>x.url)))];
+          console.log('TRIAL_FULL_AUDIT_EXIT='+process.env.AUDIT_STATUS);
+          console.log('TRIAL_FINDINGS='+JSON.stringify(findings.map(([name,v])=>({name,severity:v.severity}))));
+          console.log('TRIAL_ADVISORIES='+JSON.stringify(advisories));
+          NODE
+      - name: Trial documented Tailwind v4 CSS and PostCSS migration in runner only
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const path='src/app/globals.css';
+          const css=fs.readFileSync(path,'utf8');
+          const old='@tailwind base;\n@tailwind components;\n@tailwind utilities;';
+          if(!css.startsWith(old)) throw Error('Tailwind 3 CSS entry changed; abort safe transformation');
+          fs.writeFileSync(path,css.replace(old,'@import "tailwindcss";\n@config "../../tailwind.config.ts";'));
+          const postcss='postcss.config.js';
+          const original=fs.readFileSync(postcss,'utf8');
+          if(original.trim()!=='module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };') throw Error('Unexpected PostCSS baseline');
+          fs.writeFileSync(postcss,'module.exports = { plugins: { "@tailwindcss/postcss": {} } };\n');
+          NODE
+      - name: Check full existing unit suite — strict
+        env:
+          APP_URL: http://localhost:3000
+        run: |
+          npm run db:generate
+          npm run test -- --maxWorkers=1 --retry=0
+      - name: Generate route types and validate TypeScript / ESLint
+        env:
+          APP_URL: http://localhost:3000
+        run: |
+          node node_modules/next/dist/bin/next typegen
+          npm run typecheck
+          npm run lint
+      - name: Build migrated CSS and Next in synthetic workspace
+        env:
+          APP_URL: https://quddam.test
+        run: npm run build
+      - name: Strict full audit, final non-waivable gate
+        run: npm audit --audit-level=moderate
+      - name: Save reproducible experiment files for independent review
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: tailwind4-security-trial-${{ github.run_id }}
+          path: |
+            qalba-platform/package.json
+            qalba-platform/package-lock.json
+            qalba-platform/src/app/globals.css
+            qalba-platform/postcss.config.js
+            qalba-platform/tailwind4-full-audit.json
+          if-no-files-found: warn
+          retention-days: 7
