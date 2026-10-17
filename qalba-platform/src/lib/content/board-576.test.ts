@@ -55,7 +55,7 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
   });
   it("keeps a row-level 576-question review ledger without fabricated human approval", () => {
     const csv = readFileSync(new URL("../../../content-review/2026-10-17/Board_576_Item_Review.csv", import.meta.url), "utf8");
-    const lines = csv.trimEnd().split(/\\r?\\n/);
+    const lines = csv.trimEnd().split(/\r?\n/);
     expect(lines).toHaveLength(577); // header + one stable-ID row per authored question
     for (let i = 0; i < 576; i++) {
       expect(lines[i + 1].startsWith(`"seed-category-${i + 1}",`)).toBe(true);
