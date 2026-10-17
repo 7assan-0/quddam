@@ -5,8 +5,8 @@ import { cellControl, createBoardRoom, hostAction, inspectDatabase, mobileGuest,
 
 test.use({ actionTimeout: 30_000 });
 
-test("a real eighteen-question match finishes with persisted results, TV, assists, undo and exactly one START debit", async ({ browser, page }, info) => {
-  test.setTimeout(300_000);
+test("a real thirty-six-question match finishes with persisted results, TV, assists, undo and exactly one START debit", async ({ browser, page }, info) => {
+  test.setTimeout(660_000);
   const contexts: BrowserContext[] = [];
   try {
     const { id, code, board, email } = await createBoardRoom(page, "board-complete");
@@ -107,7 +107,7 @@ test("a real eighteen-question match finishes with persisted results, TV, assist
       current.teams.forEach(team => expect(team.score).toBe(expected.get(team.id)));
     }
     const result = await readBoard(page, id);
-    expect(result.status).toBe("COMPLETED"); expect(result.endedEarly).toBe(false); expect(questions.size).toBe(18);
+    expect(result.status).toBe("COMPLETED"); expect(result.endedEarly).toBe(false); expect(questions.size).toBe(36);
     await page.reload(); await guest.page.reload(); await display.reload();
     expect((await readRoom(guest.page, code)).session.status).toBe("COMPLETED");
     expect((await readRoom(guest.page, code)).selfId).toBe(guestBefore.selfId);
@@ -124,7 +124,7 @@ test("a real eighteen-question match finishes with persisted results, TV, assist
       (SELECT count(*)::int FROM "GameRound" WHERE "sessionId"=$1 AND "endedAt" IS NOT NULL) AS rounds,
       (SELECT count(*)::int FROM "SessionQuestion" WHERE "sessionId"=$1) AS questions,
       (SELECT COALESCE(sum(delta),0)::int FROM "ScoreEvent" WHERE "sessionId"=$1) AS "netScore"`, [id]);
-    expect(ledger).toEqual([{ balance: before[0].balance - 1, debits: 1, rounds: 18, questions: 18, netScore: [...expected.values()].reduce((sum, score) => sum + score, 0) }]);
+    expect(ledger).toEqual([{ balance: before[0].balance - 1, debits: 1, rounds: 36, questions: 36, netScore: [...expected.values()].reduce((sum, score) => sum + score, 0) }]);
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
     // Neutral viewport capture avoids Chrome's full-page stitching of sticky
@@ -134,7 +134,7 @@ test("a real eighteen-question match finishes with persisted results, TV, assist
     await page.goto("/profile");
     const history = page.locator(".history-row").filter({ has: page.locator(`a[href='/play/${id}']`) });
     await expect(history).toContainText("انتهت");
-    await info.attach("full-game-summary", { body: JSON.stringify({ rounds: 18, distinctQuestions: 18, scores: [...expected.values()], startDebits: 1, canonicalHistorySaved: true }), contentType: "application/json" });
+    await info.attach("full-game-summary", { body: JSON.stringify({ rounds: 36, distinctQuestions: 36, scores: [...expected.values()], startDebits: 1, canonicalHistorySaved: true }), contentType: "application/json" });
   } finally { await Promise.all(contexts.map(context => context.close())); }
 });
 

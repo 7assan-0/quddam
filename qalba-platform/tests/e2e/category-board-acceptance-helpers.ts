@@ -115,7 +115,8 @@ export async function createBoardRoom(page: Page, prefix: string) {
   const code = (await page.locator(".room-code").innerText()).trim();
   expect(code, "Room code format").toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
   const board = await readBoard(page, id);
-  expect(board.cells).toHaveLength(18);
+  expect(board.cells).toHaveLength(36);
+  expect(new Set(board.cells.map(cell => cell.key)).size).toBe(36);
   expect(board.teams).toHaveLength(2);
   return { id, code, board, email };
 }
@@ -154,7 +155,10 @@ export async function hostAction(page: Page, id: string, control: Locator, type:
 
 export function cellControl(page: Page, board: BoardView, cell: BoardView['cells'][number]) {
   const category = board.categories.find(category => category.id === cell.categoryId)!;
-  return page.getByRole("button", { name: `${category.title} ${cell.value}`, exact: true });
+  const slot = board.cells.filter(item => item.categoryId === cell.categoryId && item.value === cell.value)
+    .findIndex(item => item.key === cell.key) + 1;
+  const accessibleName = slot > 1 ? `سؤال ${slot} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
+  return page.getByRole("button", { name: accessibleName, exact: true });
 }
 
 export async function assertScores(page: Page, selector: string, scores: number[]) {
