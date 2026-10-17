@@ -3,9 +3,10 @@ import { TeamMarker } from "./team-marker";
 import { connectLive } from "@/lib/realtime/client";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { roomView } from "@/lib/rooms/service";
 import { remainingOnClient, serverOffsetMs } from "@/lib/games/category-board/clock";
+import { acceptsRoomView } from "./room-view-order";
 
 type View = Awaited<ReturnType<typeof roomView>>;
 export function RoomLive({ initial, joinQr }: { initial: View; joinQr?: string }) {
@@ -14,14 +15,25 @@ export function RoomLive({ initial, joinQr }: { initial: View; joinQr?: string }
   const [clock, setClock] = useState(0);
   const [offset, setOffset] = useState(() => serverOffsetMs(initial.serverNow, Date.now()));
   const roundRef = useRef(initial.session.round);
+  const viewRef = useRef(initial);
+  const terminalRef = useRef(false);
+  const applyView = useCallback((next: View, sentAt?: number) => {
+    if (terminalRef.current || !acceptsRoomView(viewRef.current, next)) return;
+    viewRef.current = next;
+    if (roundRef.current !== next.session.round) {
+      roundRef.current = next.session.round; setAnswer("");
+    }
+    setOffset(serverOffsetMs(next.serverNow, Date.now(), sentAt));
+    setView(next);
+  }, []);
   useEffect(() => {
     const live = connectLive<View>({ events: `/api/rooms/${initial.code}/events`, endpoint: `/api/rooms/${initial.code}`,
-      apply: (next, sentAt) => { if (roundRef.current !== next.session.round) { roundRef.current = next.session.round; setAnswer(""); } setOffset(serverOffsetMs(next.serverNow, Date.now(), sentAt)); setView(next); setConnected(true); },
+      apply: (next, sentAt) => { applyView(next, sentAt); setConnected(true); },
       temporary: () => setConnected(false),
-      terminal: () => { setConnected(false); setAnswer(""); setView(current => ({ ...current, responses: undefined, session: { ...current.session, active: null } })); },
+      terminal: () => { terminalRef.current = true; setConnected(false); setAnswer(""); setView(current => ({ ...current, responses: undefined, session: { ...current.session, active: null } })); },
     });
     return () => live.close();
-  }, [initial.code]);
+  }, [initial.code, applyView]);
   useEffect(() => {
     const tick = () => setClock(Date.now()), timer = window.setInterval(tick, 250);
     document.addEventListener("visibilitychange", tick);
@@ -33,7 +45,7 @@ export function RoomLive({ initial, joinQr }: { initial: View; joinQr?: string }
   async function send(path: string, data: object) {
     setBusy(true); setError("");
     try { const response = await fetch(`/api/rooms/${view.code}/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "تعذّر إرسال الطلب"); setView(result);
+      const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "تعذّر إرسال الطلب"); applyView(result);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "تعذّر الاتصال"); }
     finally { setBusy(false); }
   }

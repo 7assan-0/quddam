@@ -1,0 +1,39 @@
+name: Beta dependency patch validation
+on:
+  pull_request:
+    paths:
+      - 'qalba-platform/package.json'
+      - 'qalba-platform/package-lock.json'
+      - '.github/workflows/beta-dependency-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: qalba-platform/package-lock.json
+      - name: Clean install
+        run: npm ci --no-fund --no-audit
+      - name: Production audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Full audit
+        run: npm audit --audit-level=moderate
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Tests
+        run: npm run test -- --maxWorkers=1 --retry=0
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build

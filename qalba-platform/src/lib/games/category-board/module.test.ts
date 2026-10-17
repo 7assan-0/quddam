@@ -1,21 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_VALUES, decideBoard, initialBoardState, type BoardState } from "./module";
+import { BOARD_VALUES, BOARD_TILES_PER_VALUE, BOARD_TOTAL_CELLS, decideBoard, initialBoardState, type BoardState } from "./module";
 
 const now = new Date("2026-01-01T12:00:00.000Z");
 function fixture(): BoardState {
   const categories = Array.from({ length: 6 }, (_, index) => ({ id: `c${index}`, title: `فئة ${index}` }));
-  const cells = categories.flatMap((category) => BOARD_VALUES.map((value) => ({
-    key: `${category.id}:${value}`, categoryId: category.id, value, questionId: `${category.id}-${value}`, completed: false,
-  })));
+  const cells = categories.flatMap(category => BOARD_VALUES.flatMap(value =>
+    Array.from({ length: BOARD_TILES_PER_VALUE }, (_, slot) => ({
+      key: `${category.id}:${value}:${slot + 1}`, categoryId: category.id, value,
+      questionId: slot === 0 ? `${category.id}-${value}` : `${category.id}-${value}-${slot + 1}`, completed: false,
+    }))));
   return initialBoardState(categories, ["team-a", "team-b"], cells, Object.fromEntries(cells.map((cell) => [cell.questionId,
     { id: cell.questionId, question: "سؤال تجريبي", answer: "صح", type: "TEXT", options: null, explanation: null, imageUrl: null }])));
 }
 function open() {
   const started = decideBoard(fixture(), { type: "START" }, now).state;
-  return decideBoard(started, { type: "OPEN", categoryId: "c0", value: 200 }, now).state;
+  return decideBoard(started, { type: "OPEN", cellKey: "c0:200:1" }, now).state;
 }
 
 describe("Category Board decisions", () => {
+  it("requires exact keys for repeated values but accepts the saved legacy 18-cell format", () => {
+    const full = decideBoard(fixture(), { type: "START" }, now).state;
+    expect(() => decideBoard(full, { type: "OPEN", categoryId: "c0", value: 200 }, now)).toThrow();
+    const legacy = { ...full, cells: full.cells.filter(cell => cell.key.endsWith(":1")).map(cell => ({
+      ...cell, key: `${cell.categoryId}:${cell.value}`,
+    })) };
+    const opened = decideBoard(legacy, { type: "OPEN", categoryId: "c0", value: 200 }, now).state;
+    expect(opened.active?.questionId).toBe("c0-200");
+    expect(opened.cells).toHaveLength(18);
+  });
+  it("refuses duplicate tile keys, repeated question ids and incomplete buckets before a match starts", () => {
+    const full = fixture(), opts = { categories: full.categories, teamIds: full.teamIds,
+      snapshots: full.questionSnapshots };
+    const make = (cells: BoardState["cells"]) => initialBoardState(opts.categories, opts.teamIds, cells, opts.snapshots);
+    const duplicate = structuredClone(full.cells);
+    duplicate[1].questionId = duplicate[0].questionId;
+    expect(() => make(duplicate)).toThrow();
+    const repeatedKey = structuredClone(full.cells);
+    repeatedKey[1].key = repeatedKey[0].key;
+    expect(() => make(repeatedKey)).toThrow();
+    expect(() => make(full.cells.slice(0,18))).toThrow();
+  });
   it("awards doubled points exactly once and undo creates the opposite delta", () => {
     let state = open();
     state = decideBoard(state, { type: "USE_POWERUP", slug: "double" }, now, { powerRemaining: 1 }).state;
@@ -63,15 +87,33 @@ describe("Category Board decisions", () => {
     expect(decideBoard(paused, { type: "TIMER_START" }, now).state.active?.deadlineAt).toBe("2026-01-01T12:00:40.000Z");
   });
 
-  it("ends only after all 18 distinct cells, then permits undo of the last result", () => {
+  it("stays in progress after 18 cells and completes only after all 36", () => {
     let state = decideBoard(fixture(), { type: "START" }, now).state;
-    for (const category of state.categories) for (const value of BOARD_VALUES) {
-      state = decideBoard(state, { type: "OPEN", categoryId: category.id, value }, now).state;
+    expect(state.cells).toHaveLength(36);
+    const tiles = [...state.cells];
+    for (const [index, cell] of tiles.entries()) {
+      state = decideBoard(state, { type: "OPEN", cellKey: cell.key }, now).state;
+      state = decideBoard(state, { type: "SKIP" }, now).state;
+      if (index === 17) {
+        expect(state.completed).toBe(false);
+        expect(state.cells.filter(item => item.completed)).toHaveLength(18);
+      }
+      if (index < 35) expect(state.completed).toBe(false);
+    }
+    expect(state.completed).toBe(true);
+    expect(new Set(tiles.map(cell => cell.questionId)).size).toBe(36);
+  });
+  it("ends only after all 36 distinct cells, then permits undo of the last result", () => {
+    let state = decideBoard(fixture(), { type: "START" }, now).state;
+    expect(state.cells).toHaveLength(BOARD_TOTAL_CELLS);
+    expect(new Set(state.cells.map(cell => cell.questionId)).size).toBe(BOARD_TOTAL_CELLS);
+    for (const cell of state.cells) {
+      state = decideBoard(state, { type: "OPEN", cellKey: cell.key }, now).state;
       state = decideBoard(state, { type: "SKIP" }, now).state;
     }
     expect(state.completed).toBe(true);
     expect(state.cells.every((cell) => cell.completed)).toBe(true);
-    expect(() => decideBoard(state, { type: "OPEN", categoryId: "c0", value: 200 }, now)).toThrow();
+    expect(() => decideBoard(state, { type: "OPEN", cellKey: "c0:200:1" }, now)).toThrow();
     expect(decideBoard(state, { type: "UNDO" }, now).state.completed).toBe(false);
   });
 
@@ -161,8 +203,8 @@ describe("Category Board hardening", () => {
     const started = decideBoard(fixture(), { type: "START" }, now).state;
     expect(() => decideBoard(started, { type: "CORRECT" }, now)).toThrow();
     expect(() => decideBoard(started, { type: "RESUME_GAME" }, now)).toThrow();
-    const active = decideBoard(started, { type: "OPEN", categoryId: "c0", value: 200 }, now).state;
-    expect(() => decideBoard(active, { type: "OPEN", categoryId: "c1", value: 200 }, now)).toThrow();
+    const active = decideBoard(started, { type: "OPEN", cellKey: "c0:200:1" }, now).state;
+    expect(() => decideBoard(active, { type: "OPEN", cellKey: "c1:200:1" }, now)).toThrow();
     expect(() => decideBoard(active, { type: "USE_POWERUP", slug: "challenge" }, now, { powerRemaining: 1 })).toThrow();
     const done = decideBoard(active, { type: "CORRECT" }, now).state;
     expect(() => decideBoard(done, { type: "WRONG" }, now)).toThrow();

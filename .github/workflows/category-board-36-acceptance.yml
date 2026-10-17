@@ -1,0 +1,64 @@
+name: Category Board 36-cell isolated acceptance (owner label)
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  board-36:
+    if: ${{ github.event.pull_request.head.ref == 'feature/category-board-36-20261017' && github.event.label.name == 'board-36-ci-approved' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      # Prisma generation only: the browser runner creates its own in-memory fixture.
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect
+      E2E_REPORT_FILE: playwright-report/board-36.json
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind evidence to exact candidate
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(node -v)" = "v24.19.0"
+          echo "CATEGORY_BOARD_36_SOURCE_SHA=$EXPECTED_SHA"
+      - name: Locked dependency install and Prisma generation
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Full Vitest (including 36-cell completion and 72 authored source)
+        run: npm run test -- --maxWorkers=1 --retry=0
+      - name: TypeScript ESLint and build
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Install actual Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Isolated seeded PGlite UI regression (no production data)
+        run: |
+          mkdir -p playwright-report
+          npm run test:e2e:db -- tests/e2e/category-board-36.spec.ts tests/e2e/category-board.spec.ts tests/e2e/board-hardening.spec.ts tests/e2e/category-board-beta-journey.spec.ts --workers=1 --retries=0
+      - name: Upload sanitized browser summary
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: board-36-acceptance-${{ github.run_id }}
+          path: qalba-platform/playwright-report/board-36.json
+          if-no-files-found: warn
+          retention-days: 7
