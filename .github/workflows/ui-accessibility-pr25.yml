@@ -1,0 +1,64 @@
+name: PR25 measured UI accessibility
+
+on:
+  pull_request:
+    paths:
+      - 'qalba-platform/src/**'
+      - 'qalba-platform/tests/e2e/ui-simplify-accessibility.spec.ts'
+      - '.github/workflows/ui-accessibility-pr25.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measured-accessibility:
+    if: ${{ github.event.pull_request.head.ref == 'ui/simplify-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect
+      ENABLE_NIGHT_OF_QUDDAM: 'true'
+      ENABLE_SHILLATAK: 'true'
+      E2E_REPORT_FILE: playwright-report/pr25-accessibility.json
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Exact HEAD and locked dependencies
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Lint and static type checks
+        run: |
+          node node_modules/next/dist/bin/next typegen
+          npm run lint
+          npm run typecheck
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Isolated PGlite real browser contrast and touch audit
+        run: |
+          mkdir -p playwright-report
+          npm run test:e2e:db -- tests/e2e/ui-simplify-accessibility.spec.ts --workers=1 --retries=0
+      - name: Preserve measured audit report on success or failure
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: pr25-accessibility-${{ github.run_id }}
+          path: |
+            qalba-platform/playwright-report/pr25-accessibility.json
+            qalba-platform/test-results/
+          if-no-files-found: warn
+          retention-days: 14
