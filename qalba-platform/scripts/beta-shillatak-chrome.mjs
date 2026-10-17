@@ -248,7 +248,11 @@ try {
   step = "member-inline-login-to-existing-membership"; checkpoint();
   // LogoutButton navigates after receiving headers without reading its JSON body.
   // Its body may be cancelled by that navigation; status + signed-out UI are the contract.
-  await clickMutation(anonymousPage, anonymousPage.getByRole("button", { name: "خروج", exact: true }), "/api/auth/logout", 200, { readJson: false });
+  // Simplified mobile navigation puts the real logout action inside the collapsed phone menu.
+  const mobileMenu = anonymousPage.locator(".mobile-menu");
+  await mobileMenu.locator("summary").click();
+  await expect(mobileMenu).toHaveAttribute("open", "");
+  await clickMutation(anonymousPage, mobileMenu.getByRole("button", { name: "خروج", exact: true }), "/api/auth/logout", 200, { readJson: false });
   step = "member-logout-navigation"; checkpoint();
   await anonymousPage.waitForURL(origin.href);
   step = "member-consumed-invite-inline-login-form"; checkpoint();
