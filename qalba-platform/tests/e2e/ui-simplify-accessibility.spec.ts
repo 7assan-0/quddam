@@ -92,4 +92,20 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
     ...e.touch.map(item => `${e.screen} ${e.viewport}px target: ${item.element}: ${item.width}x${item.height}px`),
   ]);
   expect(failures, failures.join("\n")).toEqual([]);
+  // End the real synthetic match through the host UI; do not fabricate a completed response.
+  page.once("dialog", dialog => void dialog.accept());
+  await page.getByRole("button", { name: "إنهاء المباراة", exact: true }).click();
+  const result = page.locator(".victory");
+  await expect(result).toBeVisible();
+  await expect(result.getByRole("link", { name: "جولة ثانية؟ قدّام!" })).toHaveAttribute("href", /rematch=/);
+  await expect(result.locator(".score-editor-details > summary")).toBeVisible();
+  await expect(result.locator(".score-editor")).not.toBeVisible();
+  await result.locator(".score-editor-details > summary").click();
+  await expect(result.locator(".score-editor")).toBeVisible();
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => document.fonts.ready);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `Completed Board ${width}: no overflow`).toBeLessThanOrEqual(1);
+    await testInfo.attach(`board-completed-${width}.png`, { body: await result.screenshot(), contentType: "image/png" });
+  }
 });

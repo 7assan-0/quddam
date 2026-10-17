@@ -1,0 +1,163 @@
+name: PR25 actual Night final visual acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'qalba-platform/src/**'
+      - 'qalba-platform/scripts/night-phase4-chrome.mjs'
+      - '.github/workflows/ui-final-night-visual-pr25.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr25-night-visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  actual-night-visual:
+    if: ${{ github.event.pull_request.head.ref == 'ui/simplify-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quddam_ui_visual_ci
+          POSTGRES_PASSWORD: synthetic-only-pr25-ui-visual-password
+          POSTGRES_DB: night_mvp_ui_visual_ci
+        ports:
+          - 55479:5432
+        options: >-
+          --health-cmd "pg_isready -U quddam_ui_visual_ci -d night_mvp_ui_visual_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_POOL_MAX: '10'
+      NIGHT_MVP_SYNTHETIC: '1'
+      ENABLE_NIGHT_OF_QUDDAM: 'true'
+      ENABLE_SHILLATAK: 'true'
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
+      AUTH_RATE_LIMIT_SECRET: synthetic-pr25-night-visual-ci-secret-0123456789abcdef
+      AUTH_TRUST_PROXY: 'false'
+      DATABASE_URL: postgresql://quddam_ui_visual_ci:synthetic-only-pr25-ui-visual-password@127.0.0.1:55479/night_mvp_ui_visual_ci
+      NIGHT_MVP_ENV_FILE: /tmp/quddam-pr25-night-visual/database.private.json
+      NIGHT_MVP_OUTPUT: /tmp/quddam-pr25-night-visual
+      BASE_URL: http://127.0.0.1:3000
+      NIGHT_MVP_CHROME_NO_SANDBOX: '1'
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind exact candidate to new private local PG17 fixture
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(node -v)" = v24.19.0
+          for env_name in .env .env.local .env.production .env.production.local; do test ! -e "$env_name"; done
+          umask 077
+          mkdir -p "$NIGHT_MVP_OUTPUT"
+          chmod 700 "$NIGHT_MVP_OUTPUT"
+          printf '{"DATABASE_URL":"%s"}\n' "$DATABASE_URL" > "$NIGHT_MVP_ENV_FILE"
+          chmod 600 "$NIGHT_MVP_ENV_FILE"
+      - name: Clean install, Prisma, source tests, typegen, lint and build
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+          npm run test -- --maxWorkers=1 --retry=0
+          node node_modules/next/dist/bin/next typegen
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Verify empty synthetic database and prepare real canonical Night fixtures
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try{
+            const r=await c.query("SELECT current_database() AS name, current_setting('server_version_num')::int AS version, (SELECT count(*)::int FROM pg_tables WHERE schemaname='public') AS tables");
+            const v=r.rows[0];
+            if(v.name!=='night_mvp_ui_visual_ci'||v.version<170000||v.version>=180000||v.tables!==0) throw Error('Not the new isolated PG17 fixture');
+            console.log('PR25_NEW_SYNTHETIC_PG17_PASS');
+          }finally{await c.end()}})().catch(()=>{console.error('Synthetic database identity failed');process.exitCode=1});
+          NODE
+          npm run db:migrate
+          node --import tsx scripts/night-mvp-fixtures.ts --seed
+          node --import tsx scripts/night-phase4-fixtures.ts
+          node --import tsx scripts/night-phase4-postgres.ts
+      - name: Install and verify actual Google Chrome
+        run: |
+          npx playwright install --with-deps chrome
+          chrome="$(command -v google-chrome)"
+          test -x "$chrome"
+          "$chrome" --version | grep '^Google Chrome'
+          echo "CHROME_EXECUTABLE=$chrome" >> "$GITHUB_ENV"
+      - name: Capture real canonical transitions, winner, explicit TV and private PNG
+        env:
+          APP_URL: http://127.0.0.1:3000
+        run: |
+          set -euo pipefail
+          node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000 > "$NIGHT_MVP_OUTPUT/next.private.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 120); do
+            if curl --silent --fail --output /dev/null http://127.0.0.1:3000/login; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          node scripts/night-phase4-chrome.mjs
+      - name: Retain only synthetic, public-safe visual fixtures with source-bound receipt
+        if: always()
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),path=require('node:path');
+          const root=process.env.NIGHT_MVP_OUTPUT,dir=path.join(root,'phase4-chrome');
+          const manifest={sourceHead:process.env.EXPECTED_SHA,syntheticOnly:true,realChrome:true,nativePG17:true,status:'INCOMPLETE',images:[]};
+          try{
+            const receipt=JSON.parse(fs.readFileSync(path.join(dir,'receipt.json')));
+            manifest.status=receipt.status;
+            manifest.passedChecks=receipt.passed;
+            manifest.failureStep=receipt.status==='PASSED'?null:receipt.failureStep;
+            if(receipt.sourceHead!==process.env.EXPECTED_SHA) throw Error('Candidate source changed');
+            for(const name of ['transition-1-390.png','transition-1-1440.png','transition-2-390.png','transition-2-1440.png','champion-owner-390.png','champion-owner-1920.png','champion-tv-1920.png','champion.png','cochampions.png']){
+              const file=path.join(dir,name);
+              if(fs.existsSync(file)&&receipt.status==='PASSED'){
+                const bytes=fs.readFileSync(file);
+                if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a') throw Error('Invalid PNG');
+                manifest.images.push(name);
+              }
+            }
+            if(receipt.status==='PASSED'&&manifest.images.length!==9) throw Error('Missing required visual fixture');
+          }catch(e){manifest.status='FAIL_OR_INCOMPLETE';manifest.images=[]}
+          fs.writeFileSync(path.join(root,'visual-summary.json'),JSON.stringify(manifest,null,2),{mode:0o600});
+          console.log('PR25_VISUAL_SUMMARY='+JSON.stringify(manifest));
+          NODE
+      - name: Upload de-identified synthetic visuals only
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: pr25-night-visual-${{ github.run_id }}
+          path: |
+            /tmp/quddam-pr25-night-visual/visual-summary.json
+            /tmp/quddam-pr25-night-visual/phase4-chrome/transition-*.png
+            /tmp/quddam-pr25-night-visual/phase4-chrome/champion-owner-*.png
+            /tmp/quddam-pr25-night-visual/phase4-chrome/champion-tv-1920.png
+            /tmp/quddam-pr25-night-visual/phase4-chrome/champion.png
+            /tmp/quddam-pr25-night-visual/phase4-chrome/cochampions.png
+          if-no-files-found: warn
+          retention-days: 14
