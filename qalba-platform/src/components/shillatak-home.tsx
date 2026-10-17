@@ -43,7 +43,7 @@ export function ShillatakHome({ initial }: { initial: Entry[] }) {
       </form>
     </section>
     <section className="panel" style={{ marginBlock: "1rem" }}><h2>شللك الخاصة</h2>
-      {groups.length === 0 && <div className="shilla-empty"><strong>مكان شلّتك جاهز ✨</strong><p>سمّوا شلّتكم وفريقينكم فوق، وخلو الفوز القادم ينحفظ هنا.</p></div>}
+      {groups.length === 0 && <div className="shilla-empty"><strong>مكان شلّتك جاهز ✨</strong><p>ما انضمّيت لأي شلّة حتى الآن. سمّوا شلّتكم وفريقينكم فوق، وخلو الفوز القادم ينحفظ هنا.</p></div>}
       <div className="history-list">{groups.map(group => <article className="history-row" key={group.id}>
         <span><strong>{group.name}</strong> · {group.role === "OWNER" ? "المنظّم" : "عضو"} · {group.status === "archived" ? "مؤرشفة" : "نشطة"}<p>{group.members} أعضاء · {group.nights} سهرات مكتملة مسجلة</p></span>
         <Link className="btn btn-secondary" href={`/shillatak/${group.id}`}>لوحة الشرف</Link>
