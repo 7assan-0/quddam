@@ -186,3 +186,10 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 .night-champion-actions .btn-primary{background:var(--color-accent-gold);color:var(--neutral-900)}
 .night-tv-note{display:none}.night-details{margin-block:var(--space-4)}.night-details>summary{cursor:pointer;min-height:44px;padding:12px;border:1px solid var(--line);border-radius:var(--radius-md);font-weight:700}
 @media(min-width:1700px){body:has(.night-champion) .header,body:has(.night-champion) .footer{display:none}body:has(.night-champion) .night-champion-actions,body:has(.night-champion) .night-details,body:has(.night-champion) [data-testid="night-highlights"],body:has(.night-champion) [data-testid="night-games"],body:has(.night-champion) .utility-links{display:none}.night-tv-note{display:block;font-size:1.3rem;color:var(--neutral-200)}}
+
+.night-transition{text-align:center;display:grid;justify-items:center;gap:var(--space-4)}
+.night-progress{display:flex;align-items:start;justify-content:center;gap:clamp(12px,3vw,40px);padding:0;margin:var(--space-3) 0;list-style:none;width:100%}
+.night-progress li{display:grid;justify-items:center;gap:4px;min-width:0;flex:1;max-width:160px}.night-progress span{font-size:clamp(2rem,5vw,3.2rem);color:var(--color-accent-gold);line-height:1}.night-progress small{color:var(--neutral-200);font-size:.85rem;overflow-wrap:anywhere}
+.night-transition-scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,680px)}
+.night-transition-team{display:grid;gap:4px;min-width:0;padding:16px;border-radius:var(--radius-md);border-block-start:5px solid var(--team-a);background:var(--neutral-800)}.night-transition-team.night-team-1{border-block-start-color:var(--team-b)}.night-transition-team strong{overflow-wrap:anywhere}.night-transition-team b{font:700 clamp(2rem,5vw,3.5rem) var(--font-numeral)}.night-transition-team small{color:var(--neutral-200)}
+.night-next-button{width:min(100%,420px);min-height:60px;background:var(--color-accent-gold);color:var(--neutral-900)}
