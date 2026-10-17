@@ -43,6 +43,17 @@ jobs:
           npm run db:generate
       - name: Full existing regression plus new 576-category source/difficulty/duplication gates
         run: npm run test -- --maxWorkers=1 --retry=0
+      - name: Verify 2-group 576-question blind pilot plan and reject blank forms as human evidence
+        run: |
+          set -euo pipefail
+          node scripts/board-576-blind-calibration.mjs --self-test > /tmp/board-pilot-selftest.txt
+          grep -F '"status":"PASS"' /tmp/board-pilot-selftest.txt
+          grep -F '"approval":"NOT_RUN"' /tmp/board-pilot-selftest.txt
+          node scripts/board-576-blind-calibration.mjs --plan /tmp/board-576-private-pilot
+          node scripts/board-576-blind-calibration.mjs --analyze /tmp/board-576-private-pilot/responses-EMPTY.csv > /tmp/board-pilot-empty-analysis.json
+          grep -F '"status": "NOT_RUN"' /tmp/board-pilot-empty-analysis.json
+          grep -F '"approval": "NEVER_AUTOMATIC"' /tmp/board-pilot-empty-analysis.json
+          echo "BOARD576_BLIND_PLAN_ONLY_NO_HUMAN_CLAIM_PASS"
       - name: TypeScript lint and production build
         run: |
           npm run typecheck
