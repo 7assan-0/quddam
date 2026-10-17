@@ -1,0 +1,109 @@
+name: Survey 91 follow-up isolated acceptance (owner label only)
+on:
+  pull_request:
+    types: [labeled]
+permissions:
+  contents: read
+jobs:
+  candidate-structure:
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-followup-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect_generate_only
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Pin the exact candidate source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          echo "SURVEY_REVIEW_SHA=$EXPECTED_SHA"
+      - name: Clean install and source validation only
+        run: |
+          npm ci --no-audit --no-fund
+          npm run db:generate
+          npx vitest run tests/survey-91-review-candidate.test.ts tests/remaining-games-review-staged.test.ts --maxWorkers=1 --retry=0
+          npm run typecheck
+          npm run lint
+      - name: Do not allow editorial or playtest signoffs to be fabricated by automation
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const s=readFileSync('content-review/2026-10-16/Survey_91_Item_Editorial_Gate.csv','utf8');
+          const rows=s.trim().split(/\r?\n/);
+          if(rows.length!==92 || !rows.slice(1).every(row=>row.includes(',PENDING_INDEPENDENT_ITEM_REVIEW,PENDING_HUMAN_SPOKEN_GUESS_REVIEW,NOT_RUN,,')))
+            throw Error('Human editorial/alias/playtest status changed; this gate cannot sign off 91 candidates');
+          console.log('REVIEW_ONLY_91_PENDING; NEVER_IMPORTED');
+          NODE
+
+  original-seed-browser:
+    if: ${{ github.event.label.name == 'survey-91-ci-approved' && github.event.pull_request.head.ref == 'test/survey-91-followup-20261017' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'true'
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect_generate_only
+      E2E_REPORT_FILE: playwright-report/survey-original-65-20261017.json
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Verify literal source and prepare synthetic runner
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          npm ci --no-audit --no-fund
+          npm run db:generate
+      - name: Install Chromium and run original 65-seed baseline, never candidate 91
+        run: |
+          npx playwright install --with-deps chromium
+          mkdir -p playwright-report
+          node scripts/e2e-with-db.mjs tests/e2e/survey-battle.spec.ts --grep "full five-round winner" --workers=1 --retries=0
+      - name: Accept one native successful run, zero skip/flaky/retry/error
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('playwright-report/survey-original-65-20261017.json','utf8'));
+          const stats=r.stats||{}, results=[];
+          const walk=suites=>{for(const suite of suites||[]){for(const spec of suite.specs||[])for(const t of spec.tests||[])results.push(t);walk(suite.suites)}};
+          walk(r.suites);
+          const proof={head:process.env.EXPECTED_SHA,scope:'original seeded 65 only, candidate 91 not imported',expected:stats.expected,unexpected:stats.unexpected,skipped:stats.skipped,flaky:stats.flaky,errors:(r.errors||[]).length,retries:results.map(t=>t.results?.length),statuses:results.map(t=>t.results?.[0]?.status)};
+          console.log('SURVEY_BASELINE_SUMMARY='+JSON.stringify(proof));
+          writeFileSync('playwright-report/survey-original-65-summary.json',JSON.stringify(proof,null,2)+'\n');
+          if(proof.expected!==1||proof.unexpected||proof.skipped||proof.flaky||proof.errors||results.length!==1||proof.retries[0]!==1||proof.statuses[0]!=='passed') throw Error('Original seeded baseline did not pass once cleanly');
+          NODE
+      - name: Keep sanitized count-only summary when generated
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: survey-original-seed-counts-${{ github.run_id }}
+          path: qalba-platform/playwright-report/survey-original-65-summary.json
+          if-no-files-found: warn
+          retention-days: 7
