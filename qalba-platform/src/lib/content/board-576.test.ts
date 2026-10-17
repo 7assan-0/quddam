@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { boardExpansionSamples } from "../../../prisma/board-expansion";
 import { boardSamples, boardStarterSamples } from "../../../prisma/core-content";
 import { auditBank } from "./audit";
@@ -51,6 +52,17 @@ describe("original Board576 editorial expansion, no show-text copying", () => {
       if (overlap(a[1], b[1]) >= 0.35) found.push(a[0] + " => " + a[1] + " | " + b[1]);
     }
     expect(found).toEqual([]);
+  });
+  it("keeps a row-level 576-question review ledger without fabricated human approval", () => {
+    const csv = readFileSync(new URL("../../../content-review/2026-10-17/Board_576_Item_Review.csv", import.meta.url), "utf8");
+    const lines = csv.trimEnd().split(/\\r?\\n/);
+    expect(lines).toHaveLength(577); // header + one stable-ID row per authored question
+    for (let i = 0; i < 576; i++) {
+      expect(lines[i + 1].startsWith(`"seed-category-${i + 1}",`)).toBe(true);
+      expect(lines[i + 1]).toContain('"PENDING_INDEPENDENT_ITEM_REVIEW"');
+      expect(lines[i + 1]).toContain('"PENDING_INDEPENDENT_FACTCHECK"');
+      expect(lines[i + 1]).toContain('"NOT_RUN"');
+    }
   });
   it("passes the real source validation (not just a synthetic standalone CSV tally)", () => {
     const rows = sourceBanks()["category-board"];
