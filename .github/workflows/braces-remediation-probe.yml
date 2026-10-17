@@ -109,7 +109,7 @@ jobs:
             exit 1
           fi
           echo 'PASS: no braces package in production-only dependency directory'
-          npm ls braces --omit=dev --all
+          # npm ls returns 1 when a queried package is absent. Physical absence was already asserted above.
           npm audit --omit=dev --audit-level=moderate
           git diff --exit-code -- package.json package-lock.json
 
