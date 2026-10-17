@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format-number";
 /** Presentation only. Availability, routes and game rules remain in their existing owners. */
 export const featuredGames = [
   { slug: "category-board", title: "لوحة التحدي", description: "اختاروا الفئة، راهنوا على معرفتكم، واقلبوا النتيجة.", players: "فريقان", duration: "٢٠–٤٠ دقيقة", icon: "board" },
