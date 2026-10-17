@@ -165,7 +165,7 @@ export function BoardHost({ initial }: { initial: View }) {
         <button className="btn btn-danger" disabled={busy} onClick={() => { if (window.confirm("إنهاء المباراة الآن وإعلان النتيجة الحالية؟")) send({ type: "END_GAME" }); }}>إنهاء المباراة</button>
       </div>{scoreEditor}</section>
       {view.status === "PAUSED" && <p className="paused-note" role="status">المباراة متوقفة. المؤقت محفوظ، واستئناف المباراة يعيد التحكم بالسؤال.</p>}
-      {active && <section className="question-stage" aria-live="polite"><div className="question-meta"><span>{view.categories.find((category) => category.id === active.categoryId)?.title} · {formatNumber(active.value ?? 0)} نقطة{active.double ? " ×{formatNumber(2)}" : ""}</span><span>{active.phase === "STEAL" ? "فرصة السرقة" : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${answering?.name}`}</span></div>
+      {active && <section className="question-stage" aria-live="polite"><div className="question-meta"><span>{view.categories.find((category) => category.id === active.categoryId)?.title} · {formatNumber(active.value ?? 0)} نقطة{active.double ? ` ×${formatNumber(2)}` : ""}</span><span>{active.phase === "STEAL" ? "فرصة السرقة" : active.phase === "CHALLENGE" ? "اعتراض على الحكم" : `دور ${answering?.name}`}</span></div>
         <h2>{active.question}</h2>{active.type === "IMAGE" && active.imageUrl && (
           // Admin-controlled question URLs can use different hosts; no image optimization proxy is configured.
           // eslint-disable-next-line @next/next/no-img-element
