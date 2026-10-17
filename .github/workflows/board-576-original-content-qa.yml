@@ -96,6 +96,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
           for name in .env .env.local .env.production .env.production.local; do test ! -e "$name"; done
+          npm ci --include=dev --no-audit --no-fund
           node <<'NODE'
           const {Client}=require('pg');
           (async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try{
@@ -104,9 +105,8 @@ jobs:
             console.log('EMPTY_NATIVE_POSTGRES17_FOR_BOARD576_VERIFIED');
           }finally{await c.end()}})().catch(()=>{console.error('Fixture identity failed');process.exitCode=1});
           NODE
-      - name: Install and apply original migrations in synthetic database only
+      - name: Generate Prisma and apply original migrations only after empty PG17 identity proof
         run: |
-          npm ci --include=dev --no-audit --no-fund
           npm run db:generate
           npm run db:migrate
       - name: Seed candidate 576, re-seed idempotently and verify all stable IDs and grade buckets
