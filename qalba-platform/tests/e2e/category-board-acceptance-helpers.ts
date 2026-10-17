@@ -157,7 +157,7 @@ export function cellControl(page: Page, board: BoardView, cell: BoardView['cells
   const category = board.categories.find(category => category.id === cell.categoryId)!;
   const slot = board.cells.filter(item => item.categoryId === cell.categoryId && item.value === cell.value)
     .findIndex(item => item.key === cell.key) + 1;
-  const accessibleName = `${category.title} ${cell.value}${slot > 1 ? ` سؤال ${slot}` : ""}`;
+  const accessibleName = slot > 1 ? `سؤال ${slot} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
   return page.getByRole("button", { name: accessibleName, exact: true });
 }
 
