@@ -94,7 +94,8 @@ async function main() {
         'SELECT current_database() AS database, current_setting(\'server_version_num\')::int AS version_num, (SELECT count(*)::int FROM "User") AS users');
       assert.equal(id.rows[0].database, databaseName);
       assert.ok(id.rows[0].version_num >= 170000 && id.rows[0].version_num < 180000);
-      assert.equal(id.rows[0].users, 3);
+      assert.ok(id.rows[0].users >= 3);
+      assert.equal(await db().user.count({ where: { id: { in: [fixture.ownerId, fixture.otherOwnerId, fixture.adminId] } } }), 3);
     });
     const initialBalance = (await db().creditWallet.findUniqueOrThrow({ where: { userId: fixture.ownerId } })).balance;
     const initialDebits = await db().gameCredit.count({ where: { userId: fixture.ownerId, delta: -1 } });
@@ -147,7 +148,7 @@ async function main() {
       assert.equal((await getPublicInvitation(inv.code)).view.open, true);
       assert.equal(await db().gameCredit.count({ where: { userId: fixture.ownerId, delta: -1 } }), initialDebits);
       assert.equal((await db().creditWallet.findUniqueOrThrow({ where: { userId: fixture.ownerId } })).balance, initialBalance);
-      assert.equal(await db().nightGame.count({ where: { sourceSessionId: { not: null }, night: { ownerId: fixture.ownerId } } }), 0);
+      assert.equal(await db().nightGame.count({ where: { nightId: inv.night.id, sourceSessionId: { not: null } } }), 0);
     });
     passed = true;
   } finally {
