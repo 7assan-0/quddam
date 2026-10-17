@@ -48,6 +48,10 @@ jobs:
           npm run typecheck
           npm run lint
           npm run build
+      - name: Verify Next-generated import-path-only transformation and restore exact committed bytes
+        env:
+          BETA_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/beta-next-env-integrity.mjs
       - name: Verify exact tracked source inventory after full quality checks
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
