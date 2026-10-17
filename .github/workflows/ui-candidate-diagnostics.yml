@@ -97,9 +97,9 @@ jobs:
             await page.getByLabel("البريد الإلكتروني").fill(`visual-qa-${Date.now()}@example.test`);
             await page.getByLabel("كلمة المرور").fill("visual-qa-password-12345");
             await page.getByRole("button", { name: "إنشاء الحساب" }).click();
-            await page.goto("/games");
-            await expect(page.locator(".game-card")).toHaveCount(10);
+            await expect(page.getByRole("link", { name: "ابدأ لوحة التحدي" })).toBeVisible({ timeout: 30_000 });
             await page.screenshot({ path: `${dir}/02-library-390.png`, fullPage: true });
+            await expect(page.locator(".game-card")).toHaveCount(10);
             expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), "Library 390: no horizontal overflow").toBeLessThanOrEqual(1);
             await page.goto("/shillatak");
             await expect(page.locator("[data-testid=shillatak-home]")).toBeVisible();
