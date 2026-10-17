@@ -25,7 +25,7 @@ async function measure(page: Page, screen: string, viewport: number): Promise<Ev
       !element.closest("[inert]") && !element.matches(":disabled");
   }).map(element => {
     const rect = element.getBoundingClientRect();
-    return { element: `${element.tagName.toLowerCase()}${element.className && typeof element.className === "string" ? "." + element.className.trim().replace(/\\s+/g, ".") : ""} ${element.textContent?.trim().slice(0, 45) ?? ""}`,
+    return { element: `${element.tagName.toLowerCase()}${element.className && typeof element.className === "string" ? "." + element.className.trim().replace(/\s+/g, ".") : ""} ${element.textContent?.trim().slice(0, 45) ?? ""}`,
       width: Math.round(rect.width * 100) / 100, height: Math.round(rect.height * 100) / 100 };
   }).filter(element => element.width < 44 || element.height < 44));
   return { screen, viewport, contrast, touch };
@@ -49,7 +49,7 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   await page.getByLabel("البريد الإلكتروني").fill("admin@example.test");
   await page.getByLabel("كلمة المرور").fill("e2e-admin-password-123");
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
-  await expect(page).toHaveURL(/\\/games$/);
+  await expect(page).toHaveURL(/\/games$/);
   for (const width of [360, 390]) {
     await visit("signed-in library", "/games", width);
     await visit("Shillatak empty/setup", "/shillatak", width);
@@ -61,7 +61,7 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
   const categories = page.getByRole("checkbox");
   for (let i = 0; i < 6; i++) await categories.nth(i).check();
   await page.getByRole("button", { name: "جهّز اللوحة" }).click();
-  await expect(page).toHaveURL(/\\/play\\/[^/]+$/);
+  await expect(page).toHaveURL(/\/play\/[^/]+$/);
   await page.getByRole("button", { name: "ابدأ المباراة" }).click();
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 844 });
@@ -78,5 +78,5 @@ test("PR25: measured AA text contrast and 44px interactive targets on 360/390 mo
     ...e.contrast.map(item => `${e.screen} ${e.viewport}px contrast: ${item.selector}: ${item.summary}`),
     ...e.touch.map(item => `${e.screen} ${e.viewport}px target: ${item.element}: ${item.width}x${item.height}px`),
   ]);
-  expect(failures, failures.join("\\n")).toEqual([]);
+  expect(failures, failures.join("\n")).toEqual([]);
 });
