@@ -38,7 +38,7 @@ export function AuthForm({ mode, token, returnTo, onModeChange }: {
     <form onSubmit={submit}>
       {mode === "register" && <div className="field"><label htmlFor="name">الاسم</label><input className="input" id="name" name="name" autoComplete="name" minLength={2} maxLength={80} required /></div>}
       {mode !== "reset" && <div className="field"><label htmlFor="email">البريد الإلكتروني</label><input className="input" id="email" name="email" type="email" autoComplete="email" required /></div>}
-      {(mode === "register" || mode === "login" || mode === "reset") && <div className="field"><label htmlFor="password">كلمة المرور</label><input className="input" id="password" name="password" type="password" autoComplete={mode === "register" || mode === "reset" ? "new-password" : "current-password"} minLength={mode === "login" ? 1 : 12} maxLength={128} required />{mode !== "login" && <small className="form-note">١٢ حرفًا على الأقل</small>}</div>}
+      {(mode === "register" || mode === "login" || mode === "reset") && <div className="field"><label htmlFor="password">كلمة المرور</label><input className="input" id="password" name="password" type="password" autoComplete={mode === "register" || mode === "reset" ? "new-password" : "current-password"} minLength={mode === "login" ? 1 : 12} maxLength={128} required />{mode !== "login" && <small className="form-note">12 حرفًا على الأقل</small>}</div>}
       {error && <p className="form-error" role="alert">{error}</p>}{success && <p className="form-success" role="status">{success}</p>}
       <button className="btn btn-primary" style={{ width: "100%" }} type="submit" disabled={busy || (mode === "reset" && !token)}>{busy ? "لحظة..." : button}</button>
     </form>
