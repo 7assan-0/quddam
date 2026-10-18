@@ -125,7 +125,7 @@ describe("Board27 staged rollout — evidence, quotas and publication isolation"
   it("does not silently publish Geography or alter the authorized seed or live Board36 engine", () => {
     const published = sourceBanks()["category-board"];
     expect(published).toHaveLength(576);
-    expect(published.every(row => row.categorySlug !== "geography")).toBe(true);
+    expect(published.every(row => row.categoryId !== "geography")).toBe(true);
     expect(published.every(row => row.id.startsWith("seed-category-"))).toBe(true);
     expect(published.map(row => row.id)).toEqual(
       Array.from({ length: 576 }, (_, i) => "seed-category-" + (i + 1)),
