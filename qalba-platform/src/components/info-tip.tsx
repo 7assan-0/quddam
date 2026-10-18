@@ -7,7 +7,7 @@ export function InfoTip({ title, description, example }: { title: string; descri
   const modal = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const headingId = useId();
-  return <span className="info-tip">
+  return <div className="info-tip">
     <button ref={trigger} type="button" className="info-tip-trigger" aria-label={`شرح ${title}`} aria-haspopup="dialog"
       onClick={() => modal.current?.showModal()}><span aria-hidden="true">!</span></button>
     <dialog ref={modal} className="info-dialog" aria-labelledby={headingId} onClose={() => trigger.current?.focus()}
@@ -20,5 +20,5 @@ export function InfoTip({ title, description, example }: { title: string; descri
         <button type="button" className="btn btn-secondary info-dialog-done" onClick={() => modal.current?.close()}>فهمت!</button>
       </div>
     </dialog>
-  </span>;
+  </div>;
 }
