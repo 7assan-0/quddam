@@ -42,6 +42,19 @@ describe("Night owner interface preserves completion and authority boundaries", 
     expect(html).not.toContain('data-testid="night-end"');
   });
 
+  it("celebrates only an authoritative completed night with one dominant action", () => {
+    const complete = renderToStaticMarkup(<NightOfQuddam initial={fixture("completed", 3)}/>);
+    expect(complete).toContain('class="panel night-champion night-champion-live"');
+    expect(complete).toContain('data-testid="night-winning-score"');
+    expect(complete).toContain("يا سلام! أنتم نجوم هالسهرة.");
+    expect(complete).toContain("يلا نعيدها! سهرة جديدة");
+    expect(complete).toContain("المشوار اكتمل");
+    expect(complete.match(/class="night-standing-top"/g)).toHaveLength(2);
+    expect(complete).toContain('data-testid="night-share-card"');
+    const unfinished = renderToStaticMarkup(<NightOfQuddam initial={fixture("ended", 1)}/>);
+    expect(unfinished).not.toContain("night-champion-live");
+  });
+
   it("keeps owner controls on large ordinary desktop, and gates TV presentation explicitly", () => {
     const complete = fixture("completed", 3);
     const owner = renderToStaticMarkup(<NightOfQuddam initial={complete}/>);
