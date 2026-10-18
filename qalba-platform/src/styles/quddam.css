@@ -315,7 +315,7 @@ h1,h2,h3,.quddam-brand { font-family:var(--font-display); font-weight:400; }
 .night-champion-live{padding:24px 14px}.night-champion-live .night-completed-badges{gap:5px}.night-champion-live .night-completed-badges span{padding:10px 4px;min-height:94px;font-size:.78rem}.night-standing-card{padding:12px 10px}.night-standing-top{gap:7px}.night-standing-top b small{display:block}.night-celebrate-primary{width:100%}
 .board-game-hero{align-items:start;flex-wrap:wrap}.board-live-strip>span{font-size:.78rem;min-height:40px;padding:7px 10px}
 .host-game .board-category-head{border-radius:10px;gap:0}
-.host-game .board-category-head h3{font-size:clamp(12px,3.35vw,.95rem);padding:5px 0 5px 3px;line-height:1.35;min-height:48px}
+.host-game .board-category-head h3{font-size:clamp(13px,3.6vw,.95rem);padding:5px 0 5px 3px;line-height:1.35;min-height:48px}
 .host-game .board-category-head .info-tip-trigger{min-width:44px;min-height:48px}.host-game .board-category-head .info-tip-trigger>span{width:20px;height:20px;font-size:.7rem}
 .board-setup .category-choice .category-option{padding-inline:7px;gap:5px}.category-chip-help{padding-inline:5px}
 .info-dialog{width:100%;max-width:none;max-height:min(85dvh,700px);inset:auto 0 0 0;margin:0;border-radius:22px 22px 0 0;border-inline:0;border-block-end:0}
