@@ -52,7 +52,7 @@ Original visual rebus composed of **two, three, four, or more legible pictures**
 
 ## Currency category scope
 
-The new **عملات** category should cover original or licensed images of banknotes/coins (with proper legal and provenance checks), country-to-currency and currency-to-country, currency names and symbols with unambiguous country context, and a Saudi-riyal component. Avoid inherently unstable **live FX rates**; verify that each issuer/currency is current for the question's stated historical date. Include accepted Arabic and international names as alternatives where needed. No 96-question currency bank has yet been authored, reviewed, seeded, or published.
+The new **عملات** category should cover original or licensed images of banknotes/coins (with proper legal and provenance checks), country-to-currency and currency-to-country, currency names and symbols with unambiguous country context, and a Saudi-riyal component. Avoid inherently unstable **live FX rates**; verify that each issuer/currency is current for the question's stated historical date. Include accepted Arabic and international names as alternatives where needed. A **96-question Currencies DRAFT** has now been authored (32 per 200/400/600) and logged for item-by-item review at `prisma/board-expansion/currencies-candidate.ts` and `content-review/2026-10-18/Board_Currencies_96_Review.csv`. It has **not** been independently fact-reviewed, calibrated, seeded, or published; image-backed items and art rights have **not** been completed.
 
 ## 96-item bank and release constraints
 
