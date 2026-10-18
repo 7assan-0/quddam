@@ -1,0 +1,180 @@
+name: Night celebration board and explainer UI exact-head QA (synthetic only)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [integration/pr34-seven-visual-fixes-20261018]
+    paths:
+      - '.github/workflows/champion-board-explainers-qa.yml'
+      - 'qalba-platform/src/**'
+permissions:
+  contents: read
+jobs:
+  ui-diagnostics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: qa_ui
+          POSTGRES_PASSWORD: synthetic-only-qa-ui
+          POSTGRES_DB: qa_ui
+        ports:
+          - 55469:5432
+        options: >-
+          --health-cmd "pg_isready -U qa_ui -d qa_ui"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATABASE_URL: postgresql://qa_ui:synthetic-only-qa-ui@127.0.0.1:55469/qa_ui
+      APP_URL: https://quddam.test
+      AUTH_RATE_LIMIT_SECRET: synthetic-ui-check-only-0123456789abcdef
+      PUBLIC_WELCOME_CREDITS_ENABLED: 'false'
+    defaults:
+      run:
+        working-directory: qalba-platform
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Assert exact UI source
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Locked install and synthetic DB preparation
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+          npm run db:migrate
+          npm run db:seed:content
+      - name: Full unit suite (visible diagnostics, no retry)
+        id: unit
+        env:
+          APP_URL: http://localhost:3000
+        run: npm run test -- --maxWorkers=1 --retry=0 --reporter=verbose
+      - name: ESLint (zero warnings)
+        if: always()
+        run: npm run lint -- --max-warnings=0
+      - name: Generate route types
+        if: always()
+        run: node node_modules/next/dist/bin/next typegen
+      - name: TypeScript check
+        if: always()
+        run: npm run typecheck
+      - name: Production build (synthetic env)
+        if: always()
+        run: npm run build
+
+      - name: Install isolated Chromium
+        if: success()
+        run: npx playwright install --with-deps chromium
+      - name: Capture actual synthetic UI and check mobile geometry
+        if: success()
+        env:
+          ENABLE_NIGHT_OF_QUDDAM: 'true'
+          ENABLE_SHILLATAK: 'true'
+        run: |
+          mkdir -p tests/e2e playwright-report/ui-review
+          cat > tests/e2e/qa-ui-review.spec.ts <<'VISUAL_SPEC'
+          import { test, expect } from "@playwright/test";
+          import { mkdir } from "node:fs/promises";
+          const dir = "playwright-report/ui-review";
+          test("actual Quddam UI: responsive pages, game grid and optional TV", async ({ page }) => {
+            test.skip(!process.env.E2E_DATABASE_URL, "Uses disposable synthetic E2E database");
+            await mkdir(dir, { recursive: true });
+            for (const width of [360, 390, 1440, 1920]) {
+              await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
+              await page.goto("/");
+              await expect(page.getByRole("heading", { name: /جمعتكم جاهزة/ })).toBeVisible();
+              await page.screenshot({ path: `${dir}/01-home-${width}.png`, fullPage: true });
+              if (width === 1440) {
+                const cards = page.locator(".quddam-featured-games > .game-card");
+                await expect(cards).toHaveCount(3);
+                const [hero, second, third] = await Promise.all([cards.nth(0).boundingBox(), cards.nth(1).boundingBox(), cards.nth(2).boundingBox()]);
+                expect(hero && second && third).toBeTruthy();
+                expect(Math.abs(second!.x - third!.x), "02 and 03 share the smaller grid column").toBeLessThanOrEqual(2);
+                expect(third!.y, "03 appears below 02, not orphaned under 01").toBeGreaterThan(second!.y + 40);
+                expect(hero!.height, "Featured 01 spans both companion rows").toBeGreaterThan(second!.height);
+              }
+              if (width < 400) expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `Home ${width}: no horizontal overflow`).toBeLessThanOrEqual(1);
+            }
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.goto("/register");
+            await page.getByLabel("الاسم").fill("مضيف تجريبي");
+            await page.getByLabel("البريد الإلكتروني").fill(`visual-qa-${Date.now()}@example.test`);
+            await page.getByLabel("كلمة المرور").fill("visual-qa-password-12345");
+            await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+            await expect(page.getByRole("link", { name: "ابدأ لوحة التحدي" })).toBeVisible({ timeout: 30_000 });
+            await page.screenshot({ path: `${dir}/02-library-390.png`, fullPage: true });
+            await expect(page.locator(".game-card")).toHaveCount(10);
+            await page.getByRole("button", { name: "شرح لوحة التحدي" }).click();
+            await expect(page.getByRole("dialog")).toBeVisible();
+            await expect(page.getByRole("dialog")).toContainText("36");
+            await page.screenshot({ path: `${dir}/02-library-game-help-390.png`, fullPage: true });
+            await page.getByRole("button", { name: "إغلاق الشرح" }).click();
+            expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), "Library 390: no horizontal overflow").toBeLessThanOrEqual(1);
+            await page.goto("/shillatak");
+            await expect(page.locator("[data-testid=shillatak-home]")).toBeVisible();
+            await page.screenshot({ path: `${dir}/03-shillatak-390.png`, fullPage: true });
+            await page.goto("/night/new");
+            await page.screenshot({ path: `${dir}/04-night-setup-390.png`, fullPage: true });
+            await page.goto("/games/category-board/new");
+            await expect(page.getByRole("checkbox")).toHaveCount(6);
+            const originalSelection = await page.getByRole("checkbox", { checked: true }).count();
+            await page.getByRole("button", { name: /^شرح / }).first().click();
+            await expect(page.getByRole("dialog")).toBeVisible();
+            await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(originalSelection);
+            await page.screenshot({ path: `${dir}/05-category-help-390.png`, fullPage: true });
+            await page.getByRole("button", { name: "إغلاق الشرح" }).click();
+            await page.screenshot({ path: `${dir}/05-board-setup-390.png`, fullPage: true });
+            await page.getByLabel("الفريق الأول").fill("فريق المستكشفين المتحمسين أصحاب الاسم الطويل جداً");
+            await page.getByLabel("الفريق الثاني").fill("فريق الأصدقاء المتنافسين المتحمسين من المجلس");
+            for (let i = 0; i < 6; i++) await page.getByRole("checkbox").nth(i).check();
+            await page.getByRole("button", { name: /جهّز اللوحة/ }).click();
+            await expect(page).toHaveURL(/\/play\/[^/]+$/);
+            const id = page.url().split("/").at(-1)!;
+            await page.getByRole("button", { name: "ابدأ المباراة" }).click();
+            await expect(page.locator(".board-column")).toHaveCount(6);
+            await expect(page.locator(".board-live-strip")).toBeVisible();
+            await expect(page.locator(".board-category-head")).toHaveCount(6);
+            for (const width of [360, 390]) {
+              await page.setViewportSize({ width, height: 844 });
+              await page.screenshot({ path: `${dir}/06-board-host-${width}.png`, fullPage: true });
+              expect(await page.locator(".board-column h3").first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(13);
+              expect(await page.locator(".team-score strong").first().evaluate(el => getComputedStyle(el).webkitLineClamp)).toBe("2");
+              expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `Board host ${width}: no horizontal overflow`).toBeLessThanOrEqual(1);
+              const rows = await page.locator(".board-column").evaluateAll(items => items.map(item => Math.round(item.getBoundingClientRect().top)));
+              expect(new Set(rows).size, `Board ${width} should have exactly 2 visible category rows`).toBe(2);
+              expect(rows[0]).toBe(rows[1]); expect(rows[1]).toBe(rows[2]); expect(rows[3]).toBe(rows[4]); expect(rows[4]).toBe(rows[5]);
+            }
+            await page.setViewportSize({ width: 1920, height: 1080 });
+            await page.goto(`/play/${id}/display`);
+            await expect(page.locator(".display-mode")).toBeVisible();
+            await page.screenshot({ path: `${dir}/07-board-tv-1920.png`, fullPage: true });
+            const tv = await page.evaluate(() => {
+              const el = (selector: string) => document.querySelector(selector)! as HTMLElement;
+              return { heading: parseFloat(getComputedStyle(el(".display-column h2")).fontSize),
+                idle: el(".display-wait").getBoundingClientRect().height,
+                board: el(".display-grid").getBoundingClientRect().height,
+                bottom: parseFloat(getComputedStyle(el(".display-mode")).paddingBottom),
+                overflow: document.documentElement.scrollWidth - innerWidth };
+            });
+            expect(tv.heading).toBeGreaterThanOrEqual(28);
+            expect(tv.idle).toBeLessThan(tv.board);
+            expect(tv.bottom).toBeGreaterThanOrEqual(40);
+            expect(tv.overflow).toBeLessThanOrEqual(1);
+          });
+          VISUAL_SPEC
+          npm run test:e2e:db -- tests/e2e/qa-ui-review.spec.ts --workers=1 --retries=0
+      - name: Upload synthetic UI screenshots for visual inspection
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: quddam-ui-screenshots-${{ github.run_id }}
+          path: qalba-platform/playwright-report/ui-review
+          if-no-files-found: warn
+          retention-days: 7
