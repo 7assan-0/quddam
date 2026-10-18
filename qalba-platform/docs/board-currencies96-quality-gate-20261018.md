@@ -30,9 +30,9 @@ Special checks for reviewers: SLE is Sierra Leone's present ISO code (not old SL
 ## Honest current arithmetic
 
 - Approved **27 category names** = 22 retained + 5 new, ألغاز exactly once.
-- **576** baseline Board questions on source-only PR #43; **96** Geography drafts and **96** Currencies drafts: **768 candidate authored questions** total across eight proposed category packs.
-- **Only baseline 576** are imported by `core-content.ts`, `sourceBanks()`, and candidate synthetic PG17 seed. The new 192 remain isolated, not playable or published.
-- 19 other category banks are not authored to 96 each = **1,824 questions** further to author to reach final 27 × 96 = **2,592**. The geography and currency candidate packs themselves still require full factual/editorial quality, alternate-answer and empirical difficulty signoff.
+- **576** baseline Board questions on source-only PR #43; **96** Geography drafts, **96** Currencies drafts, and **672** questions across seven new category drafts: **1,440 candidate authored questions** total.
+- **Only baseline 576** are imported by `core-content.ts`, `sourceBanks()`, and candidate synthetic PG17 seed. The new 864 remain isolated, not playable or published.
+- 12 other category banks are not authored to 96 each = **1,152 questions** further to author to reach final 27 × 96 = **2,592**. The geography and currency candidate packs themselves still require full factual/editorial quality, alternate-answer and empirical difficulty signoff.
 - Each Board match stays exactly 6 selectable eligible categories × 6 questions = **36 cells**. Nothing in this PR changes gameplay, billing, other games, or shared seeded category rows.
 
 ## Required before a production-ready Currency96 import
