@@ -43,7 +43,9 @@ describe("Owner-selected Currencies96 — unpublished candidate quality gates", 
     }
   });
   it("prevents normalized duplicates across starter, Geography and Currency candidates", () => {
-    const geo = grades.flatMap(grade => geographyCandidate[String(grade) as "200" | "400" | "600"]);
+    const geo: readonly (readonly [string, string])[] = [
+      ...geographyCandidate["200"], ...geographyCandidate["400"], ...geographyCandidate["600"],
+    ];
     const allPrompts = [
       ...boardSamples.map(row => normalized(row[1])),
       ...geo.map(row => normalized(row[0])),
