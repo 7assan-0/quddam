@@ -1,5 +1,8 @@
 "use client";
 import { TeamMarker } from "./team-marker";
+import { InfoTip } from "./info-tip";
+import { categoryExplanation } from "@/lib/brand/explainers";
+import { boardHeaderPresentation } from "./board-header-presentation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -117,6 +120,7 @@ export function BoardHost({ initial }: { initial: View }) {
     (active?.phase === "STEAL" && power.teamId === active.originalTeamId && power.slug === "challenge"));
   const winnerScore = Math.max(...view.teams.map((team) => team.score));
   const winners = view.teams.filter((team) => team.score === winnerScore);
+  const header = boardHeaderPresentation(view);
   const scoreEditor = <div className="score-editor"><label htmlFor="scoreAmount">تعديل النقاط بمقدار</label><input className="input" id="scoreAmount" type="number" min="1" max="10000" value={scoreAmount}
     onChange={(event) => setScoreAmount(Number(event.target.value))} />
     {view.teams.map((team) => <div className="score-edit-team" key={team.id}><strong>{team.name}</strong>
@@ -137,10 +141,27 @@ export function BoardHost({ initial }: { initial: View }) {
         {copyStatus && <p role="status">{copyStatus}</p>}</>}
       <button className="btn btn-secondary btn-small" onClick={() => displayDialog.current?.close()}>إغلاق</button>
     </dialog>
-    <div className="host-heading"><div><span className="eyebrow">لوحة التحدي · {view.status === "COMPLETED" ? "النتيجة النهائية" : view.round === 0 ? "قبل الجولة الأولى" : `الجولة ${formatNumber(view.round)}`}</span>
-      <h1>اقلبوا النتيجة</h1></div><Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
-    <div className="scorebar" aria-label="نتائج الفريقين">{view.teams.map((team) => <div className={`team-score ${team.id === view.turnTeamId && view.status !== "COMPLETED" ? "turn" : ""}`} key={team.id} style={{ borderColor: team.color }}>
-      <TeamMarker position={team.position} color={team.color} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
+    <header className="board-game-hero" data-testid="board-live-header">
+      <div className="board-hero-heading"><div className="board-hero-copy"><span className="eyebrow">قدّام · كل خانة لها حكاية</span>
+        <h1>لوحة التحدي <span aria-hidden="true">✦</span></h1><p>اختاروا الخانة، خذوا التحدي، واقلبوا النتيجة!</p></div>
+        <Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
+      <div className="board-live-strip" aria-label="ملخص مباشر لحالة المباراة">
+        <div className="board-live-card board-live-stage"><span className="board-live-caption"><span className="board-live-dot" aria-hidden="true"/>حالة اللعب</span>
+          <strong className="board-live-pill" role="status">{header.phaseLabel}</strong>
+          <span className="board-live-round">{header.roundLabel}</span></div>
+        <div className="board-live-card board-live-leader" style={header.soleLeader ? { borderInlineStartColor: header.soleLeader.color } : undefined}>
+          <span className="board-live-caption">{header.isTie ? "الصدارة متعادلة" : "الفريق المتصدر"}</span>
+          <strong className="board-live-team">{header.leaderLabel}</strong>
+          <b className="board-live-points">{formatNumber(header.leadingScore)} <small>نقطة</small></b></div>
+        <div className="board-live-card board-live-progress"><span className="board-live-caption">تقدّم اللوحة</span>
+          <strong dir="ltr">{formatNumber(header.completed)} / {formatNumber(header.total)}</strong>
+          <div className="board-progress-meter" role="progressbar" aria-label="الخانات المكتملة" aria-valuemin={0} aria-valuemax={header.total} aria-valuenow={header.completed}>
+            <span style={{ width: header.progressPercent + "%" }}/></div>
+          <small>خانة مكتملة</small></div>
+      </div>
+    </header>
+    <div className="scorebar board-scorebar" aria-label="نتائج الفريقين">{view.teams.map((team) => <div className={`team-score ${team.id === view.turnTeamId && view.status !== "COMPLETED" ? "turn" : ""} ${header.soleLeader?.id === team.id ? "is-leading" : ""}`} key={team.id} style={{ borderColor: team.color }}>
+      <TeamMarker position={team.position} color={team.color} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : header.soleLeader?.id === team.id ? "في الصدارة" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
     </div>)}</div>
     {error && <p role="alert" className="form-error">{error}</p>}
     {judgmentFeedback && <div className={`judgment-feedback judgment-feedback--${judgmentFeedback}`} role="status">{judgmentFeedback === "correct" ? "✓ إجابة صحيحة!" : "✕ إجابة غير صحيحة"}</div>}
@@ -191,17 +212,34 @@ export function BoardHost({ initial }: { initial: View }) {
       </section>}
 
       {!active && view.canUndo && <div className="host-actions after-round"><span>حُفظت الجولة. اختروا السؤال التالي.</span></div>}
-      <section className="board-section"><div className="section-head"><div><span className="eyebrow">اللوحة</span><h2>{active ? "السؤال المفتوح" : "اختاروا السؤال التالي"}</h2></div><p>القيم الأعلى أصعب، والخانة المستخدمة تختفي من اللعب.</p></div>
-        <div className="board-grid">{view.categories.map(category => <div className="board-column" key={category.id}><h3>{category.title}</h3>
-          {view.cells.filter(cell => cell.categoryId === category.id).map(cell => {
-            const numberInLevel = view.cells.filter(item => item.categoryId === category.id && item.value === cell.value)
-              .findIndex(item => item.key === cell.key) + 1;
-            const label = numberInLevel > 1 ? `سؤال ${numberInLevel} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
-            return <button key={cell.key} className={`board-cell ${cell.completed ? "used" : ""}`}
-              disabled={busy || view.status === "PAUSED" || Boolean(active) || cell.completed}
-              aria-label={`${label}${cell.completed ? " مستخدم" : ""}`}
-              onClick={() => send({ type: "OPEN", cellKey: cell.key })}>{cell.completed ? "✓" : formatNumber(cell.value)}</button>;
-          })}</div>)}</div></section>
+      <section className="board-section board-arena" aria-labelledby="board-arena-title" data-testid="board-arena">
+        <div className="section-head board-arena-intro"><div><span className="eyebrow">ست فئات · ستة أسئلة لكل فئة</span>
+          <h2 id="board-arena-title">{active ? "التحدي شغّال!" : "اختاروا السؤال التالي"}</h2></div>
+          <p>{active ? "السؤال الحالي ظاهر فوق اللوحة، وتنفتح الخانات بعد حسمه." : "ابدؤوا بـ٢٠٠، أو ارفعوا الحماس مع ٤٠٠ و٦٠٠ نقطة."}</p></div>
+        <div className="board-grid board-grid-live" data-board-state={view.status === "PAUSED" ? "paused" : active ? "question-open" : "ready"}>{view.categories.map(category => {
+          const categoryCells = view.cells.filter(cell => cell.categoryId === category.id);
+          const remaining = categoryCells.filter(cell => !cell.completed).length;
+          return <div className="board-column" key={category.id} data-cleared={remaining === 0 ? "true" : undefined}>
+            <div className="board-category-head">
+              <span className="board-category-spark" aria-hidden="true">✦</span>
+              <div className="board-category-copy"><h3>{category.title}</h3><small>{formatNumber(remaining)} من {formatNumber(categoryCells.length)} متبقية</small></div>
+              <InfoTip title={category.title} {...categoryExplanation(category.title)}/>
+            </div>
+            {categoryCells.map(cell => {
+              const numberInLevel = categoryCells.filter(item => item.value === cell.value).findIndex(item => item.key === cell.key) + 1;
+              const label = numberInLevel > 1 ? `سؤال ${numberInLevel} · ${category.title} · ${cell.value} نقطة` : `${category.title} ${cell.value}`;
+              const state = cell.completed ? "used" : view.status === "PAUSED" ? "paused" : active ? "waiting" : "ready";
+              return <button key={cell.key} className={`board-cell ${cell.completed ? "used" : ""}`}
+                data-state={state} data-value={cell.value} data-testid="board-question-cell"
+                disabled={busy || view.status === "PAUSED" || Boolean(active) || cell.completed}
+                aria-label={`${label}${cell.completed ? " مستخدم" : ""}`}
+                onClick={() => send({ type: "OPEN", cellKey: cell.key })}>
+                <span className="board-cell-number">{cell.completed ? "✓" : formatNumber(cell.value)}</span>
+              </button>;
+            })}</div>;
+        })}</div>
+        <p className="board-arena-footnote"><span aria-hidden="true">✦</span> الأصعب نقاطه أعلى · علامة ✓ تعني أن السؤال اكتمل.</p>
+      </section>
     </>}
   </div>;
 }

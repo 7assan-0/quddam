@@ -1,6 +1,8 @@
 "use client";
 import { formatNumber } from "@/lib/format-number";
 import { CreateCopy } from "./cta-copy";
+import { InfoTip } from "./info-tip";
+import { categoryExplanation } from "@/lib/brand/explainers";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -26,10 +28,13 @@ export function BoardSetup({ categories, defaults }: { categories: Category[]; d
   return <form onSubmit={submit} className="board-setup">
     <section className="panel"><span className="eyebrow">{formatNumber(1)} / الفئات</span><h2>ست فئات، ستة أسئلة لكل فئة</h2>
       <p className="muted">تظهر الفئات التي تضم سؤالين مختلفين ومنشورين على الأقل من كل مستوى ({formatNumber(200)}، {formatNumber(400)}، {formatNumber(600)}). المباراة فيها {formatNumber(36)} سؤالًا.</p>
-      <div className="category-picker">{categories.map((category) => <label key={category.id} className={`category-option ${selected.includes(category.id) ? "selected" : ""}`}>
-        <input type="checkbox" checked={selected.includes(category.id)} disabled={busy || (!selected.includes(category.id) && selected.length >= 6)}
-          onChange={() => setSelected((old) => old.includes(category.id) ? old.filter((id) => id !== category.id) : [...old, category.id])} />
-        <span>{category.title}</span></label>)}</div>
+      <div className="category-picker">{categories.map((category) => <div key={category.id} className={"category-choice" + (selected.includes(category.id) ? " selected" : "")}>
+        <label className="category-option"><input type="checkbox" checked={selected.includes(category.id)}
+          disabled={busy || (!selected.includes(category.id) && selected.length >= 6)}
+          onChange={() => setSelected((previous) => previous.includes(category.id) ? previous.filter((id) => id !== category.id) : [...previous, category.id])}/>
+          <span>{category.title}</span></label>
+        <InfoTip title={category.title} {...categoryExplanation(category.title)}/>
+      </div>)}</div>
       <p className="form-note">{formatNumber(selected.length)} من {formatNumber(6)} فئات مختارة</p>
       {categories.length < 6 && <p className="form-error">يلزم سؤالان على الأقل من كل مستوى في ست فئات. أضف المحتوى الناقص من لوحة الإدارة.</p>}
     </section>
