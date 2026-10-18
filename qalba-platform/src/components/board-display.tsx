@@ -108,9 +108,9 @@ export function BoardDisplay({ initial, displayToken }: { initial: View; display
           <div className={`display-timer ${seconds <= 5 ? "urgent" : ""}`}>{active.deadlineAt && seconds === 0 ? "انتهى الوقت" : `الوقت ${formatNumber(seconds)} ث`}</div>
         </section>
         : <section className="display-center display-wait"><span>{view.status === "PAUSED" ? "ننتظر المضيف" : view.status === "LOBBY" ? "استعدوا للعب" : `الدور على ${view.teams.find((item) => item.id === view.turnTeamId)?.name}`}</span><h1>{view.status === "LOBBY" ? "جهزوا فرقكم" : "اختاروا السؤال التالي"}</h1></section>}
-    <div className="display-grid" aria-label="لوحة الأسئلة">{view.categories.map(category => <div className="display-column" key={category.id}><h2>{category.title}</h2>
+    <div className="display-grid display-grid-live" aria-label="لوحة الأسئلة">{view.categories.map(category => <div className="display-column" key={category.id}><h2>{category.title}</h2>
       {view.cells.filter(cell => cell.categoryId === category.id).map(cell =>
-        <div className={`display-cell ${cell.completed ? "done" : ""}`} key={cell.key}>
+        <div className={`display-cell ${cell.completed ? "done" : ""}`} data-value={cell.value} data-state={cell.completed ? "used" : active ? "waiting" : "ready"} key={cell.key}>
           {cell.completed ? "✓" : formatNumber(cell.value)}
         </div>)}</div>)}</div>
   </div>;
