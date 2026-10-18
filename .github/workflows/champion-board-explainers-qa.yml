@@ -140,6 +140,11 @@ jobs:
             await page.getByRole("button", { name: "ابدأ المباراة" }).click();
             await expect(page.locator(".board-column")).toHaveCount(6);
             await expect(page.locator(".board-live-strip")).toBeVisible();
+            await expect(page.getByTestId("board-live-header").getByRole("heading", { name: /لوحة التحدي/ })).toBeVisible();
+            await expect(page.locator(".board-live-stage")).toContainText("دور الاختيار");
+            await expect(page.locator(".board-live-stage")).toContainText("الجولة");
+            await expect(page.locator(".board-live-leader")).toContainText("الصدارة متعادلة");
+            await expect(page.getByRole("progressbar", { name: "الخانات المكتملة" })).toHaveAttribute("aria-valuenow", "0");
             await expect(page.locator(".board-category-head")).toHaveCount(6);
             for (const width of [360, 390]) {
               await page.setViewportSize({ width, height: 844 });
