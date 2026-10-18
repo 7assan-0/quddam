@@ -2,6 +2,7 @@
 import { TeamMarker } from "./team-marker";
 import { InfoTip } from "./info-tip";
 import { categoryExplanation } from "@/lib/brand/explainers";
+import { boardHeaderPresentation } from "./board-header-presentation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -119,6 +120,7 @@ export function BoardHost({ initial }: { initial: View }) {
     (active?.phase === "STEAL" && power.teamId === active.originalTeamId && power.slug === "challenge"));
   const winnerScore = Math.max(...view.teams.map((team) => team.score));
   const winners = view.teams.filter((team) => team.score === winnerScore);
+  const header = boardHeaderPresentation(view);
   const scoreEditor = <div className="score-editor"><label htmlFor="scoreAmount">تعديل النقاط بمقدار</label><input className="input" id="scoreAmount" type="number" min="1" max="10000" value={scoreAmount}
     onChange={(event) => setScoreAmount(Number(event.target.value))} />
     {view.teams.map((team) => <div className="score-edit-team" key={team.id}><strong>{team.name}</strong>
@@ -139,14 +141,25 @@ export function BoardHost({ initial }: { initial: View }) {
         {copyStatus && <p role="status">{copyStatus}</p>}</>}
       <button className="btn btn-secondary btn-small" onClick={() => displayDialog.current?.close()}>إغلاق</button>
     </dialog>
-    <div className="host-heading board-game-hero"><div><span className="eyebrow">لوحة التحدي · المعرفة تغيّر النتيجة</span>
-      <h1>اقلبوا النتيجة <span aria-hidden="true">✦</span></h1><p>اختاروا الخانة، خذوا التحدي، وخلو النقاط تتكلم.</p></div><Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
-    <div className="board-live-strip" aria-label="حالة المباراة">
-      <span className="board-live-pill" role="status">{view.status === "COMPLETED" ? "انتهت المباراة" : view.status === "PAUSED" ? "متوقفة مؤقتًا" : view.status === "LOBBY" ? "بانتظار البداية" : active ? "سؤال مفتوح" : "جاهزين للسؤال القادم"}</span>
-      <span>{view.round === 0 ? "قبل الجولة الأولى" : "الجولة " + formatNumber(view.round)}</span>
-      <span>{view.teams.every(team => team.score === view.teams[0].score) ? "النتيجة متعادلة" : "المتصدر: " + view.teams.reduce((first,team) => team.score > first.score ? team : first, view.teams[0]).name}</span>
-      <span>{formatNumber(view.cells.filter(cell => cell.completed).length)} / {formatNumber(view.cells.length)} خانة مكتملة</span>
-    </div>
+    <header className="board-game-hero" data-testid="board-live-header">
+      <div className="board-hero-heading"><div className="board-hero-copy"><span className="eyebrow">قدّام · كل خانة لها حكاية</span>
+        <h1>لوحة التحدي <span aria-hidden="true">✦</span></h1><p>اختاروا الخانة، خذوا التحدي، واقلبوا النتيجة!</p></div>
+        <Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
+      <div className="board-live-strip" aria-label="ملخص مباشر لحالة المباراة">
+        <div className="board-live-card board-live-stage"><span className="board-live-caption"><span className="board-live-dot" aria-hidden="true"/>حالة اللعب</span>
+          <strong className="board-live-pill" role="status">{header.phaseLabel}</strong>
+          <span className="board-live-round">{header.roundLabel}</span></div>
+        <div className="board-live-card board-live-leader" style={header.soleLeader ? { borderInlineStartColor: header.soleLeader.color } : undefined}>
+          <span className="board-live-caption">{header.isTie ? "الصدارة متعادلة" : "الفريق المتصدر"}</span>
+          <strong className="board-live-team">{header.leaderLabel}</strong>
+          <b className="board-live-points">{formatNumber(header.leadingScore)} <small>نقطة</small></b></div>
+        <div className="board-live-card board-live-progress"><span className="board-live-caption">تقدّم اللوحة</span>
+          <strong dir="ltr">{formatNumber(header.completed)} / {formatNumber(header.total)}</strong>
+          <div className="board-progress-meter" role="progressbar" aria-label="الخانات المكتملة" aria-valuemin={0} aria-valuemax={header.total} aria-valuenow={header.completed}>
+            <span style={{ width: header.progressPercent + "%" }}/></div>
+          <small>خانة مكتملة</small></div>
+      </div>
+    </header>
     <div className="scorebar" aria-label="نتائج الفريقين">{view.teams.map((team) => <div className={`team-score ${team.id === view.turnTeamId && view.status !== "COMPLETED" ? "turn" : ""}`} key={team.id} style={{ borderColor: team.color }}>
       <TeamMarker position={team.position} color={team.color} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
     </div>)}</div>
