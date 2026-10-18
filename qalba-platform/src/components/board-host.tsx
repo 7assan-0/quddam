@@ -1,5 +1,7 @@
 "use client";
 import { TeamMarker } from "./team-marker";
+import { InfoTip } from "./info-tip";
+import { categoryExplanation } from "@/lib/brand/explainers";
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -137,8 +139,14 @@ export function BoardHost({ initial }: { initial: View }) {
         {copyStatus && <p role="status">{copyStatus}</p>}</>}
       <button className="btn btn-secondary btn-small" onClick={() => displayDialog.current?.close()}>إغلاق</button>
     </dialog>
-    <div className="host-heading"><div><span className="eyebrow">لوحة التحدي · {view.status === "COMPLETED" ? "النتيجة النهائية" : view.round === 0 ? "قبل الجولة الأولى" : `الجولة ${formatNumber(view.round)}`}</span>
-      <h1>اقلبوا النتيجة</h1></div><Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
+    <div className="host-heading board-game-hero"><div><span className="eyebrow">لوحة التحدي · المعرفة تغيّر النتيجة</span>
+      <h1>اقلبوا النتيجة <span aria-hidden="true">✦</span></h1><p>اختاروا الخانة، خذوا التحدي، وخلو النقاط تتكلم.</p></div><Link className="btn btn-secondary btn-small" href="/games">مكتبة الألعاب</Link></div>
+    <div className="board-live-strip" aria-label="حالة المباراة">
+      <span className="board-live-pill" role="status">{view.status === "COMPLETED" ? "انتهت المباراة" : view.status === "PAUSED" ? "متوقفة مؤقتًا" : view.status === "LOBBY" ? "بانتظار البداية" : active ? "سؤال مفتوح" : "جاهزين للسؤال القادم"}</span>
+      <span>{view.round === 0 ? "قبل الجولة الأولى" : "الجولة " + formatNumber(view.round)}</span>
+      <span>{view.teams.every(team => team.score === view.teams[0].score) ? "النتيجة متعادلة" : "المتصدر: " + view.teams.reduce((first,team) => team.score > first.score ? team : first, view.teams[0]).name}</span>
+      <span>{formatNumber(view.cells.filter(cell => cell.completed).length)} / {formatNumber(view.cells.length)} خانة مكتملة</span>
+    </div>
     <div className="scorebar" aria-label="نتائج الفريقين">{view.teams.map((team) => <div className={`team-score ${team.id === view.turnTeamId && view.status !== "COMPLETED" ? "turn" : ""}`} key={team.id} style={{ borderColor: team.color }}>
       <TeamMarker position={team.position} color={team.color} /><div><strong>{team.name}</strong><small>{team.id === view.turnTeamId && view.status !== "COMPLETED" ? "يختار السؤال القادم" : "الفريق"}</small></div><AnimatedScore value={team.score} as="b" />
     </div>)}</div>
@@ -192,7 +200,7 @@ export function BoardHost({ initial }: { initial: View }) {
 
       {!active && view.canUndo && <div className="host-actions after-round"><span>حُفظت الجولة. اختروا السؤال التالي.</span></div>}
       <section className="board-section"><div className="section-head"><div><span className="eyebrow">اللوحة</span><h2>{active ? "السؤال المفتوح" : "اختاروا السؤال التالي"}</h2></div><p>القيم الأعلى أصعب، والخانة المستخدمة تختفي من اللعب.</p></div>
-        <div className="board-grid">{view.categories.map(category => <div className="board-column" key={category.id}><h3>{category.title}</h3>
+        <div className="board-grid board-grid-live">{view.categories.map(category => <div className="board-column" key={category.id}><div className="board-category-head"><h3>{category.title}</h3><InfoTip title={category.title} {...categoryExplanation(category.title)}/></div>
           {view.cells.filter(cell => cell.categoryId === category.id).map(cell => {
             const numberInLevel = view.cells.filter(item => item.categoryId === category.id && item.value === cell.value)
               .findIndex(item => item.key === cell.key) + 1;
