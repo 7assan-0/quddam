@@ -1,0 +1,28 @@
+{
+  "category": "خمن الصورة",
+  "owner_request": "اعتمد الاساله",
+  "target_count": 96,
+  "tier_targets": {
+    "200": 32,
+    "400": 32,
+    "600": 32
+  },
+  "format_reference": "Abu Omar picture challenge (creative format only; no copied art/questions)",
+  "approval": {
+    "format": "APPROVED",
+    "question_bank": "NOT_APPROVED_PENDING_ITEM_REVIEW",
+    "visual_assets": "NOT_APPROVED_PENDING_CREATION_AND_RIGHTS",
+    "difficulty": "NOT_APPROVED_PENDING_BLIND_PLAYTEST",
+    "release": "BLOCKED"
+  },
+  "rejected": "Previous assistant-created unclear picture examples",
+  "required_per_question": [
+    "specific video URL and timestamp actually inspected",
+    "independently justified solution and acceptable aliases",
+    "natural image asset and rights record",
+    "ambiguity review",
+    "blind difficulty test",
+    "mobile/TV readability"
+  ],
+  "publication_rule": "Do not seed or publish unverified questions. Owner's request to approve is not evidence that missing items were inspected."
+}
