@@ -14,6 +14,7 @@
 
 ## Confirmed answer/topic reuse: not exact duplicates, but below release-quality variety
 
+- **Across-category overlap:** `people` and `who-am-i` share **21 identical canonical answers out of 96 in WhoAmI** (for example Albert Einstein, Beethoven, Umm Kulthum, Ibn Battuta, Marie Curie, Andrew Wiles and Tim Berners-Lee). This is not exact prompt duplication, but it is undesirable repeated identity if both categories are selected in one 36-cell match. Replace or re-author the 21 WhoAmI identity/clue pairs with independently verified distinct targets (objects/places/science or people not in direct People), update both source and ledger, and add a cross-category answer-overlap gate. Do **not** just rename aliases to trick the matcher.
 - `movies-400`: **32** director questions, **18 distinct answers**. Spielberg and Nolan each occur three times. These are different correct factual questions, but repeated formats and answers can make a group match predictable.
 - `cars-400`: **32** car-brand questions, only **16 distinct answers**. Toyota occurs three times and many brands twice. Needs replacement with more diverse automotive knowledge and evidence-backed difficulty, not necessarily banning any repeated answer globally.
 - `riddles-400`: **10 of 32** questions use the same “ما العدد التالي في المتتالية…” template. Needs a broader mix of text/logic/lateral riddles, not merely numbers.
@@ -30,7 +31,7 @@
 ## Required acceptance gates and decision
 
 1. Independent `APPROVE/REVISE/REJECT` for **every one** of 2,112 authored items; verify exact question, canonical answer, real accepted variants, ambiguity and primary source (with stable date).
-2. Category editors should redesign the **movies-400**, **cars-400**, **riddles-400**, **games-600**, and date-heavy TV rounds, then update per-item ledgers and rerun normalized, semantic and answer-concept reviews.
+2. Category editors should redesign the **21 cross-category repeated People/WhoAmI identities**, **movies-400**, **cars-400**, **riddles-400**, **games-600**, and date-heavy TV rounds, then update per-item ledgers and rerun normalized, semantic and answer-concept reviews.
 3. Conduct blind mixed-audience rounds: record solve rate and time for each item, and only then assign 200/400/600 (32 approved in each tier of each category). Check both within-category and across-category difficulty; reject ambiguous items.
 4. For unmade visual packs (logos, guess-picture, flags, proverbs, maps), author original/licensed images and test legibility plus answer uniqueness. Never pretend a plain text bank is an image-question pack.
 5. Run exact-head automated tests and synthetic PostgreSQL17 QA after each edit, plus browser, RTL, security/release checks; **CI success is necessary but not independent factual/human approval**.
