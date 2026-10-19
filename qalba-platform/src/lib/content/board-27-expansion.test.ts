@@ -99,6 +99,14 @@ describe("Board27 staged rollout — evidence, quotas and publication isolation"
     expect(collisions).toEqual([]);
   });
 
+  it("replaces four former geography/places same-fact questions with independently reviewable alternatives", () => {
+    const changed = [9, 10, 13, 15] as const;
+    const expected = ["جبل إتنا", "مضيق سوندا", "ألاسكا", "جبال الأطلس"];
+    changed.forEach((i, idx) => expect(geographyCandidate["400"][i - 1][1]).toBe(expected[idx]));
+    const mediumPrompts = geographyCandidate["400"].map(([question]) => normalized(question));
+    for (const oldFact of ["جبل فوجي", "صحراء أتاكاما", "جبل كليمنجارو", "آثار ماتشو بيتشو"])
+      expect(mediumPrompts.some(question => question.includes(normalized(oldFact)))).toBe(false);
+  });
   it("has a synchronized per-question ledger without inventing an editor, source, or pilot", () => {
     const csv = readFileSync(
       new URL("../../../content-review/2026-10-18/Board_Geography_96_Review.csv", import.meta.url), "utf8",
@@ -118,7 +126,8 @@ describe("Board27 staged rollout — evidence, quotas and publication isolation"
         "PENDING_INDEPENDENT_FACTCHECK", "PENDING_INDEPENDENT_ITEM_REVIEW",
         "NOT_RUN", "NOT_RUN", "PENDING",
       ]);
-      expect(row.slice(11)).toEqual(["", "", ""]);
+      expect(row.slice(11, 13)).toEqual(["", ""]); // reviewer and review date remain blank
+      if (row[13]) expect(row[13]).toMatch(/^https:\/\//); // primary source leads do not equal item approval
     }
   });
 
