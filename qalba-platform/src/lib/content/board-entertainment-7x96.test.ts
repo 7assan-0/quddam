@@ -107,6 +107,21 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
       expect(q).not.toMatch(/^أنا أنا /);
     }
   });
+  it("keeps WhoAmI reveal identities distinct from selectable People answers", () => {
+    const direct = new Set(grades.flatMap(g=>peopleCandidate[g].map(([,answer])=>normal(answer))));
+    const clues = grades.flatMap(g=>whoAmICandidate[g].map(([,answer])=>normal(answer)));
+    expect(clues).toHaveLength(96);
+    expect(new Set(clues).size).toBe(96);
+    expect(clues.filter(answer=>direct.has(answer))).toEqual([]);
+  });
+  it("limits repetitive medium riddles to two numeric-sequence prompts", () => {
+    const medium = riddlesCandidate["400"];
+    expect(medium.filter(([question])=>question.includes("العدد التالي في المتتالية"))).toHaveLength(2);
+    expect(medium[12][1]).toBe("ثمرة واحدة");
+    expect(medium[14][1]).toBe("الصندوق أ");
+    expect(medium[15][1]).toBe("وزنتان");
+    expect(medium[21][1]).toBe("سبع مرات");
+  });
   it("guards against specific corrected editorial errors without certifying every fact", () => {
     expect(seriesCandidate["200"][9][0]).not.toContain("جرّاح");
     expect(gamesCandidate["400"][21][1]).toBe("ببجي كوربوريشن (PUBG Corporation)");
