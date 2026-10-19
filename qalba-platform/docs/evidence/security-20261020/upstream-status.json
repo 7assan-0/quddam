@@ -1,0 +1,45 @@
+{
+  "checkedAt": "2026-10-19T23:17:27.727Z",
+  "sources": [
+    {
+      "source": "https://api.github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "httpStatus": 200,
+      "htmlUrl": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "ghsaId": "GHSA-vfj7-8cjw-p6xm",
+      "cveId": "CVE-2026-93687",
+      "summary": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "severity": "high",
+      "updatedAt": "2026-10-02T22:36:34Z",
+      "vulnerabilities": [
+        {
+          "package": {
+            "ecosystem": "npm",
+            "name": "braces"
+          },
+          "vulnerable_version_range": "<= 3.0.3",
+          "first_patched_version": null,
+          "vulnerable_functions": []
+        }
+      ],
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-93687",
+        "https://github.com/micromatch/braces/issues/70",
+        "https://github.com/micromatch/braces/blob/3.0.3/lib/compile.js#L49-L53",
+        "https://github.com/micromatch/braces/blob/3.0.3/lib/expand.js#L102-L105",
+        "https://github.com/micromatch/braces/blob/3.0.3/lib/parse.js#L38-L40",
+        "https://www.vulncheck.com/advisories/braces-through-3.0.3-stack-overflow-via-deeply-nested-patterns",
+        "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+      ]
+    },
+    {
+      "source": "https://api.github.com/repos/micromatch/braces/pulls/72",
+      "httpStatus": 200,
+      "htmlUrl": "https://github.com/micromatch/braces/pull/72",
+      "title": "fix: prevent stack overflow from deeply nested patterns (CVE-2026-93687)",
+      "state": "closed",
+      "merged": false,
+      "closedAt": "2026-10-05T06:43:43Z",
+      "headSha": "28d440b5dd449dbf1fe6f3506cf94ecca4d02660"
+    }
+  ]
+}

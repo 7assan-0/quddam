@@ -1,0 +1,42 @@
+{
+  "checkedOn": "2026-10-20",
+  "scope": "LOCAL_PREVIEW_ONLY_NOT_HUMAN_PLAYTEST",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1160,
+        "height": 1000
+      },
+      "cards": 8,
+      "loadedPictures": 16,
+      "hiddenAnswers": true,
+      "hiddenReview": true,
+      "rightToLeft": true,
+      "noHorizontalOverflow": true,
+      "buttonsAtLeast44Px": true,
+      "imageAltsAvoidAnswers": true,
+      "revealWorks": true,
+      "returnToPlayHidesAnswers": true,
+      "pageErrors": [],
+      "externalRequests": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "cards": 8,
+      "loadedPictures": 16,
+      "hiddenAnswers": true,
+      "hiddenReview": true,
+      "rightToLeft": true,
+      "noHorizontalOverflow": true,
+      "buttonsAtLeast44Px": true,
+      "imageAltsAvoidAnswers": true,
+      "revealWorks": true,
+      "returnToPlayHidesAnswers": true,
+      "pageErrors": [],
+      "externalRequests": []
+    }
+  ]
+}

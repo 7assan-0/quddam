@@ -1,0 +1,300 @@
+{
+  "checkedAt": "2026-10-19T23:16:53.744Z",
+  "packages": [
+    {
+      "name": "braces",
+      "source": "https://registry.npmjs.org/braces",
+      "status": 200,
+      "distTags": {
+        "latest": "3.0.3"
+      },
+      "latest": {
+        "version": "3.0.3",
+        "dependencies": {
+          "fill-range": "^7.1.1"
+        },
+        "engines": {
+          "node": ">=8"
+        },
+        "dist": {
+          "shasum": "490332f40919452272d55a8480adc0c441358789",
+          "tarball": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+          "fileCount": 10,
+          "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==",
+          "signatures": [
+            {
+              "sig": "MEQCICfWLKNcFCGtU07ikrPJ+s1dTDH3VZTE+vQZzC22s6o+AiAEVUE/YXRqHYgctcwHqNawvsOviSDFZPvgNm8+SUXD3w==",
+              "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+            }
+          ],
+          "unpackedSize": 44635
+        }
+      },
+      "publishedAt": "2024-05-21T08:59:11.390Z",
+      "latestPublishedVersions": [
+        "2.3.2",
+        "3.0.0",
+        "3.0.1",
+        "3.0.2",
+        "3.0.3"
+      ]
+    },
+    {
+      "name": "micromatch",
+      "source": "https://registry.npmjs.org/micromatch",
+      "status": 200,
+      "distTags": {
+        "latest": "4.0.8"
+      },
+      "latest": {
+        "version": "4.0.8",
+        "dependencies": {
+          "braces": "^3.0.3",
+          "picomatch": "^2.3.1"
+        },
+        "engines": {
+          "node": ">=8.6"
+        },
+        "dist": {
+          "shasum": "d66fa18f3a47076789320b9b1af32bd86d9fa202",
+          "tarball": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==",
+          "signatures": [
+            {
+              "sig": "MEUCIQCbM5vTauiWZIyEboHJF/YXuneSxEyEJ+2VHaEdyLD4zQIgU0seoGyOpfB4e80kPjxYidBvIgonDpZpZzNN8w25BUU=",
+              "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+            }
+          ],
+          "unpackedSize": 56599
+        }
+      },
+      "publishedAt": "2024-08-23T16:31:18.748Z",
+      "latestPublishedVersions": [
+        "4.0.4",
+        "4.0.5",
+        "4.0.6",
+        "4.0.7",
+        "4.0.8"
+      ]
+    },
+    {
+      "name": "fast-glob",
+      "source": "https://registry.npmjs.org/fast-glob",
+      "status": 200,
+      "distTags": {
+        "next": "2.0.2",
+        "beta": "3.2.1-beta.1",
+        "latest": "3.3.3"
+      },
+      "latest": {
+        "version": "3.3.3",
+        "dependencies": {
+          "@nodelib/fs.stat": "^2.0.2",
+          "@nodelib/fs.walk": "^1.2.3",
+          "glob-parent": "^5.1.2",
+          "merge2": "^1.3.0",
+          "micromatch": "^4.0.8"
+        },
+        "engines": {
+          "node": ">=8.6.0"
+        },
+        "dist": {
+          "integrity": "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==",
+          "shasum": "d06d585ce8dba90a16b0505c543c3ccfb3aeb818",
+          "tarball": "https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.3.tgz",
+          "fileCount": 55,
+          "unpackedSize": 98396,
+          "signatures": [
+            {
+              "keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+              "sig": "MEUCICTjokEWb6KQHVjqCGFBsmTVyNXGzhTR6Go+PYGeHq9SAiEApP3aaGSYHbb2YmHZecGkGpQUM0m+IcTsKdciYSSOsso="
+            }
+          ]
+        }
+      },
+      "publishedAt": "2025-01-05T10:38:42.236Z",
+      "latestPublishedVersions": [
+        "3.2.12",
+        "3.3.0",
+        "3.3.1",
+        "3.3.2",
+        "3.3.3"
+      ]
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "source": "https://registry.npmjs.org/%40next%2Feslint-plugin-next",
+      "status": 200,
+      "distTags": {
+        "next-11": "11.1.4",
+        "next-12-2-6": "12.2.6",
+        "next-14-1": "14.1.1",
+        "rc": "15.0.0-rc.1",
+        "next-13": "13.5.11",
+        "next-12-3-2": "12.3.7",
+        "beta": "16.0.0-beta.0",
+        "next-14": "14.2.35",
+        "next-15-3": "15.3.9",
+        "next-15-2": "15.2.9",
+        "next-15-0": "15.1.12",
+        "next-15-0-0": "15.0.8",
+        "preview": "16.3.0-preview.10",
+        "backport": "15.5.28",
+        "latest": "16.4.2",
+        "canary": "16.5.0-canary.18"
+      },
+      "latest": {
+        "version": "16.4.2",
+        "dependencies": {
+          "fast-glob": "3.3.1",
+          "@eslint-community/eslint-utils": "4.9.1"
+        },
+        "dist": {
+          "shasum": "74a371f9ced5c112fca9874a96732693e65d168c",
+          "tarball": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.4.2.tgz",
+          "fileCount": 56,
+          "integrity": "sha512-gCTWlw0e+Y6kajpFyKKgA195jUJCRhlzJE0lV7ufe8a+ghIsANWZ0/FiJwg6DuOG1+OvRbcZDcFBoRh3mNJx0g==",
+          "signatures": [
+            {
+              "sig": "MEQCIH5U+N4fCt7ztbfd7pdpWz1kn8RXCvGjw+6Io6cD/TR6AiAFr2CE9BK93D5re7VXwsoLIvhuNqL1KsPmX4SqZVEUeQ==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEQCIEt9IDsiIt93Fu3mgZL19P9AtxoXFClh4Cv12J/yDtadAiAltyAQOyx/4L9vDXZ/8ogjVkZH9a8qjAp8x+6FAIf+uw==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@next%2feslint-plugin-next@16.4.2",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 106327
+        }
+      },
+      "publishedAt": "2026-10-15T20:44:42.148Z",
+      "latestPublishedVersions": [
+        "16.4.2",
+        "16.5.0-canary.15",
+        "16.5.0-canary.16",
+        "16.5.0-canary.17",
+        "16.5.0-canary.18"
+      ]
+    },
+    {
+      "name": "eslint-config-next",
+      "source": "https://registry.npmjs.org/eslint-config-next",
+      "status": 200,
+      "distTags": {
+        "next-11": "11.1.4",
+        "next-12-2-6": "12.2.6",
+        "next-14-1": "14.1.1",
+        "rc": "15.0.0-rc.1",
+        "next-13": "13.5.11",
+        "next-12-3-2": "12.3.7",
+        "beta": "16.0.0-beta.0",
+        "next-14": "14.2.35",
+        "next-15-3": "15.3.9",
+        "next-15-2": "15.2.9",
+        "next-15-0": "15.1.12",
+        "next-15-0-0": "15.0.8",
+        "preview": "16.3.0-preview.10",
+        "backport": "15.5.28",
+        "latest": "16.4.2",
+        "canary": "16.5.0-canary.18"
+      },
+      "latest": {
+        "version": "16.4.2",
+        "dependencies": {
+          "globals": "16.4.0",
+          "typescript-eslint": "^8.56.0",
+          "eslint-plugin-react": "^7.37.0",
+          "eslint-plugin-import": "^2.32.0",
+          "eslint-plugin-jsx-a11y": "^6.10.0",
+          "@next/eslint-plugin-next": "16.4.2",
+          "eslint-plugin-react-hooks": "^7.1.0",
+          "eslint-import-resolver-node": "^0.3.6",
+          "eslint-import-resolver-typescript": "^3.5.2"
+        },
+        "peerDependencies": {
+          "eslint": ">=9.0.0",
+          "typescript": ">=3.3.1"
+        },
+        "dist": {
+          "shasum": "07439d6c863980072e36238ac994b26d04df30b4",
+          "tarball": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.4.2.tgz",
+          "fileCount": 11,
+          "integrity": "sha512-P33vjcETMXc+qBjpF77TeJHZLzk6cPcTy8KjpxLucYB3mCIFIORMcZ+cBXcAiIYjE5RM7jyknEEOwMNdnx/ADQ==",
+          "signatures": [
+            {
+              "sig": "MEUCIDqOsjo2ARxncghYCc9JwMXPJ2uqRa2BnzLwfItV142zAiEAlzv9imIFFtdPgb6ZOfowxAMqRVXjSnpu1Kk0HXilRvo=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEUCIQC58HsoMs697EwzmzGQCTXe3HOrSD/splOQ72ArchuNigIgHOi+zJKciKT9H38jc4TiAk3T3u4jfT4h/si1dOhSumY=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/eslint-config-next@16.4.2",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 22082
+        }
+      },
+      "publishedAt": "2026-10-15T20:46:42.598Z",
+      "latestPublishedVersions": [
+        "16.4.2",
+        "16.5.0-canary.15",
+        "16.5.0-canary.16",
+        "16.5.0-canary.17",
+        "16.5.0-canary.18"
+      ]
+    },
+    {
+      "name": "tailwindcss",
+      "source": "https://registry.npmjs.org/tailwindcss",
+      "status": 200,
+      "distTags": {
+        "next": "4.0.0",
+        "v3-lts": "3.4.19",
+        "latest": "4.3.3",
+        "insiders": "0.0.0-insiders.8cc0551"
+      },
+      "latest": {
+        "version": "4.3.3",
+        "dist": {
+          "shasum": "c006861611c213c1877893ab5b23daa16be2bb55",
+          "tarball": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.3.3.tgz",
+          "fileCount": 34,
+          "integrity": "sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==",
+          "signatures": [
+            {
+              "sig": "MEQCIBhVHX/RChjUWt77CdssLibpRhMHsS3XWOKLRtP/ibJvAiBt9/qLAVxC6nR+eobWqzs5j/1ztHVMWGH0p/sMFj08bw==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/tailwindcss@4.3.3",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 772893
+        }
+      },
+      "publishedAt": "2026-07-16T12:03:35.267Z",
+      "latestPublishedVersions": [
+        "0.0.0-insiders.d580998",
+        "0.0.0-insiders.f7f47f8",
+        "0.0.0-insiders.fda34f8",
+        "0.0.0-insiders.a982d5b",
+        "0.0.0-insiders.8cc0551"
+      ]
+    }
+  ]
+}

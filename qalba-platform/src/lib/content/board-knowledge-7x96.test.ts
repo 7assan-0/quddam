@@ -24,7 +24,6 @@ const packs = {
 } as const;
 const grades = [200, 400, 600] as const;
 const labels = { 200: "EASY", 400: "MEDIUM", 600: "HARD" } as const;
-type Pair = readonly [string, string];
 const normalized = (value: string) => value.normalize("NFKC")
   .replace(/[\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed\u0640]/gu, "")
   .replace(/[أإآٱ]/gu, "ا").replace(/ى/gu, "ي")
