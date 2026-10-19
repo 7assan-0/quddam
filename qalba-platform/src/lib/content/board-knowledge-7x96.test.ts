@@ -84,6 +84,13 @@ describe("Seven additional knowledge banks — draft-only quality gates", () => 
     expect(animalPrompt).toContain("مجموعة كبرى");
     expect(animalPrompt).not.toContain("نوع الهيكل");
     expect(animalAnswer).toBe("كلابيات القرون");
+    const [cucumberQuestion, cucumberAnswer] = animalsCandidate["600"][7];
+    expect(cucumberQuestion).not.toContain("ما السائل");
+    expect(cucumberQuestion).toContain("يطرحه");
+    expect(cucumberAnswer).toBe("بعض أعضائه الداخلية");
+    const [narwhalQuestion, narwhalAnswer] = animalsCandidate["600"][11];
+    expect(narwhalQuestion).toContain("ذكر النروال");
+    expect(narwhalAnswer).toBe("الناب العلوي الأيسر");
     const [coffeePrompt, coffeeAnswer] = cultureCandidate["400"][0];
     expect(coffeePrompt).toContain("2015");
     expect(coffeePrompt).toContain("الأردن");
