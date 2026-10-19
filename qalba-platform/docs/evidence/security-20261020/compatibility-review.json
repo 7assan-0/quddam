@@ -1,0 +1,148 @@
+{
+  "checkedAt": "2026-10-19T23:18:19.823Z",
+  "inspection": "Official npm tarball source and existing installed package. No downgraded lint configuration executed.",
+  "currentPluginVersion": "16.4.2",
+  "candidatePluginVersion": "14.2.35",
+  "currentRuleCount": 22,
+  "candidateRuleCount": 21,
+  "missingRules": [
+    "no-location-assign-relative-destination"
+  ],
+  "candidateRules": [
+    "google-font-display",
+    "google-font-preconnect",
+    "inline-script-id",
+    "next-script-for-ga",
+    "no-assign-module-variable",
+    "no-async-client-component",
+    "no-before-interactive-script-outside-document",
+    "no-css-tags",
+    "no-document-import-in-page",
+    "no-duplicate-head",
+    "no-head-element",
+    "no-head-import-in-document",
+    "no-html-link-for-pages",
+    "no-img-element",
+    "no-page-custom-font",
+    "no-script-component-in-head",
+    "no-styled-jsx-in-document",
+    "no-sync-scripts",
+    "no-title-in-document-head",
+    "no-typos",
+    "no-unwanted-polyfillio"
+  ],
+  "currentRules": [
+    "google-font-display",
+    "google-font-preconnect",
+    "inline-script-id",
+    "next-script-for-ga",
+    "no-assign-module-variable",
+    "no-async-client-component",
+    "no-before-interactive-script-outside-document",
+    "no-css-tags",
+    "no-document-import-in-page",
+    "no-duplicate-head",
+    "no-head-element",
+    "no-head-import-in-document",
+    "no-html-link-for-pages",
+    "no-img-element",
+    "no-location-assign-relative-destination",
+    "no-page-custom-font",
+    "no-script-component-in-head",
+    "no-styled-jsx-in-document",
+    "no-sync-scripts",
+    "no-title-in-document-head",
+    "no-typos",
+    "no-unwanted-polyfillio"
+  ],
+  "currentPluginIndexSha256": "d1d7f1de69b3a222f04a0d0485d0cf5552c9c6d614d03a07bd689f4a21c91c06",
+  "candidatePluginIndexSha256": "e1897bcc8f2dfc369904e2d2ba1be651763d023de70d66a70ae6c40d4d6fdf95",
+  "candidateFlatConfigCompatible": false,
+  "candidateCoreWebVitalsShape": {
+    "extends": [
+      "./index.js (resolved by require.resolve in the published package)",
+      "plugin:@next/next/core-web-vitals"
+    ]
+  },
+  "candidateTypescriptShape": {
+    "extends": [
+      "plugin:@typescript-eslint/recommended"
+    ]
+  },
+  "registryVersions": [
+    {
+      "source": "https://registry.npmjs.org/eslint-config-next/14.2.35",
+      "httpStatus": 200,
+      "name": "eslint-config-next",
+      "version": "14.2.35",
+      "dependencies": {
+        "eslint-plugin-react": "^7.33.2",
+        "eslint-plugin-import": "^2.28.1",
+        "eslint-plugin-jsx-a11y": "^6.7.1",
+        "@rushstack/eslint-patch": "^1.3.3",
+        "@next/eslint-plugin-next": "14.2.35",
+        "@typescript-eslint/parser": "^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0",
+        "eslint-plugin-react-hooks": "^4.5.0 || 5.0.0-canary-7118f5dd7-20230705",
+        "eslint-import-resolver-node": "^0.3.6",
+        "@typescript-eslint/eslint-plugin": "^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0",
+        "eslint-import-resolver-typescript": "^3.5.2"
+      },
+      "peerDependencies": {
+        "eslint": "^7.23.0 || ^8.0.0",
+        "typescript": ">=3.3.1"
+      },
+      "dist": {
+        "integrity": "sha512-BpLsv01UisH193WyT/1lpHqq5iJ/Orfz9h/NOOlAmTUq4GY349PextQ62K4XpnaM9supeiEn3TaOTeQO07gURg==",
+        "tarball": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-14.2.35.tgz"
+      }
+    },
+    {
+      "source": "https://registry.npmjs.org/%40next%2Feslint-plugin-next/16.5.0-canary.18",
+      "httpStatus": 200,
+      "name": "@next/eslint-plugin-next",
+      "version": "16.5.0-canary.18",
+      "dependencies": {
+        "fast-glob": "3.3.1",
+        "@eslint-community/eslint-utils": "4.9.1"
+      },
+      "dist": {
+        "integrity": "sha512-VoxjzjL2FjbLbS2sZ7U/gSMeo1EayP4in9xlSmUwrwmdSxH5Ov5Trfp06BHHmyZnq81kU7BqdebcQV7wDFLNeQ==",
+        "tarball": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.5.0-canary.18.tgz"
+      }
+    },
+    {
+      "source": "https://registry.npmjs.org/tailwindcss/3.4.19",
+      "httpStatus": 200,
+      "name": "tailwindcss",
+      "version": "3.4.19",
+      "dependencies": {
+        "arg": "^5.0.2",
+        "dlv": "^1.1.3",
+        "jiti": "^1.21.7",
+        "is-glob": "^4.0.3",
+        "postcss": "^8.4.47",
+        "resolve": "^1.22.8",
+        "sucrase": "^3.35.0",
+        "chokidar": "^3.6.0",
+        "fast-glob": "^3.3.2",
+        "lilconfig": "^3.1.3",
+        "didyoumean": "^1.2.2",
+        "micromatch": "^4.0.8",
+        "picocolors": "^1.1.1",
+        "postcss-js": "^4.0.1",
+        "glob-parent": "^6.0.2",
+        "object-hash": "^3.0.0",
+        "normalize-path": "^3.0.0",
+        "postcss-import": "^15.1.0",
+        "postcss-nested": "^6.2.0",
+        "@alloc/quick-lru": "^5.2.0",
+        "postcss-load-config": "^4.0.2 || ^5.0 || ^6.0",
+        "postcss-selector-parser": "^6.1.2"
+      },
+      "dist": {
+        "integrity": "sha512-3ofp+LL8E+pK/JuPLPggVAIaEuhvIz4qNcf3nA1Xn2o/7fb7s/TYpHhwGDv1ZU3PkBluUVaF8PyCHcm48cKLWQ==",
+        "tarball": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-3.4.19.tgz"
+      }
+    }
+  ]
+}

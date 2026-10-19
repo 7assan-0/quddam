@@ -82,7 +82,7 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
     }
     expect(rows.filter(r=>r.slug==="who-am-i")).toHaveLength(96);
   });
-  it("does not repeat identified film titles across easy story questions and hard award questions", () => {
+  it("does not repeat reveal answers across easy film stories and hard cinema questions", () => {
     const movieTitles = ["200","600"] as const;
     const normalizedFilmAnswers = movieTitles.flatMap(g=>moviesCandidate[g].map(([,answer])=>
       normal(answer).replace(/ ?the artist/g,"").trim()));
@@ -125,10 +125,42 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
   it("keeps Games600 from regressing into a 32-question release-year memorization round", () => {
     const hard = gamesCandidate["600"];
     expect(hard).toHaveLength(32);
-    expect(hard.filter(([q])=>q.startsWith("في أي سنة صدرت لعبة"))).toHaveLength(17);
+    expect(hard.filter(([q])=>q.startsWith("في أي سنة صدرت لعبة")).length).toBeLessThanOrEqual(Math.floor(hard.length / 3));
     expect(hard[17][1]).toContain("البيسبول");
     expect(hard[18][1]).toContain("GLaDOS");
     expect(hard[31][1]).toContain("Illithid tadpole");
+  });
+  it("reserves at least a quarter of medium cinema and car rounds for other question types", () => {
+    const films = moviesCandidate["400"];
+    const cars = carsCandidate["400"];
+    expect(films.filter(([q])=>q.startsWith("من أخرج فيلم")).length).toBeLessThanOrEqual(films.length * 0.75);
+    expect(cars.filter(([q])=>q.startsWith("أي علامة سيارات أنتجت طراز")).length).toBeLessThanOrEqual(cars.length * 0.75);
+  });
+  it("caps premiere-year recall at a third of the hard television round", () => {
+    const hard = seriesCandidate["600"];
+    expect(hard.filter(([q])=>q.startsWith("في أي سنة بدأ عرض مسلسل")).length).toBeLessThanOrEqual(Math.floor(hard.length / 3));
+  });
+  it("retains the ceremony-specific Snow White award question instead of an easy plot clue at 600", () => {
+    const [question, answer] = moviesCandidate["600"][0];
+    expect(question).toContain("حفل الأوسكار عام 1939");
+    expect(question).toContain("سلّمت والت ديزني");
+    expect(answer).toBe("شيرلي تمبل");
+  });
+  it("keeps author source rechecks distinguishable from independent approval and cross-tier answer repeats", () => {
+    const csv=readFileSync(new URL("../../../content-review/2026-10-19/Board_Entertainment_7x96_Review.csv",import.meta.url),"utf8");
+    const rechecked=csv.trimEnd().split(/\r?\n/).slice(1).map(csvRow)
+      .filter(cols=>cols[15].startsWith("2026-10-20 author source recheck and variety replacement."));
+    expect(rechecked.length).toBeGreaterThanOrEqual(33);
+    const primaryDomains = ["pixar.com", "disney.com", "oscars.org", "toyota", "honda.com", "ford.com", "chevrolet.com", "mercedes-benz.com", "porsche.com", "mazdausa.com", "skoda-storyboard.com", "amc.com", "apple.com", "netflix.com", "bbc.co.uk", "nintendo.com", "thinkwithportals.com", "bandainamcoent.eu", "playstation.com"];
+    for(const cols of rechecked) {
+      const [id,slug,tier]=cols;
+      const hostname=new URL(cols[7]).hostname;
+      expect(primaryDomains.some(domain=>hostname===domain || hostname.endsWith("."+domain)),id).toBe(true);
+      expect(cols.slice(8,12),id).toEqual(["PENDING_INDEPENDENT_FACTCHECK","PENDING_INDEPENDENT_ITEM_REVIEW","NOT_RUN","NOT_RUN"]);
+      expect(cols.slice(12,14),id).toEqual(["",""]);
+      const otherTierAnswers=rows.filter(row=>row.slug===slug && row.tier!==tier).map(row=>normal(row.answer));
+      expect(otherTierAnswers,id).not.toContain(normal(cols[5]));
+    }
   });
   it("guards against specific corrected editorial errors without certifying every fact", () => {
     expect(seriesCandidate["200"][9][0]).not.toContain("جرّاح");

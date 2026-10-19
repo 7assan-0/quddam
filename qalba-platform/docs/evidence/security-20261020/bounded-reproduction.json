@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-19T23:18:36.049Z",
+  "scope": "Local child processes using fixed test strings only; no web request or production database access.",
+  "results": [
+    {
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "packageVersion": "3.0.3",
+      "depth": 100,
+      "characters": 201,
+      "compile": "returned",
+      "expand": "returned"
+    },
+    {
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "packageVersion": "3.0.3",
+      "depth": 3500,
+      "characters": 7001,
+      "compile": "returned",
+      "expand": "returned"
+    },
+    {
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "packageVersion": "3.0.3",
+      "depth": 4000,
+      "characters": 8001,
+      "compile": "returned",
+      "expand": "returned"
+    },
+    {
+      "exitCode": 0,
+      "node": "v24.21.0",
+      "packageVersion": "3.0.3",
+      "depth": 4500,
+      "characters": 9001,
+      "compile": "returned",
+      "expand": "RangeError",
+      "expandMessage": "Maximum call stack size exceeded"
+    }
+  ]
+}

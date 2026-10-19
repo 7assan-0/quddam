@@ -1,0 +1,210 @@
+name: Board content review and original rebus pilot QA (synthetic only)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  strict-dependency-audit:
+    if: ${{ github.event.pull_request.head.ref == 'codex/content-quality-20261020' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind audit to exact proposed source and install full locked graph
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(node -v)" = "v24.19.0"
+          npm ci --include=dev --ignore-scripts --no-audit --no-fund
+          mkdir -p ../verification/security-audit-ci
+      - name: Production dependency audit
+        run: npm audit --omit=dev --json > ../verification/security-audit-ci/audit-production.json
+      - name: Strict full dependency audit
+        if: ${{ !cancelled() }}
+        run: npm audit --json > ../verification/security-audit-ci/audit-full.json
+      - name: Preserve audit evidence including failed full audit
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: quddam-security-audit-${{ github.run_id }}
+          path: verification/security-audit-ci/
+          retention-days: 7
+  source-quality:
+    if: ${{ github.event.pull_request.head.ref == 'codex/content-quality-20261020' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      APP_URL: http://localhost:3000
+      DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:65432/never_connect
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Bind exact proposed source and refuse local dotenv
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(node -v)" = "v24.19.0"
+          for name in .env .env.local .env.production .env.production.local; do test ! -e "$name"; done
+          echo "BOARD_576_EXACT_SHA=$EXPECTED_SHA"
+      - name: Clean lockfile install, Prisma generation
+        run: |
+          npm ci --include=dev --no-audit --no-fund
+          npm run db:generate
+      - name: Full existing regression plus new 576-category source/difficulty/duplication gates
+        run: npm run test -- --maxWorkers=1 --retry=0
+      - name: Verify 2-group 576-question blind pilot plan and reject blank forms as human evidence
+        run: |
+          set -euo pipefail
+          node scripts/board-576-blind-calibration.mjs --self-test > /tmp/board-pilot-selftest.txt
+          grep -F '"status":"PASS"' /tmp/board-pilot-selftest.txt
+          grep -F '"approval":"NOT_RUN"' /tmp/board-pilot-selftest.txt
+          node scripts/board-576-blind-calibration.mjs --plan /tmp/board-576-private-pilot
+          node scripts/board-576-blind-calibration.mjs --analyze /tmp/board-576-private-pilot/responses-EMPTY.csv > /tmp/board-pilot-empty-analysis.json
+          grep -F '"status": "NOT_RUN"' /tmp/board-pilot-empty-analysis.json
+          grep -F '"approval": "NEVER_AUTOMATIC"' /tmp/board-pilot-empty-analysis.json
+          echo "BOARD576_BLIND_PLAN_ONLY_NO_HUMAN_CLAIM_PASS"
+      - name: TypeScript lint and production build
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run build
+      - name: Verify Next-generated import-path-only transformation and restore exact committed bytes
+        env:
+          BETA_EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/beta-next-env-integrity.mjs
+      - name: Verify exact tracked source inventory after full quality checks
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          python3 ../ci/financial-review/source-binding.py "$GITHUB_WORKSPACE" "$EXPECTED_SHA" > /tmp/board-576-source-binding.private.json
+          echo "BOARD_576_SOURCE_BINDING_PASS"
+
+      - name: Export source-bound 2112-item review package and prove empty pilot is NOT_RUN
+        run: |
+          node --import tsx scripts/board-content-review.ts --export ../verification/board-review-ci
+          node --import tsx scripts/board-content-review.ts --analyze ../verification/board-review-ci/judge-responses-EMPTY.csv > ../verification/board-review-ci/empty-pilot-proof.json
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('../verification/board-review-ci/empty-pilot-proof.json'));if(p.status!=='NOT_RUN'||p.answered!==0||p.approval!=='NEVER_AUTOMATIC')process.exit(1)"
+      - name: Preserve reviewer package with no human responses
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: quddam-content-review-${{ github.run_id }}
+          path: verification/board-review-ci/
+          retention-days: 7
+  native-postgres17-seed:
+    if: ${{ github.event.pull_request.head.ref == 'codex/content-quality-20261020' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: board_content_ci
+          POSTGRES_PASSWORD: synthetic-content-only-password
+          POSTGRES_DB: board_content_576_ci
+        ports:
+          - 55473:5432
+        options: >-
+          --health-cmd "pg_isready -U board_content_ci -d board_content_576_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    defaults:
+      run:
+        working-directory: qalba-platform
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://board_content_ci:synthetic-content-only-password@127.0.0.1:55473/board_content_576_ci
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Refuse any non-empty non-Postgres17 fixture before migrating
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          for name in .env .env.local .env.production .env.production.local; do test ! -e "$name"; done
+          npm ci --include=dev --no-audit --no-fund
+          node <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try{
+            const {rows:[r]}=await c.query("SELECT current_database() AS db, current_setting('server_version_num')::int AS version, (SELECT count(*)::int FROM pg_tables WHERE schemaname='public') AS tables");
+            if(r.db!=='board_content_576_ci'||r.version<170000||r.version>=180000||r.tables!==0)throw Error('Unexpected/nonempty database: refuse migrations');
+            console.log('EMPTY_NATIVE_POSTGRES17_FOR_BOARD576_VERIFIED');
+          }finally{await c.end()}})().catch(()=>{console.error('Fixture identity failed');process.exitCode=1});
+          NODE
+      - name: Generate Prisma and apply original migrations only after empty PG17 identity proof
+        run: |
+          npm run db:generate
+          npm run db:migrate
+      - name: Seed candidate 576, re-seed idempotently and verify all stable IDs and grade buckets
+        run: |
+          set -euo pipefail
+          npm run db:seed:content
+          node <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try{
+            const {rows}=await c.query(`SELECT cat.slug, q."pointValue" AS value, COUNT(*)::int AS n
+              FROM "Question" q JOIN "Category" cat ON cat.id=q."categoryId"
+              JOIN "GameType" g ON g.id=q."gameTypeId"
+              WHERE g.slug='category-board' AND q.status='PUBLISHED'
+              GROUP BY cat.slug,q."pointValue" ORDER BY cat.slug,q."pointValue"`);
+            const names=['general','saudi','football','science','technology','cybersecurity'];
+            if(rows.length!==18)throw Error('Expected exactly six times three content buckets');
+            for(const slug of names)for(const value of [200,400,600]){
+              const hit=rows.find(r=>r.slug===slug&&r.value===value);
+              if(!hit||hit.n!==32)throw Error('Wrong grade bucket for '+slug+'/'+value);
+            }
+            const {rows:ids}=await c.query(`SELECT q.id FROM "Question" q JOIN "GameType" g ON g.id=q."gameTypeId" WHERE g.slug='category-board' AND q.status='PUBLISHED'`);
+            const actual=new Set(ids.map(r=>r.id));
+            if(actual.size!==576||ids.length!==576)throw Error('Board question count/identity mismatch');
+            for(let i=1;i<=576;i++)if(!actual.has('seed-category-'+i))throw Error('Missing stable question ID '+i);
+            console.log('BOARD576_NATIVE_PG17_VALIDATED_18_BUCKETS_576_IDS');
+          }finally{await c.end()}})().catch(e=>{console.error(e.message);process.exitCode=1});
+          NODE
+          npm run db:seed:content
+          node <<'NODE'
+          const {Client}=require('pg');
+          (async()=>{const c=new Client({connectionString:process.env.DATABASE_URL});await c.connect();try{
+            const {rows:[r]}=await c.query(`SELECT COUNT(*)::int AS n FROM "Question" q JOIN "GameType" g ON g.id=q."gameTypeId" WHERE g.slug='category-board' AND q.status='PUBLISHED'`);
+            if(r.n!==576)throw Error('Re-seeding created missing or duplicate Board question IDs');
+            console.log('BOARD576_NATIVE_PG17_RESEED_IDEMPOTENT_PASS');
+          }finally{await c.end()}})().catch(e=>{console.error(e.message);process.exitCode=1});
+          NODE
