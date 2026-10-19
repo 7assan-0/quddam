@@ -1,0 +1,363 @@
+{
+  "kind": "editorial_review_not_playable_bank",
+  "date": "2026-10-20",
+  "video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+  "video_title": "اقوى لعبة بالتاريخ | اتحداك تجيب الصورة",
+  "method": "Based on user-provided Work viewing summary of visual frames and automated transcript; current Chat Browser page metadata confirms matching URL/title only. No independent audio/visual verification of the listed puzzle frames has been performed in this turn.",
+  "timestamp_semantics": "A point where the puzzle is visible, not the first frame.",
+  "candidate_count": 2,
+  "revision_count": 4,
+  "rejected_count": 5,
+  "total_reviewed": 11,
+  "owner_report_excluded_original_puzzle_numbers": [
+    1,
+    2,
+    6,
+    9,
+    11,
+    13,
+    15,
+    18,
+    20
+  ],
+  "records": [
+    {
+      "id": 7,
+      "t": "10:18",
+      "answer": "عسير",
+      "tier": 200,
+      "clues": [
+        "عين",
+        "جهاز سير"
+      ],
+      "derivation": "ع (الحرف الأول من عين) + سير = عسير",
+      "status": "CANDIDATE",
+      "notes": "وضح بصريًا أن المطلوب حرف ع لا كلمة عين؛ جرّب دون إظهار أي كلمة مساعدة.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "10:18",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=618",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "عين"
+        },
+        {
+          "index_from_right": 2,
+          "description": "جهاز سير"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 10,
+      "t": "14:08",
+      "answer": "أبو ربيع",
+      "tier": 200,
+      "clues": [
+        "أب يحمل ابنه",
+        "عصير الربيع"
+      ],
+      "derivation": "أبو + ربيع",
+      "status": "REVISE",
+      "notes": "اسم الربيع الظاهر قد يكشف الإجابة ويطرح حقوق علامة؛ الأبوة وحدها ليست بالضرورة أبو، هل المقصود شخصية بعينها؟ صمم قرينة أصلية واختبر العدالة.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "14:08",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=848",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "أب يحمل ابنه"
+        },
+        {
+          "index_from_right": 2,
+          "description": "عصير الربيع"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 16,
+      "t": "20:04",
+      "answer": "بيرين",
+      "tier": 200,
+      "clues": [
+        "بئر",
+        "بئر"
+      ],
+      "derivation": "بئرين باللهجة تُنطق بيرين؛ تلاعب باسم علامة مياه",
+      "status": "CANDIDATE",
+      "notes": "توثيق اسم العلامة متاح رسميًا؛ اختلاف الإملاء بئرين/بيرين مقصود ويجب عرضه بعد الكشف فقط، لا تقبل بئرين بديلاً عن العلامة دون توضيح صيغة السؤال.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "20:04",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=1204",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "بئر"
+        },
+        {
+          "index_from_right": 2,
+          "description": "بئر"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 17,
+      "t": "21:32",
+      "answer": "دجاج مسحّب",
+      "tier": 200,
+      "clues": [
+        "دجاجة تسحب عربة"
+      ],
+      "derivation": "دجاج + مُسحِّب (تلاعب بصوت مسحّب)",
+      "status": "REVISE",
+      "notes": "فعل السحب لا ينتج بالضرورة وصف الوجبة مسحّب، وقد يُفهم دجاج يسحب فقط؛ يحتاج اختبار جمهور.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "21:32",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=1292",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "دجاجة تسحب عربة"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 3,
+      "t": "05:48",
+      "answer": "عادل إمام",
+      "tier": 400,
+      "clues": [
+        "عادل من المشاركين",
+        "إمام يصلي"
+      ],
+      "derivation": "اسم المشارك عادل + إمام",
+      "status": "REJECT_PUBLIC",
+      "notes": "المعرفة باسم مشارك في الفيديو لا تتوفر للاعبين الجدد؛ استبدال المصدر قد يستلزم صورة موثقة لشخص معروف اسمه عادل وحقوق استخدامها.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "05:48",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=348",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "عادل من المشاركين"
+        },
+        {
+          "index_from_right": 2,
+          "description": "إمام يصلي"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 4,
+      "t": "06:42",
+      "answer": "أمازون",
+      "tier": 400,
+      "clues": [
+        "أم تحمل طفلًا",
+        "منطقة لعب مميزة Zone"
+      ],
+      "derivation": "أم + Zone (زون) ≈ أمازون",
+      "status": "REVISE",
+      "notes": "التركيب الصوتي أمزون مقابل أمازون يحتاج تبرير نطقي، وتغيير صورة منطقة اللعب دون كلمة Zone قد يجعل القرينة غير مفهومة؛ ارفض إن لم تنجح تجربة عمياء.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "06:42",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=402",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "أم تحمل طفلًا"
+        },
+        {
+          "index_from_right": 2,
+          "description": "منطقة لعب مميزة Zone"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 12,
+      "t": "16:03",
+      "answer": "KFC",
+      "tier": 400,
+      "clues": [
+        "كف",
+        "كريستيانو رونالدو"
+      ],
+      "derivation": "ادعاء K وF من كف، وC من Cristiano",
+      "status": "REJECT_PUBLIC",
+      "notes": "كف لا تُفك بصورة منضبطة إلى K وF؛ C تعتمد على بداية الاسم الإنجليزي وتعرّف الشخص؛ لا تُنشر.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "16:03",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=963",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "كف"
+        },
+        {
+          "index_from_right": 2,
+          "description": "كريستيانو رونالدو"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 14,
+      "t": "18:33",
+      "answer": "Subway",
+      "tier": 400,
+      "clues": [
+        "تبديل لاعب substitution",
+        "طريق way"
+      ],
+      "derivation": "Sub + Way = Subway",
+      "status": "REVISE",
+      "notes": "قابل للفهم لمن يعرف الإنجليزية ورمز تبديل اللاعبين؛ يحتاج صورًا مستقلة وترميزًا واضحًا دون كشف Sub أو Way نصيًا. ربما 600 بعد اختبار.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "18:33",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=1113",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "تبديل لاعب substitution"
+        },
+        {
+          "index_from_right": 2,
+          "description": "طريق way"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 5,
+      "t": "07:42",
+      "answer": "سامسونج",
+      "tier": 600,
+      "clues": [
+        "شخص يُقصد به سام",
+        "لاعب يُشار إليه سونج"
+      ],
+      "derivation": "سام + سونج",
+      "status": "REJECT_PUBLIC",
+      "notes": "هويات الشخصين والنطق غير مثبتين للاعب العام؛ Song/Son اختلاف مؤثر؛ مصدر شخصي غير قابل للنشر كما هو.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "07:42",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=462",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "شخص يُقصد به سام"
+        },
+        {
+          "index_from_right": 2,
+          "description": "لاعب يُشار إليه سونج"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 8,
+      "t": "11:21",
+      "answer": "سليمان الحبيب",
+      "tier": 600,
+      "clues": [
+        "شخص اسمه سليمان",
+        "رمز حبيبين"
+      ],
+      "derivation": "سليمان + الحبيب",
+      "status": "REJECT_PUBLIC",
+      "notes": "لا يمكن اشتقاق سليمان من صورة شخص مجهول، وقد تحتاج صورة/إذن لشخص محدد. كما أن رمز حبيبين ليس بالضرورة الحبيب.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "11:21",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=681",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "شخص اسمه سليمان"
+        },
+        {
+          "index_from_right": 2,
+          "description": "رمز حبيبين"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    },
+    {
+      "id": 19,
+      "t": "24:56",
+      "answer": "أبو عبير",
+      "tier": 600,
+      "clues": [
+        "أب",
+        "عين",
+        "بئر"
+      ],
+      "derivation": "أبو + ع + بير (باللهجة)",
+      "status": "REJECT_PUBLIC",
+      "notes": "الهدف اسم مشارك من سياق الفيديو وغير عام؛ العين/ع يحتاج قاعدة استخراج حرف، وبئر/بير تحويل لهجي؛ ليس مناسبًا لبنك عام.",
+      "source_video": "https://www.youtube.com/watch?v=cdWcC3Q6EXo",
+      "frame_timestamp": "24:56",
+      "frame_url": "https://youtu.be/cdWcC3Q6EXo?t=1496",
+      "origin": "USER_SUPPLIED_WORK_VISUAL_REPORT; AUTOMATIC_TRANSCRIPT_SUPPORT ONLY; NOT AUDIO_VERIFIED",
+      "rtl_order": [
+        {
+          "index_from_right": 1,
+          "description": "أب"
+        },
+        {
+          "index_from_right": 2,
+          "description": "عين"
+        },
+        {
+          "index_from_right": 3,
+          "description": "بئر"
+        }
+      ],
+      "asset_status": "NOT_CREATED",
+      "blind_pilot": "NOT_RUN",
+      "release": "HOLD"
+    }
+  ],
+  "production_rules": [
+    "Do not copy video images/screenshots or puzzle layouts; create licensed original natural assets after editorial approval.",
+    "First clue must be on the far RIGHT and subsequent clues progress LEFT in both DOM accessible reading order and visual display; do not flip individual source images.",
+    "Do not treat candidate as published/approved; verify answer and pronunciation and run blind testing.",
+    "Do not publish or seed these review items.",
+    "Earlier pilot examples that were rejected must not be brought into the seed.",
+    "Review difficulty by independent player success and answer ambiguity, not source video scores."
+  ]
+}
