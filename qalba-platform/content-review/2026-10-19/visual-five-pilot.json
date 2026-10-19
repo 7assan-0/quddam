@@ -1,0 +1,72 @@
+{
+  "status": "DRAFT_NOT_PUBLISHED",
+  "policy": "Natural photographs, official flags and logos, accurate map geometry. No Quddam branded art, synthetic national flags or synthetic logos. Rights verification required before asset import.",
+  "items": [
+    {
+      "id": "visual-rebus-200-001",
+      "category": "خمن الصورة",
+      "tier": 200,
+      "prompt": "ما اسم الدولة؟",
+      "visual_brief": "صورتان طبيعيتان منفصلتان: شخص صائم عند الإفطار + رزم مال، دون كلمات أو حروف",
+      "answer": "الصومال",
+      "aliases": [
+        "صومال"
+      ],
+      "note": "صوم + مال; owner-supplied example; avoid revealing text"
+    },
+    {
+      "id": "flags-200-001",
+      "category": "أعلام الدول",
+      "tier": 200,
+      "prompt": "علم أي دولة؟",
+      "visual_brief": "العلم الياباني الرسمي: دائرة حمراء في وسط حقل أبيض؛ مصدر رسمي، لا توليد",
+      "answer": "اليابان",
+      "aliases": [
+        "يابان"
+      ]
+    },
+    {
+      "id": "proverbs-200-001",
+      "category": "الأمثال",
+      "tier": 200,
+      "prompt": "ما المثل الذي تعبّر عنه الصورة؟",
+      "visual_brief": "صورة فوتوغرافية لعصفور واحد ممسوك باليد وعصافير بعيدة فوق شجرة؛ دون نص",
+      "answer": "عصفور في اليد خير من عشرة على الشجرة",
+      "aliases": [
+        "عصفور باليد خير من عشرة على الشجرة"
+      ],
+      "note": "Verify canonical variant against independent source"
+    },
+    {
+      "id": "maps-200-001",
+      "category": "الخرائط",
+      "tier": 200,
+      "prompt": "ما الدولة الظاهرة في الخريطة؟",
+      "visual_brief": "محيط دولة إيطاليا الجغرافي الصحيح دون تسميات؛ استخدم بيانات حدود مرخّصة",
+      "answer": "إيطاليا",
+      "aliases": [
+        "ايطاليا"
+      ]
+    },
+    {
+      "id": "logos-200-001",
+      "category": "الشعارات",
+      "tier": 200,
+      "prompt": "لأي شركة هذا الشعار؟",
+      "visual_brief": "شعار Saudi Aramco الرسمي من مصدر مرخص، دون تحوير أو توليد؛ تحقّق من السماح بالاستخدام",
+      "answer": "أرامكو",
+      "aliases": [
+        "ارامكو",
+        "Saudi Aramco",
+        "أرامكو السعودية"
+      ]
+    }
+  ],
+  "review": {
+    "youtube_reference": "PENDING_PER_ITEM",
+    "independent_fact_check": "PENDING",
+    "image_rights": "PENDING",
+    "assets": "NOT_CREATED",
+    "blind_difficulty_test": "NOT_RUN"
+  }
+}
