@@ -24,7 +24,8 @@ The prior baseline source has 6 × 96 = **576** items. Geography96 + Currencies9
 ## Editorial hold list
 
 - **Films**: distinguish film's release year from Academy ceremony year; film story hints and translations must identify a single title; older ceremony facts need Oscar source check.
-- **Series**: distinguish original UK/US versions, episode-premiere region/year, co-creator credits; challenge monotony of repeated date or studio formats.
+  - Editorial follow-up: seven Film600 prompts were replaced to avoid repeating Easy-tier movie solutions; the source and CSV are synchronized. Oscar ceremony year/release-year mapping checked against Academy winner listings, but each item still awaits independent fact/Arabic-title approval. The new automated guard enforces 64 unique normalized movie titles across tiers 200 and 600 (director-name answers in tier 400 are intentionally a separate type).
+- **Series**: distinguish original UK/US versions, episode-premiere region/year, co-creator credits; challenge monotony of repeated date or studio formats. Easy TV clue 28 was replaced with Modern Family as a more broadly suitable group-game topic.
 - **Games**: distinguish early access, original, console regional and full release. Studio/developer versus publisher needs precision.
 - **Cars**: technical names need accepted Arabic alternatives; manufacturer make versus distributor/badge and generation/year need review. Exclude fluctuating sale prices or ungrounded current availability.
 - **People**: direct works/achievements must be independently sourced, and names accepted in verified transliterations; no unrelated personal data.
