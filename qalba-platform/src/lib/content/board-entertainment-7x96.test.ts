@@ -122,6 +122,14 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
     expect(medium[15][1]).toBe("وزنتان");
     expect(medium[21][1]).toBe("سبع مرات");
   });
+  it("keeps Games600 from regressing into a 32-question release-year memorization round", () => {
+    const hard = gamesCandidate["600"];
+    expect(hard).toHaveLength(32);
+    expect(hard.filter(([q])=>q.startsWith("في أي سنة صدرت لعبة"))).toHaveLength(17);
+    expect(hard[17][1]).toContain("البيسبول");
+    expect(hard[18][1]).toContain("GLaDOS");
+    expect(hard[31][1]).toContain("Illithid tadpole");
+  });
   it("guards against specific corrected editorial errors without certifying every fact", () => {
     expect(seriesCandidate["200"][9][0]).not.toContain("جرّاح");
     expect(gamesCandidate["400"][21][1]).toBe("ببجي كوربوريشن (PUBG Corporation)");
