@@ -82,6 +82,21 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
     }
     expect(rows.filter(r=>r.slug==="who-am-i")).toHaveLength(96);
   });
+  it("does not repeat identified film titles across easy story questions and hard award questions", () => {
+    const movieTitles = ["200","600"] as const;
+    const normalizedFilmAnswers = movieTitles.flatMap(g=>moviesCandidate[g].map(([,answer])=>
+      normal(answer).replace(/ ?the artist/g,"").trim()));
+    expect(new Set(normalizedFilmAnswers).size).toBe(64);
+  });
+  it("retains the checked historical film-award replacements and a family-friendly TV easy clue", () => {
+    expect(moviesCandidate["600"][1][1]).toContain("ذا ستينغ");
+    expect(moviesCandidate["600"][3][1]).toBe("المريض الإنجليزي");
+    expect(moviesCandidate["600"][4][1]).toBe("عقل جميل");
+    expect(moviesCandidate["600"][6][1]).toBe("القلب الشجاع");
+    expect(moviesCandidate["600"][12][1]).toBe("المليونير المتشرد");
+    expect(moviesCandidate["600"][17][1]).toBe("الجمال الأمريكي");
+    expect(seriesCandidate["200"][27][1]).toBe("مودرن فاميلي");
+  });
   it("prevents repeated celebrity answers, repeated mystery identities and double first-person wording", () => {
     const peopleAnswers = grades.flatMap(g=>peopleCandidate[g].map(([,a])=>normal(a)));
     const mysteryAnswers = grades.flatMap(g=>whoAmICandidate[g].map(([,a])=>normal(a)));
