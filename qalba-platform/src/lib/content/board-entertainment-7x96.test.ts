@@ -82,6 +82,22 @@ describe("Entertainment 7 × 96 — isolated unpublished content quality", () =>
     }
     expect(rows.filter(r=>r.slug==="who-am-i")).toHaveLength(96);
   });
+  it("prevents repeated celebrity answers, repeated mystery identities and double first-person wording", () => {
+    const peopleAnswers = grades.flatMap(g=>peopleCandidate[g].map(([,a])=>normal(a)));
+    const mysteryAnswers = grades.flatMap(g=>whoAmICandidate[g].map(([,a])=>normal(a)));
+    expect(new Set(peopleAnswers).size).toBe(96);
+    expect(new Set(mysteryAnswers).size).toBe(96);
+    for(const g of grades) for(const [q] of whoAmICandidate[g]) {
+      expect(q).toMatch(/^أنا /);
+      expect(q).not.toMatch(/^أنا أنا /);
+    }
+  });
+  it("guards against specific corrected editorial errors without certifying every fact", () => {
+    expect(seriesCandidate["200"][9][0]).not.toContain("جرّاح");
+    expect(gamesCandidate["400"][21][1]).toBe("ببجي كوربوريشن (PUBG Corporation)");
+    expect(carsCandidate["600"][19][0]).toContain("نوع الإطار");
+    expect(peopleCandidate["400"][21][1]).toBe("رجاء عالم");
+  });
   it("matches all 672 questions exactly against the pending independent item review ledger", () => {
     const csv=readFileSync(new URL("../../../content-review/2026-10-19/Board_Entertainment_7x96_Review.csv",import.meta.url),"utf8");
     const lines=csv.trimEnd().split(/\r?\n/);
