@@ -1,0 +1,130 @@
+{
+  "status": "CANDIDATES_NEED_ASSETS_AND_BLIND_TEST",
+  "category": "خمن الصورة",
+  "reference_style": "Abu Omar picture challenge format; original puzzles, no copied artwork",
+  "items": [
+    {
+      "id": "gp-001",
+      "tier": 200,
+      "prompt": "خمن اسم الدولة",
+      "parts": [
+        {
+          "visual": "صورة طبيعية لشخص صائم يفطر",
+          "word": "صوم"
+        },
+        {
+          "visual": "صورة أوراق نقدية",
+          "word": "مال"
+        }
+      ],
+      "answer": "الصومال",
+      "aliases": [
+        "صومال"
+      ],
+      "derivation": "صوم + مال = صومال",
+      "source_note": "Owner-provided example"
+    },
+    {
+      "id": "gp-002",
+      "tier": 200,
+      "prompt": "خمن اسم الدولة",
+      "parts": [
+        {
+          "visual": "صورة كوب شاي",
+          "word": "شاي"
+        },
+        {
+          "visual": "صورة شخص يرتدي قبعة رجل دين إيراني تقليدية؛ يجب تجنب إيحاءات ملتبسة، يفضل رسم حرف ن بخط واضح كرمز مستقل",
+          "word": "ن"
+        }
+      ],
+      "answer": "الصين",
+      "aliases": [
+        "صين"
+      ],
+      "derivation": "صياغة غير سليمة؛ REJECT",
+      "status": "REJECTED_DO_NOT_USE"
+    },
+    {
+      "id": "gp-003",
+      "tier": 400,
+      "prompt": "خمن اسم الدولة",
+      "parts": [
+        {
+          "visual": "صورة عُمان ممثلة بعلم رسمي مع تجنب ظهور اسمها",
+          "word": "عُمان"
+        },
+        {
+          "visual": "صورة حرف ي واضح",
+          "word": "ي"
+        }
+      ],
+      "answer": "عُماني",
+      "aliases": [
+        "عماني"
+      ],
+      "derivation": "عُمان + ي = عُماني",
+      "status": "REJECTED_PROMPT_ANSWER_TYPE_MISMATCH"
+    },
+    {
+      "id": "gp-004",
+      "tier": 200,
+      "prompt": "خمن الكلمة",
+      "parts": [
+        {
+          "visual": "صورة شمس",
+          "word": "شمس"
+        },
+        {
+          "visual": "صورة حرف ي مكتوب وحده",
+          "word": "ي"
+        }
+      ],
+      "answer": "شمسي",
+      "aliases": [
+        "شمسيّ"
+      ],
+      "derivation": "شمس + ي = شمسي",
+      "status": "CANDIDATE"
+    },
+    {
+      "id": "gp-005",
+      "tier": 400,
+      "prompt": "خمن الكلمة",
+      "parts": [
+        {
+          "visual": "صورة سيارة",
+          "word": "سيارة"
+        },
+        {
+          "visual": "صورة حرف ت",
+          "word": "ت"
+        }
+      ],
+      "answer": "سيارات",
+      "aliases": [],
+      "derivation": "سيارة + ت -> سيارات requires ة→ا spelling change",
+      "status": "REJECTED_WEAK_COMPOSITION"
+    },
+    {
+      "id": "gp-006",
+      "tier": 200,
+      "prompt": "خمن الكلمة",
+      "parts": [
+        {
+          "visual": "صورة بيت",
+          "word": "بيت"
+        },
+        {
+          "visual": "صورة حرف ي",
+          "word": "ي"
+        }
+      ],
+      "answer": "بيتي",
+      "aliases": [],
+      "derivation": "بيت + ي = بيتي",
+      "status": "CANDIDATE"
+    }
+  ],
+  "review": "Only gp-001 owner example and gp-004/gp-006 provisional; rejected examples deliberately recorded to demonstrate ambiguity gate. No assets or verified YouTube timestamps yet. Do not publish."
+}
