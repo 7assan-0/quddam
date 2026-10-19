@@ -38,3 +38,11 @@
 6. Keep PR #48 Draft, **NO-GO** for merge, seed, deploy, or player activation until all of the above are evidenced and the owner explicitly signs off.
 
 **Do not market “2,112 perfect questions.” At best: 2,112 authored candidates, 0 complete independent item-by-item signoffs confirmed by this audit.**
+
+
+## Follow-up remediation — 20 October 2026 (does NOT change NO-GO)
+
+- **Verified primary UNESCO source** for culture-400-001: Decision 19.COM 7.b.55 explicitly recalls the initial 2015 inscription of Arabic coffee and records its 2024 expansion to include Jordan. The corrected prompt uniquely requests the expansion year; the item remains pending independent review and blind difficulty testing.
+- **Re-authored all 21 shared People/WhoAmI identity answers** rather than disguising aliases. New WhoAmI entries cover distinct objects, natural phenomena, geography, astronomy, animals, computing and science. Sources and all 21 per-item review ledger rows have been synchronized; a regression guard now requires ZERO normalized answer overlap between the two selectable categories, while retaining 96 unique WhoAmI answers and the three-clue format. These are newly authored candidates, not automatically fact-approved.
+- **Replaced eight of ten medium-tier number-sequence riddles** with constrained box-label, logic-statement, balance-scale, family, book-order, sock-drawer and river-crossing puzzles. Exactly **two** of 32 Riddles400 entries retain the former sequence template; all eight updated ledger entries remain marked PENDING with NOT_RUN pilot, and a regression test checks this mix.
+- Remaining **unresolved** editorial variety issues from the prior findings: Movies400 still uses repeated directors, Cars400 still repeats brands and Games600 and Series600 use release/premiere years excessively. These need a distinct redesign pass with source-backed replacements, not blind global banning of recurring facts. No claim of independent verification of all 2,112 candidate items or calibrated 200/400/600 difficulty is made.
