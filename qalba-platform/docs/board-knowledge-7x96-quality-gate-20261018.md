@@ -41,8 +41,8 @@ Each bank is 96 text Q/A candidates with 32 rows at each of 200 / 400 / 600. Eac
 - Geography candidate: 96 (draft, not seeded).
 - Currencies candidate: 96 (draft, not seeded).
 - This seven-category batch: 672 (draft, not seeded).
-- **Authored candidate pool across branches: 1,440**.
-- Remaining 12 categories without a 96-item authored bank: movies, series, games, cars, logos, people, riddles, who-am-I, guess-picture, country-flags, proverbs, maps = **1,152 additional items**.
+- **Authored candidate pool across branches: 2,112**, including the seven later entertainment packs (672) documented in docs/board-entertainment-7x96-quality-gate-20261019.md.
+- Remaining five visual-oriented categories without a 96-item authored bank: logos, guess-picture, country-flags, proverbs, maps = **480 additional items**.
 - End-state target remains **27 × 96 = 2,592**, with six selected categories and 36 question cells per match.
 
 **Do not claim zero factual errors based on automated tests alone. No merge, seed, release or deployment approval is implied.**
