@@ -79,6 +79,16 @@ describe("Seven additional knowledge banks — draft-only quality gates", () => 
     expect(answer).toBe("2024");
     expect(prompt).not.toBe("في أي سنة أدرجت اليونسكو القهوة العربية ضمن التراث الثقافي غير المادي؟");
   });
+  it("keeps animal taxonomy question aligned with its answer and coffee dates unambiguous", () => {
+    const [animalPrompt, animalAnswer] = animalsCandidate["600"][2];
+    expect(animalPrompt).toContain("مجموعة كبرى");
+    expect(animalPrompt).not.toContain("نوع الهيكل");
+    expect(animalAnswer).toBe("كلابيات القرون");
+    const [coffeePrompt, coffeeAnswer] = cultureCandidate["400"][0];
+    expect(coffeePrompt).toContain("2015");
+    expect(coffeePrompt).toContain("الأردن");
+    expect(coffeeAnswer).toBe("2024");
+  });
   it("has a synchronized 672-row item review ledger with every editorial decision still pending", () => {
     const csv = readFileSync(new URL("../../../content-review/2026-10-18/Board_Knowledge_7x96_Review.csv", import.meta.url), "utf8");
     const lines = csv.trimEnd().split(/\r?\n/);
