@@ -72,6 +72,13 @@ describe("Seven additional knowledge banks — draft-only quality gates", () => 
     }
   });
 
+  it("disambiguates original 2015 Arabic coffee UNESCO inscription from its 2024 Jordan expansion", () => {
+    const [prompt, answer] = cultureCandidate["400"][0];
+    expect(prompt).toContain("الأردن");
+    expect(prompt).toContain("2015");
+    expect(answer).toBe("2024");
+    expect(prompt).not.toBe("في أي سنة أدرجت اليونسكو القهوة العربية ضمن التراث الثقافي غير المادي؟");
+  });
   it("has a synchronized 672-row item review ledger with every editorial decision still pending", () => {
     const csv = readFileSync(new URL("../../../content-review/2026-10-18/Board_Knowledge_7x96_Review.csv", import.meta.url), "utf8");
     const lines = csv.trimEnd().split(/\r?\n/);
