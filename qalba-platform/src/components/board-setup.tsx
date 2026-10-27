@@ -19,7 +19,7 @@ export function BoardSetup({ categories, defaults }: { categories: Category[]; d
     setBusy(true); setError("");
     try {
       const response = await fetch("/api/games/category-board", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryIds: selected, teamNames: [form.get("teamA"), form.get("teamB")], timerSeconds: Number(form.get("timer")) }) });
+        body: JSON.stringify({ categoryIds: selected, teamNames: [form.get("teamA"), form.get("teamB")], timerSeconds: 60 }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "تعذّر إنشاء المباراة");
       router.push(`/play/${result.id}`);
@@ -41,7 +41,7 @@ export function BoardSetup({ categories, defaults }: { categories: Category[]; d
     <section className="panel"><span className="eyebrow">{formatNumber(2)} / الفرق</span><h2>سمّوا الفريقين</h2>
       <div className="setup-fields"><div className="field"><label htmlFor="teamA">الفريق الأول</label><input className="input" id="teamA" name="teamA" minLength={2} maxLength={60} required defaultValue={defaults?.teamNames[0] ?? "فريق البرق"} /></div>
         <div className="field"><label htmlFor="teamB">الفريق الثاني</label><input className="input" id="teamB" name="teamB" minLength={2} maxLength={60} required defaultValue={defaults?.teamNames[1] ?? "فريق الموج"} /></div>
-        <div className="field"><label htmlFor="timer">ثواني السؤال</label><select className="input" id="timer" name="timer" defaultValue="30"><option value="20">{formatNumber(20)} ثانية</option><option value="30">{formatNumber(30)} ثانية</option><option value="45">{formatNumber(45)} ثانية</option><option value="60">{formatNumber(60)} ثانية</option></select></div></div>
+        <div className="field"><span className="field-label">وقت السؤال</span><p className="board-timer-fixed" role="note"><strong>{formatNumber(60)} ثانية</strong><span>وقت موحّد لكل سؤال في لوحة التحدّي</span></p></div></div>
       {error && <p className="form-error" role="alert">{error}</p>}
       <button className="btn btn-primary" aria-describedby="board-create-help" disabled={busy || selected.length !== 6 || categories.length < 6}>{busy ? "جارٍ إنشاء المباراة..." : <CreateCopy previous="جهّز اللوحة"/>}</button><p id="board-create-help" className="form-note" role="status">{selected.length !== 6 ? `اختاروا ${formatNumber(6)} فئات` : categories.length < 6 ? "المحتوى المنشور لا يكفي لإنشاء اللوحة بعد" : ""}</p>
     </section>
